@@ -3,7 +3,6 @@ import * as forge from 'node-forge';
 import { SignedXml } from 'xml-crypto';
 import { createPrivateKey } from 'crypto';
 import { DOMParser, XMLSerializer } from 'xmldom';
-
 class CertKeyInfoProvider {
   constructor(private cert: string) {}
 
@@ -25,9 +24,7 @@ export class FirmaService {
   async firmarXml(
     xml: string,
     pfxBuffer: Buffer,
-    password: string,
-    ruc: string,
-    razonSocial: string,
+    password: string
   ): Promise<string> {
     // 1. Parsear PFX
     const p12Asn1 = forge.asn1.fromDer(pfxBuffer.toString('binary'));
@@ -66,69 +63,49 @@ export class FirmaService {
       .replace(/-----END CERTIFICATE-----/g, '')
       .replace(/\r?\n|\r/g, '');
 
-    // 4. Preparar XML y agregar <cac:Signature> antes de firmar
+    // 4. Preparar XML
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xml, 'text/xml');
-    const ublExtensions = xmlDoc.getElementsByTagName('ext:UBLExtensions')[0];
-
-    const cacSignatureXml = `
-      <cac:Signature>
-        <cbc:ID>signatureDIGITALPERU</cbc:ID>
-        <cbc:Note>DIGITALPERU</cbc:Note>
-        <cac:SignatoryParty>
-          <cac:PartyIdentification>
-            <cbc:ID>${ruc}</cbc:ID>
-          </cac:PartyIdentification>
-          <cac:PartyName>
-            <cbc:Name><![CDATA[${razonSocial}]]></cbc:Name>
-          </cac:PartyName>
-        </cac:SignatoryParty>
-        <cac:DigitalSignatureAttachment>
-          <cac:ExternalReference>
-            <cbc:URI>#signatureDIGITALPERU</cbc:URI>
-          </cac:ExternalReference>
-        </cac:DigitalSignatureAttachment>
-      </cac:Signature>
-    `;
-
-    ublExtensions.parentNode.insertBefore(
-      parser.parseFromString(cacSignatureXml, 'text/xml').documentElement,
-      ublExtensions.nextSibling,
-    );
-
     const preparedXml = new XMLSerializer().serializeToString(xmlDoc);
 
-    // 5. Preparar firmador
+    // 5. Configurar firmador con SHA-256 y C14N exclusiva
     const sig = new SignedXml();
-    sig.signatureAlgorithm = 'http://www.w3.org/2000/09/xmldsig#rsa-sha1';
-    sig.canonicalizationAlgorithm =
-      'http://www.w3.org/TR/2001/REC-xml-c14n-20010315';
+    sig.signatureAlgorithm =
+      'http://www.w3.org/2001/04/xmldsig-more#rsa-sha256';
+    sig.canonicalizationAlgorithm = 'http://www.w3.org/2001/10/xml-exc-c14n#';
     (sig as any).prefix = 'ds';
 
+    // 🔑 Referencia al documento completo con URI vacío (SUNAT lo exige)
     sig.addReference(
-      '/*', // nodo raíz, en este caso <Invoice>
-      ['http://www.w3.org/2000/09/xmldsig#enveloped-signature'],
-      'http://www.w3.org/2000/09/xmldsig#sha1',
-      '', // digestValue vacío
-      '', // id vacío
+      "/*",
+[
+    "http://www.w3.org/2000/09/xmldsig#enveloped-signature",
+    "http://www.w3.org/2001/10/xml-exc-c14n#"
+  ],
+      'http://www.w3.org/2001/04/xmlenc#sha256',
+      
       '',
-      true, // fuerza URI vacío (no genera Id="_0")
+      '',
+      '',
+      true, // fuerza a usar URI=""
     );
-
     sig.signingKey = normalizedKey.trim();
     (sig as any).keyInfoProvider = new CertKeyInfoProvider(certBase64);
 
     // 6. Firmar
-    sig.computeSignature(preparedXml, {
+    const xmlNormalized = preparedXml.replace(/\r\n/g, '\n');
+    sig.computeSignature(xmlNormalized, {
       prefix: 'ds',
       location: {
         reference: "//*[local-name()='ExtensionContent']",
         action: 'append',
       },
-      attrs: { Id: 'signatureDIGITALPERU' },
+      attrs: { Id: 'signatureFACTURALOPERU' }
     });
 
-    // 7. Resultado final
-    return sig.getSignedXml();
+    // 7. Retornar XML firmado
+    const signedXml =  sig.getSignedXml();
+    return signedXml;
   }
 }
+

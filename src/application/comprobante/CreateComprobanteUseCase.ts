@@ -7,10 +7,7 @@ import { ZipUtil } from 'src/util/ZipUtil';
 import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
-import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
-import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { ErrorMapper } from 'src/infrastructure/mapper/ErrorMapper';
-import * as path from 'path';
 export class CreateComprobanteUseCase {
   constructor(
     private readonly xmlBuilder: XmlBuilderService,
@@ -50,11 +47,11 @@ export class CreateComprobanteUseCase {
       const xmlFirmado = await this.firmaService.firmarXml(
         xml,
         certificadoDigital,
-        passworDecript,
-        data.company.ruc,
-        data.client.rznSocial
+        passworDecript
       );
-      console.log("xml firmado ", xmlFirmado)
+      console.log("XML firmado:", xmlFirmado);
+
+
       const fileName = this.obtenerNombreFile(
         data.company.ruc,
         data.tipoDoc,

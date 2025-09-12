@@ -8,6 +8,7 @@ export class ZipUtil {
 
     // Asegurar que el XML esté en UTF-8 sin BOM
     const xmlUtf8 = Buffer.from(xml, 'utf8');
+    
 
     zip.file(fileNameXml, xmlUtf8);
 
