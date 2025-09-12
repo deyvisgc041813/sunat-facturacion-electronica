@@ -1,7 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 import { CatalogoEnum } from "./CatalogoEnum";
-import { CreateClienteDto } from "../cliente/dto/CreateRequestDto";
-import { UpdateClienteDto } from "../cliente/dto/UpdateClienteDto";
+import { CreateClienteDto } from "../domain/cliente/dto/CreateRequestDto";
+import { UpdateClienteDto } from "../domain/cliente/dto/UpdateClienteDto";
 
 export function validarSoloNumeros(valor: string, longitud: number, mensaje: string) {
   const regex = new RegExp(`^\\d{${longitud}}$`);

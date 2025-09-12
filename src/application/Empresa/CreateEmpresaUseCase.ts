@@ -2,7 +2,7 @@ import { BadRequestException, UnauthorizedException } from '@nestjs/common';
 import { CreateEmpresaDto } from 'src/domain/empresa/dto/CreateEmpresaDto';
 import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
-import { CryptoUtil } from 'src/domain/util/CryptoUtil';
+import { CryptoUtil } from 'src/util/CryptoUtil';
 const forge = require('node-forge');
 export class CreateEmpresaUseCase {
   constructor(private readonly empresaRepo: EmpresaRepository) {}

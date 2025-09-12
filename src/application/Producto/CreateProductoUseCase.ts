@@ -3,7 +3,7 @@ import { BadRequestException } from "@nestjs/common";
 import { CreateProductoDto } from "src/domain/productos/dto/CreateProductoDto";
 import { ProductoResponseDto } from "src/domain/productos/dto/ProductoResponseDto";
 import { ProductoRepository } from "src/domain/productos/Producto.repository";
-import { CatalogoEnum } from "src/domain/util/CatalogoEnum";
+import { CatalogoEnum } from "src/util/CatalogoEnum";
 import { CatalogoRepositoryImpl } from "src/infrastructure/database/repository/catalogo.repository.impl";
 
 export class CreateProductoUseCase {

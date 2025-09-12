@@ -26,5 +26,4 @@ export enum CatalogoEnum {
   PASAPORTE = '7',
   CEDULA_DIPLOMATICA = 'A'
 
-
 }

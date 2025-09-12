@@ -2,8 +2,8 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { ClienteRepository } from "src/domain/cliente/Cliente.repository";
 import { ClienteResponseDto } from "src/domain/cliente/dto/ClienteResponseDto";
 import { UpdateClienteDto } from "src/domain/cliente/dto/UpdateClienteDto";
-import { CatalogoEnum } from "src/domain/util/CatalogoEnum";
-import { validarDatosSegunTipoDocumento } from "src/domain/util/Helpers";
+import { CatalogoEnum } from "src/util/CatalogoEnum";
+import { validarDatosSegunTipoDocumento } from "src/util/Helpers";
 import { CatalogoRepositoryImpl } from "src/infrastructure/database/repository/catalogo.repository.impl";
 
 export class UpdateClienteUseCase {

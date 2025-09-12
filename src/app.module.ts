@@ -9,6 +9,8 @@ import { EmpresaModule } from './empresa.module';
 import { CatalogoModule } from './catalogo.module';
 import { SerieModule } from './serie.module';
 import { SerieAuditoriaModule } from './serie-auditoria.module';
+import { ComprobanteModule } from './comprobante.module';
+import { ErrorLogModule } from './error-log.module';
 
 @Module({
   imports: [
@@ -28,7 +30,9 @@ import { SerieAuditoriaModule } from './serie-auditoria.module';
    EmpresaModule,
    CatalogoModule,
    SerieModule,
-   SerieAuditoriaModule
+   SerieAuditoriaModule,
+   ComprobanteModule,
+   ErrorLogModule
   ],
   
   controllers: [AppController],

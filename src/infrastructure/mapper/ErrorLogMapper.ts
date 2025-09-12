@@ -1,0 +1,42 @@
+
+
+import { ErrorLogOrmEntity } from '../database/entity/ErrorLogOrmEntity';
+import { ErrorLogResponseDto } from 'src/domain/error-log/dto/ErrorLogResponseDto';
+import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
+
+export class ErrorLogMapper {
+  static toDomain(orm: ErrorLogOrmEntity): ErrorLogResponseDto {
+    return new ErrorLogResponseDto(
+      orm.errorId,
+      orm.empresaId,
+      orm.tipoComprobante,
+      orm.serie,
+      orm.correlativo,
+      orm.origen,
+      orm.codigoError,
+      orm.mensajeError,
+      orm.detalleError,
+      orm.fechaCreacion,
+      orm.estado,
+    );
+  }
+  private static assignCommon(
+    object: ErrorLogOrmEntity,
+    data: any,
+    isUpdate = false,
+  ): ErrorLogOrmEntity {
+    object.empresaId = data.empresaId;
+    object.tipoComprobante = data.tipoComprobante;
+    object.serie = data.serie;
+    object.correlativo = data.correlativo;
+    object.origen = data.origen;
+    object.codigoError = data.codigoError;
+    object.mensajeError = data.mensajeError;
+    object.detalleError = data.detalleError;
+    return object;
+  }
+
+  static dtoToOrmCreate(dto: CreateErrorLogDto): ErrorLogOrmEntity {
+    return this.assignCommon(new ErrorLogOrmEntity(), dto, false);
+  }
+}

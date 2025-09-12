@@ -73,6 +73,7 @@ async actualizarCorrelativo(
     auditoria.correlativoNuevo = newCorrelativo
     auditoria.motivo = motivo
     serieOrm.correlativoInicial = newCorrelativo
+    
     const updatedSerie = await this.repo.save(serieOrm);
     await this.auditoriaRepo.save(auditoria)
     const serieDto = SerieMapper.toDomain(updatedSerie);

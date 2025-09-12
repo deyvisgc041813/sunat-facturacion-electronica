@@ -7,12 +7,14 @@ import { CreateEmpresaDto } from 'src/domain/empresa/dto/CreateEmpresaDto';
 import { EmpresaOrmEntity } from '../entity/EmpresaOrmEntity';
 import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
+import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
 
 @Injectable()
 export class EmpresaRepositoryImpl implements EmpresaRepository {
   constructor(
     @InjectRepository(EmpresaOrmEntity) private readonly repo: Repository<EmpresaOrmEntity>,
   ) {}
+  
   async save( empresa: CreateEmpresaDto): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
     const newEmpresa = await this.repo.save(EmpresaMapper.dtoToOrmCreate(empresa));
     return {
@@ -39,6 +41,21 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
     }
     return EmpresaMapper.toDomain(empresa);
   }
+  async findCertificado(ruc: string): Promise<GetCertificadoDto | null> {
+    console.log("ruc ", ruc)
+    const empresa = await this.repo.findOne({ where: { ruc } });
+
+    if (!empresa) {
+      throw new NotFoundException(`No se encontró empresa con RUC ${ruc}`);
+    }
+    if (!empresa.certificadoDigital) {
+      throw new NotFoundException(`La empresa ${ruc} no tiene certificado digital registrado`);
+    }
+    const certificado = new GetCertificadoDto(empresa.empresaId, empresa.certificadoDigital, empresa.claveCertificado ?? "")
+    return certificado;
+  }
+
+
   async update(empresa: UpdateEmpresaDto, empresaId:number): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
     const empresaUpdate = EmpresaMapper.dtoToOrmUpdate(empresa);
     empresaUpdate.empresaId = empresaId
