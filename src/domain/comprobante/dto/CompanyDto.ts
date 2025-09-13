@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, Length, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AddressDto } from './AddressDto';
+import { AddressDto } from './factura/AddressDto';
 
 
 export class CompanyDto {
@@ -16,6 +16,10 @@ export class CompanyDto {
   @IsOptional()
   @IsString({ message: 'El nombre comercial debe ser un texto' })
   nombreComercial?: string;
+  
+  @IsString({ message: 'El tipo documento debe ser un texto' })
+  @IsNotEmpty({ message: 'El tipo document es obligatoria' })
+  tipoDoc: string;
 
   @IsOptional()
   @ValidateNested()

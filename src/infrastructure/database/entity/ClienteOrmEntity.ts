@@ -1,6 +1,7 @@
 // src/infrastructure/database/typeorm/cliente.orm-entity.ts
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { EmpresaOrmEntity } from './EmpresaOrmEntity';
+import { ComprobanteOrmEntity } from './ComprobanteOrmEntity';
 
 @Entity('clientes')
 export class ClienteOrmEntity {
@@ -44,4 +45,6 @@ export class ClienteOrmEntity {
   @ManyToOne(() => EmpresaOrmEntity, (empresa: EmpresaOrmEntity) => empresa.clientes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'empresa_id' })
   empresa: EmpresaOrmEntity;
+  @OneToMany(() => ComprobanteOrmEntity, (comprobante) => comprobante.cliente)
+  comprobantes: ComprobanteOrmEntity;
 }

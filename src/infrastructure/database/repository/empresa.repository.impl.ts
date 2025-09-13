@@ -42,7 +42,6 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
     return EmpresaMapper.toDomain(empresa);
   }
   async findCertificado(ruc: string): Promise<GetCertificadoDto | null> {
-    console.log("ruc ", ruc)
     const empresa = await this.repo.findOne({ where: { ruc } });
 
     if (!empresa) {

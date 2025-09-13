@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Unique } from 'typeo
 import { ClienteOrmEntity } from './ClienteOrmEntity';
 import { ProductoOrmEntity } from './ProductoOrmEntity';
 import { SerieOrmEntity } from './SerieOrmEntity';
+import { ComprobanteOrmEntity } from './ComprobanteOrmEntity';
 
 @Entity('empresas')
 @Unique(['ruc', 'razonSocial'])
@@ -42,8 +43,13 @@ export class EmpresaOrmEntity {
   // Relaciones
   @OneToMany(() => ClienteOrmEntity, (cliente: ClienteOrmEntity) => cliente.empresa)
   clientes: ClienteOrmEntity[];
+
   @OneToMany(() => ProductoOrmEntity, (producto: ProductoOrmEntity) => producto.empresa)
   productos: ProductoOrmEntity[];
+
   @OneToMany(() =>SerieOrmEntity, (serie: SerieOrmEntity) => serie.empresa)
   series: SerieOrmEntity[];
+
+  @OneToMany(() =>ComprobanteOrmEntity, (comprobante: ComprobanteOrmEntity) => comprobante.empresa)
+  comprobantes: ComprobanteOrmEntity[];
 }

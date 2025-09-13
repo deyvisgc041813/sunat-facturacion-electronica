@@ -1,33 +1,178 @@
-import { Body, Controller, Get, Post} from '@nestjs/common';
-import { CreateComprobanteDto } from 'src/domain/comprobante/dto/CreateComprobanteDto';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  Res
+} from '@nestjs/common';
+import type { Response } from 'express'; // 
 import { XmlBuilderService } from '../sunat/xml/xml-builder.service';
 import { FirmaService } from '../sunat/firma/firma.service';
 import { SunatService } from '../sunat/cliente/sunat.service';
 import { EmpresaRepositoryImpl } from '../database/repository/empresa.repository.impl';
-import { CreateComprobanteUseCase } from 'src/application/comprobante/CreateComprobanteUseCase';
+import { CreateFacturaUseCase } from 'src/application/comprobante/CreateFacturaUseCase';
 import { ErrorLogRepositoryImpl } from '../database/repository/error-log.repository.impl';
 import { generarCertificadoPrueba } from 'src/certificado/generarCertificadoPrueba';
+import { CreateFacturaDto } from 'src/domain/comprobante/dto/factura/CreateFacturaDto';
+import { SummaryDocumentDto } from 'src/domain/comprobante/dto/resumen/SummaryDocumentDto';
+import { CreateResumenUseCase } from 'src/application/comprobante/CreateResumenUseCase';
+import { GetAllComprobantesUseCase } from 'src/application/comprobante/GetAllComprobantesUseCase';
+import { ComprobanteRepositoryImpl } from '../database/repository/comprobante.repository.impl';
+import { GetByIdComprobantesUseCase } from 'src/application/comprobante/GetByIdComprobantesUseCase';
+import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import { GetByEstadoComprobantesUseCase } from 'src/application/comprobante/GetByEstadoComprobantesUseCase';
+import { GetByEmpresaAndFechaComprobantesUseCase } from 'src/application/comprobante/GetByEmpresaAndFechaComprobantesUseCase';
+import { ExportXmlFirmadoComprobanteUseCase } from 'src/application/comprobante/ExportXmlFirmadoComprobanteUseCase';
 
+import { ExportZipComprobanteUseCase } from 'src/application/comprobante/ExportZipComprobanteUseCase';
+import { ExportCdrZipComprobanteUseCase } from 'src/application/comprobante/ExportCdrZipComprobanteUseCase';
 
-@Controller('comprobantes')
+@Controller('empresas/:empresaId/documents')
 export class ComprobanteController {
-  constructor(private readonly xmlBuilder: XmlBuilderService, private readonly firmaService: FirmaService,
-      private readonly sunatService: SunatService, 
-      private readonly empresaRepo: EmpresaRepositoryImpl,
-      private readonly errorLogRepo: ErrorLogRepositoryImpl,
-      
-    ) {}
+  constructor(
+    private readonly xmlBuilder: XmlBuilderService,
+    private readonly firmaService: FirmaService,
+    private readonly sunatService: SunatService,
+    private readonly empresaRepo: EmpresaRepositoryImpl,
+    private readonly errorLogRepo: ErrorLogRepositoryImpl,
+    private readonly comprobanteRepository: ComprobanteRepositoryImpl,
+  ) {}
 
-  @Post()
-  async create(@Body() body: CreateComprobanteDto) {
-    const useCase = new CreateComprobanteUseCase(this.xmlBuilder, this.firmaService, this.sunatService, this.empresaRepo, this.errorLogRepo);
+  @Post('/invoices')
+  async createInvoice(@Body() body: CreateFacturaDto) {
+    const useCase = new CreateFacturaUseCase(
+      this.xmlBuilder,
+      this.firmaService,
+      this.sunatService,
+      this.empresaRepo,
+      this.errorLogRepo,
+    );
     return useCase.execute(body);
   }
- @Get("generarcertificado")
+
+  @Post('/daily-summaries')
+  async create(@Body() body: SummaryDocumentDto) {
+    const useCase = new CreateResumenUseCase(
+      this.xmlBuilder,
+      this.firmaService,
+      this.sunatService,
+      this.empresaRepo,
+      this.errorLogRepo,
+    );
+    return useCase.execute(body);
+  }
+  @Get('/generarcertificado')
   async generarCerticado() {
-    generarCertificadoPrueba()
+    generarCertificadoPrueba();
     return true;
   }
 
-  
+  // Obtener todos los comprobantes de una empresa
+  @Get()
+  async findAll(@Param('empresaId') empresaId: number) {
+    const useCase = new GetAllComprobantesUseCase(this.comprobanteRepository);
+    return useCase.execute(empresaId);
+  }
+
+  // Obtener comprobante por ID
+  @Get(':id')
+  async findById(
+    @Param('empresaId') empresaId: number,
+    @Param('id') comprobanteId: number,
+  ) {
+    const useCase = new GetByIdComprobantesUseCase(this.comprobanteRepository);
+    return useCase.execute(comprobanteId, empresaId);
+  }
+
+  // Filtrar por estado
+  @Get('estado/:estado')
+  async findByEstado(
+    @Param('empresaId') empresaId: number,
+    @Param('estado') estado: EstadoEnumComprobante,
+  ) {
+    const useCase = new GetByEstadoComprobantesUseCase(
+      this.comprobanteRepository,
+    );
+    return useCase.execute(estado, empresaId);
+  }
+
+  // Filtrar por fechas
+  @Get('buscar/fechas')
+  async findByEmpresaAndFecha(
+    @Param('empresaId') empresaId: number,
+    @Query('fecIni') fecIni: Date,
+    @Query('fecFin') fecFin: Date,
+  ) {
+    const useCase = new GetByEmpresaAndFechaComprobantesUseCase(
+      this.comprobanteRepository,
+    );
+    return useCase.execute(empresaId, fecIni, fecFin);
+  }
+
+  // Descargar XML firmado
+  @Get(':id/xml')
+  async getXmlFirmado(
+    @Param('empresaId') empresaId: number,
+    @Param('id') componenteId: number,
+    @Res() res: Response,
+  ) {
+    const useCase = new ExportXmlFirmadoComprobanteUseCase(
+      this.comprobanteRepository,
+    );
+    const archivo = await useCase.execute(componenteId, empresaId);
+
+    if (!archivo)  return res.status(HttpStatus.NOT_FOUND).send("XML no encontrado");
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${archivo.fileName}`,
+    );
+    res.setHeader('Content-Type', archivo.mimeType);
+    res.send(archivo.content);
+  }
+
+  // Descargar ZIP enviado
+  @Get(':id/zip')
+  async getZipEnviado(
+    @Param('empresaId') empresaId: number,
+    @Param('id') componenteId: number,
+    @Res() res: Response,
+  ) {
+    const useCase = new ExportZipComprobanteUseCase(
+      this.comprobanteRepository,
+    );
+    const archivo = await useCase.execute(componenteId, empresaId);
+
+    if (!archivo)
+      return res.status(HttpStatus.NOT_FOUND).send('ZIP no encontrado');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${archivo.fileName}`,
+    );
+    res.setHeader('Content-Type', archivo.mimeType);
+    res.send(archivo.content);
+  }
+
+  // Descargar CDR ZIP
+  @Get(':id/cdr')
+  async getCdrZip(
+    @Param('empresaId') empresaId: number,
+    @Param('id') componenteId: number,
+    @Res() res: Response,
+  ) {
+    const useCase = new ExportCdrZipComprobanteUseCase(
+      this.comprobanteRepository,
+    );
+    const archivo = await useCase.execute(componenteId, empresaId);
+    if (!archivo)
+      return res.status(HttpStatus.NOT_FOUND).send('CDR no encontrado');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${archivo.fileName}`,
+    );
+    res.setHeader('Content-Type', archivo.mimeType);
+    res.send(archivo.content);
+  }
 }

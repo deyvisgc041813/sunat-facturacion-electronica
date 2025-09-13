@@ -2,6 +2,7 @@ import { BadRequestException } from "@nestjs/common";
 import { CatalogoEnum } from "./CatalogoEnum";
 import { CreateClienteDto } from "../domain/cliente/dto/CreateRequestDto";
 import { UpdateClienteDto } from "../domain/cliente/dto/UpdateClienteDto";
+import { DOMParser } from '@xmldom/xmldom';
 
 export function validarSoloNumeros(valor: string, longitud: number, mensaje: string) {
   const regex = new RegExp(`^\\d{${longitud}}$`);
@@ -55,4 +56,25 @@ export function validarDatosSegunTipoDocumento(cliente: CreateClienteDto | Updat
     default:
       throw new BadRequestException('Tipo de documento no soportado');
   }
+}
+/**
+ * Convierte una fecha en formato YYYY-MM-DD o un objeto Date
+ * al formato compacto YYYYMMDD (ej: 20250911).
+ */
+export function formatDateToCompact(date: string | Date): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
+
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0'); // meses van de 0 a 11
+  const day = String(d.getDate()).padStart(2, '0');
+
+  return `${year}${month}${day}`;
+}
+
+export function  getTicketFromResponse(xml: string): string {
+    const doc = new DOMParser().parseFromString(xml, 'text/xml');
+    const ticketNode = doc.getElementsByTagName('ticket')[0];
+    return ticketNode?.textContent || '';
   }
+
+

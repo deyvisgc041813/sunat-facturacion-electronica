@@ -1,7 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { ClienteMapper } from 'src/infrastructure/mapper/ClienteMapper';
 import { SerieRepository } from 'src/domain/series/Serie.repository';
 import { CreateSerieDto } from 'src/domain/series/dto/CreateSerieDto';
 import { SerieResponseDto } from 'src/domain/series/dto/SerieResponseDto';
@@ -10,7 +9,7 @@ import { SerieMapper } from 'src/infrastructure/mapper/SerieMapper';
 import { UpdateSerieDto } from 'src/domain/series/dto/UpdateSerieDto';
 
 @Injectable()
-export class ClienteRepositoryImpl implements SerieRepository {
+export class SerieRepositoryImpl implements SerieRepository {
   constructor(
     @InjectRepository(SerieOrmEntity)
     private readonly repo: Repository<SerieOrmEntity>,
@@ -44,7 +43,7 @@ export class ClienteRepositoryImpl implements SerieRepository {
   }
   async update(serie: UpdateSerieDto, serieId:number): Promise<{ status: boolean; message: string; data?: SerieResponseDto }> {
     serie.serieId = serieId
-    const update = await this.repo.save(ClienteMapper.dtoToOrmUpdate(serie));
+    const update = await this.repo.save(SerieMapper.dtoToOrmUpdate(serie));
     return {
       status: true,
       message: 'Actualizado correctamente',

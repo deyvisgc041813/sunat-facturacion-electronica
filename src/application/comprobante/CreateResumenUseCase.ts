@@ -2,39 +2,35 @@ import { SerieResponseDto } from 'src/domain/series/dto/SerieResponseDto';
 import { XmlBuilderService } from 'src/infrastructure/sunat/xml/xml-builder.service';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { SunatService } from 'src/infrastructure/sunat/cliente/sunat.service';
-import { CreateComprobanteDto } from 'src/domain/comprobante/dto/CreateComprobanteDto';
 import { ZipUtil } from 'src/util/ZipUtil';
 import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
 import { ErrorMapper } from 'src/infrastructure/mapper/ErrorMapper';
-export class CreateComprobanteUseCase {
+import { SummaryDocumentDto } from 'src/domain/comprobante/dto/resumen/SummaryDocumentDto';
+import { formatDateToCompact } from 'src/util/Helpers';
+
+export class CreateResumenUseCase {
   constructor(
     private readonly xmlBuilder: XmlBuilderService,
     private readonly firmaService: FirmaService,
     private readonly sunatService: SunatService,
     private readonly empresaRepo: EmpresaRepositoryImpl,
     private readonly errorLogRepo: ErrorLogRepositoryImpl,
-  ) {
+  ) {}
 
-  }
-
-  async execute(
-    data: CreateComprobanteDto,
-  ): Promise<{
+  async execute(data: SummaryDocumentDto): Promise<{
     status: boolean;
     message: string;
-    xml: any;
     xmlFirmado: any;
-    cdr: any;
-    data?: SerieResponseDto;
+    ticket: any;
   }> {
     const respCert = await this.empresaRepo.findCertificado(
       data?.company?.ruc.trim(),
     );
+    const summaryInfo = this.parseResumenId(data?.resumenId);
     try {
       // 1. Construir XML
-      const xml = this.xmlBuilder.buildInvoice(data);
       const certificadoDigital = respCert?.certificadoDigital;
       const claveDigital = respCert?.claveCertificado;
       if (!certificadoDigital || !claveDigital) {
@@ -43,52 +39,53 @@ export class CreateComprobanteUseCase {
         );
       }
       const passworDecript = CryptoUtil.decrypt(claveDigital);
+      const xml = this.xmlBuilder.buildResumenBoletas(data);
       // 2. Firmar
       const xmlFirmado = await this.firmaService.firmarXml(
         xml,
         certificadoDigital,
-        passworDecript
+        passworDecript,
       );
-      console.log("XML firmado:", xmlFirmado);
-
-
       const fileName = this.obtenerNombreFile(
         data.company.ruc,
-        data.tipoDoc,
-        data.serie,
-        data.correlativo,
+        summaryInfo.fecha,
+        summaryInfo.correlativo,
       );
       // 3. Comprimir ZIP
-         
       const zipBuffer = await ZipUtil.createZip(fileName, xmlFirmado);
       // 4. Enviar a SUNAT
-      const cdr = await this.sunatService.sendBill(`${fileName}.zip`,
+      const ticket = await this.sunatService.sendSummary(
+        `${fileName}.zip`,
         zipBuffer,
       );
+
       return {
         status: true,
-        message: 'Comprobante procesado',
-        xml,
+        message: `Resumen diario enviado correctamente. Ticket: ${ticket}`,
+        ticket,
         xmlFirmado,
-        cdr,
       };
     } catch (error: any) {
       const create = ErrorMapper.mapError(error, {
         empresaId: respCert?.empresaId ?? 0,
-        tipo: data.tipoDoc,
-        serie: data.serie,
-        correlativo: data.correlativo,
+        tipo: 'RC',
+        serie: 'RC',
+        correlativo: summaryInfo?.correlativo?.toString(),
       });
-      await this.errorLogRepo.save(create)
+      await this.errorLogRepo.save(create);
       throw error;
     }
   }
   private obtenerNombreFile(
     ruc: string,
-    tipoComprobante: string,
-    serie: string,
-    correlativo: string,
+    fecReferencia: string,
+    correlativo: number,
   ) {
-    return `${ruc}-${tipoComprobante}-${serie}-${correlativo}`;
+    return `${ruc}-RC-${fecReferencia}-${correlativo}`;
   }
+
+  private parseResumenId = (resumenId: string) => {
+    const [, fecha, corr] = resumenId.split('-');
+    return { fecha, correlativo: +corr };
+  };
 }

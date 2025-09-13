@@ -6,11 +6,14 @@ import { FirmaService } from './infrastructure/sunat/firma/firma.service';
 import { SunatService } from './infrastructure/sunat/cliente/sunat.service';
 import { EmpresaRepositoryImpl } from './infrastructure/database/repository/empresa.repository.impl';
 import { ComprobanteController } from './infrastructure/controllers/comprobante.controller';
-import { CreateComprobanteUseCase } from './application/comprobante/CreateComprobanteUseCase';
 import { ErrorLogRepositoryImpl } from './infrastructure/database/repository/error-log.repository.impl';
 import { ErrorLogOrmEntity } from './infrastructure/database/entity/ErrorLogOrmEntity';
+import { ClienteOrmEntity } from './infrastructure/database/entity/ClienteOrmEntity';
+import { SerieOrmEntity } from './infrastructure/database/entity/SerieOrmEntity';
+import { ComprobanteRepositoryImpl } from './infrastructure/database/repository/comprobante.repository.impl';
+import { ComprobanteOrmEntity } from './infrastructure/database/entity/ComprobanteOrmEntity';
 @Module({
-  imports: [TypeOrmModule.forFeature([EmpresaOrmEntity, ErrorLogOrmEntity])],
+  imports: [TypeOrmModule.forFeature([EmpresaOrmEntity, ClienteOrmEntity, SerieOrmEntity, ErrorLogOrmEntity, ComprobanteOrmEntity])],
   controllers: [ComprobanteController],
   providers: [
     XmlBuilderService,
@@ -18,8 +21,8 @@ import { ErrorLogOrmEntity } from './infrastructure/database/entity/ErrorLogOrmE
     SunatService,
     EmpresaRepositoryImpl,
     ErrorLogRepositoryImpl,
-    CreateComprobanteUseCase,
+    ComprobanteRepositoryImpl
   ],
-  exports: [CreateComprobanteUseCase, EmpresaRepositoryImpl, ErrorLogRepositoryImpl],
+  exports: [EmpresaRepositoryImpl, ErrorLogRepositoryImpl, ComprobanteRepositoryImpl],
 })
 export class ComprobanteModule {}
