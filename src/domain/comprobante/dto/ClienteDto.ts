@@ -1,6 +1,6 @@
 import { Type } from "class-transformer";
 import { IsNotEmpty, IsOptional, IsString, ValidateNested } from "class-validator";
-import { AddressDto } from "./factura/AddressDto";
+import { AddressDto } from "./invoice/AddressDto";
 
 export class ClienteDto {
   @IsString()

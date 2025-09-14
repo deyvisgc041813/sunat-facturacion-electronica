@@ -90,9 +90,8 @@ CREATE TABLE comprobantes (
   comprobante_id INT AUTO_INCREMENT PRIMARY KEY,
   empresa_id INT NOT NULL,
   cliente_id INT NOT NULL,
-  tipo_comprobante VARCHAR(2) NOT NULL,
-  serie VARCHAR(4) NOT NULL,
-  numero INT NOT NULL,
+  serie_id INT NOT NULL,
+  numero_comprobante INT NOT NULL,
   fecha_emision DATETIME NOT NULL,
   moneda VARCHAR(3) DEFAULT 'PEN',
   total_gravado DECIMAL(12,2) DEFAULT 0,
@@ -106,8 +105,11 @@ CREATE TABLE comprobantes (
   hash_cpe VARCHAR(100),
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  payload_json json,
+  motivo_estado   VARCHAR(200),
   FOREIGN KEY (empresa_id) REFERENCES empresas(empresa_id),
   FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id),
+  FOREIGN KEY (serie_id) REFERENCES series(serie_id),
   UNIQUE (empresa_id, tipo_comprobante, serie, numero)
 );
 
@@ -117,26 +119,29 @@ CREATE TABLE comprobantes (
   comprobante_id INT AUTO_INCREMENT PRIMARY KEY,
   empresa_id INT NOT NULL,
   cliente_id INT NOT NULL,
-  serie_idclientes INT NOT NULL, -- relación directa con series
+  serie_id INT NOT NULL,                  -- relación con tabla series
   numero INT NOT NULL,
   fecha_emision DATETIME NOT NULL,
   moneda VARCHAR(3) DEFAULT 'PEN',
-  total_gravado DECIMAL(12,2) DEFAULT 0,
-  total_exonerado DECIMAL(12,2) DEFAULT 0,
-  total_inafecto DECIMAL(12,2) DEFAULT 0,
-  total_igv DECIMAL(12,2) DEFAULT 0,
-  total DECIMAL(12,2) NOT NULL,
+  mto_oper_gravadas DECIMAL(12,2) DEFAULT 0,
+  mto_oper_exoneradas DECIMAL(12,2) DEFAULT 0,
+  mto_oper_inafectas DECIMAL(12,2) DEFAULT 0,
+  mto_igv DECIMAL(12,2) DEFAULT 0,
+  mto_imp_venta DECIMAL(12,2) NOT NULL,   -- total del comprobante
   estado VARCHAR(20) DEFAULT 'PENDIENTE',
-  xml LONGTEXT NOT NULL,   -- XML firmado del comprobante completo
-  cdr LONGBLOB,            -- CDR (ZIP binario de SUNAT)
+  xml LONGTEXT,                           -- XML firmado (nullable al inicio)
+  cdr LONGBLOB,                           -- CDR de SUNAT
   hash_cpe VARCHAR(100),
+  payload_json JSON,                      -- opcional: payload original
   fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (empresa_id) REFERENCES empresas(empresa_id),
   FOREIGN KEY (cliente_id) REFERENCES clientes(cliente_id),
   FOREIGN KEY (serie_id) REFERENCES series(serie_id),
-  UNIQUE (empresa_id, tipo_comprobante, serie, numero)
+  UNIQUE (empresa_id, serie_id, numero)   -- garantiza unicidad
 );
+
+
 
 -- Tabla detalle de comprobantes
 CREATE TABLE comprobante_detalle (
@@ -382,23 +387,90 @@ INSERT INTO catalogo_detalle (catalogo_tipo_id, codigo, descripcion)
 SELECT catalogo_tipo_id, '1001', 'Venta de bienes afectos a IVAP' FROM catalogo_tipo WHERE codigo_catalogo='17';
 
 
+/*Procedure guardar comprobante y aumentar correlativo*/
+
+DROP PROCEDURE IF EXISTS sp_guardar_comprobante;
 
 
+DROP PROCEDURE IF EXISTS sp_guardar_comprobante;
 
 
+DELIMITER $$
+CREATE PROCEDURE sp_guardar_comprobante(
+  IN p_empresa_id INT,
+  IN p_tipo_comprobante VARCHAR(2),
+  IN p_serie VARCHAR(4),
+  IN p_fec_emision DATETIME,
+  IN p_moneda VARCHAR(3),
+  IN p_mto_oper_gravadas DECIMAL(12,2),
+  IN p_mto_oper_exoneradas DECIMAL(12,2),
+  IN p_mto_oper_inafectas DECIMAL(12,2),
+  IN p_mto_igv DECIMAL(12,2),
+  IN p_mto_imp_venta DECIMAL(12,2),
+  IN p_cliente_tipo_doc VARCHAR(2),
+  IN p_cliente_num_doc VARCHAR(20),
+  IN p_payload_json JSON
+)
+BEGIN
+  DECLARE v_numero INT;
+  DECLARE v_comprobante_id INT;
+  DECLARE v_serie_id INT;
+  DECLARE v_cliente_id INT;
 
+  -- 0. Buscar cliente_id en tabla clientes
+  SELECT cliente_id
+  INTO v_cliente_id
+  FROM clientes
+  WHERE numero_documento = p_cliente_num_doc
+    AND tipo_documento = p_cliente_tipo_doc
+  LIMIT 1;
 
+  -- Si no existe, lanzar error
+  IF v_cliente_id IS NULL THEN
+    SIGNAL SQLSTATE '45000' 
+      SET MESSAGE_TEXT = 'Cliente no registrado en la tabla clientes';
+  END IF;
 
+  -- 1. Obtener correlativo actual + 1 con bloqueo
+  SELECT serie_id, correlativo_actual + 1
+  INTO v_serie_id, v_numero
+  FROM series
+  WHERE empresa_id = p_empresa_id
+    AND tipo_comprobante = p_tipo_comprobante
+    AND serie = p_serie
+    
+  FOR UPDATE;
+	-- 1.1 Validar que exista
+	IF v_serie_id IS NULL THEN
+	  SIGNAL SQLSTATE '45000'
+		SET MESSAGE_TEXT = 'Serie no encontrada en la tabla series';
+	END IF;
+  -- 2. Insertar comprobante (estado siempre PENDIENTE)
+  INSERT INTO comprobantes (
+    empresa_id, cliente_id, serie_id, numero_comprobante, fecha_emision, moneda,
+    mto_oper_gravadas, mto_oper_exoneradas, mto_oper_inafectas, mto_igv, mto_imp_venta, estado,
+    payload_json, fecha_creacion, fecha_actualizacion
+  )
+  VALUES (
+    p_empresa_id, v_cliente_id, v_serie_id, v_numero, p_fec_emision, p_moneda,
+    p_mto_oper_gravadas, p_mto_oper_exoneradas, p_mto_oper_inafectas, p_mto_igv, p_mto_imp_venta, 'PENDIENTE',
+    p_payload_json, now(), now()
+  );
 
+  -- 3. Guardar el ID generado
+  SET v_comprobante_id = LAST_INSERT_ID();
 
+  -- 4. Actualizar correlativo de la serie
+  UPDATE series
+  SET correlativo_actual = v_numero
+  WHERE serie_id = v_serie_id;
 
+  -- 5. Devolver comprobante_id, numero, serie y tipo
+  SELECT v_comprobante_id AS comprobante_id,
+         v_numero AS numero_correlativo,
+         p_serie AS serie,
+         p_tipo_comprobante AS tipo_comprobante,
+         v_cliente_id AS cliente_id;
+END$$
 
-
-
-
-
-
-
-
-
-
+DELIMITER ;

@@ -1,6 +1,6 @@
 import { IsString, IsNotEmpty, IsOptional, Length, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { AddressDto } from './factura/AddressDto';
+import { AddressDto } from './invoice/AddressDto';
 
 
 export class CompanyDto {

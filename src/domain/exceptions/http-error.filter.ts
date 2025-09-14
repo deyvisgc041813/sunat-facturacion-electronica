@@ -31,7 +31,7 @@ export class HttpErrorFilter implements ExceptionFilter {
       // Otros errores genéricos
       message = exception.message;
     }
-    console.log(message)
+    //console.log(message)
     response.status(status).json({
       success: false,
       statusCode: status,

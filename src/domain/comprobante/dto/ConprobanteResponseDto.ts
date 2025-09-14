@@ -15,7 +15,9 @@ export class ComprobanteResponseDto {
     public totalInafecto: number,
     public totalIgv: number,
     public total: number,
-
+    // fechas auditoria
+    public fechaCreate: Date,
+    public fechaUpdate: Date,
     // Estado
     public estado: string,  // PENDIENTE, ACEPTADO, etc.
 
@@ -26,6 +28,7 @@ export class ComprobanteResponseDto {
 
     // Datos adicionales
     public hashCpe?: string,     
-    public payloadJson?: any     
+    public payloadJson?: any,
+
   ) {}
 }

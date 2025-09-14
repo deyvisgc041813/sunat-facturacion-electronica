@@ -4,13 +4,16 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  OneToMany,
+  UpdateDateColumn,
 } from 'typeorm';
 import { EmpresaOrmEntity } from './EmpresaOrmEntity';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { ClienteOrmEntity } from './ClienteOrmEntity';
 import { SerieOrmEntity } from './SerieOrmEntity';
+import { SunatLogOrmEntity } from './SunatLogOrmEntity';
 
-@Entity('comprobante')
+@Entity('comprobantes')
 export class ComprobanteOrmEntity {
   @PrimaryGeneratedColumn({ name: 'comprobante_id' })
   comprobanteId: number;
@@ -37,20 +40,50 @@ export class ComprobanteOrmEntity {
   @Column({ name: 'moneda', type: 'varchar', length: 3, nullable: true })
   moneda?: string;
 
-  @Column({ name: 'total_gravado', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  @Column({
+    name: 'mto_oper_gravadas',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
   totalGravado?: number;
 
-  @Column({ name: 'total_exonerado', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  @Column({
+    name: 'mto_oper_exoneradas',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
   totalExonerado?: number;
 
-  @Column({ name: 'total_inafecto', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  @Column({
+    name: 'mto_oper_inafectas',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
   totalInafecto?: number;
 
-  @Column({ name: 'total_igv', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  @Column({
+    name: 'mto_igv',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
   totalIgv?: number;
 
-  @Column({ name: 'total', type: 'decimal', precision: 12, scale: 2, nullable: true })
-  total?: number;
+  @Column({
+    name: 'mto_imp_venta',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  mtoImpVenta?: number;
 
   @Column({
     name: 'estado',
@@ -62,26 +95,55 @@ export class ComprobanteOrmEntity {
 
   @Column({ name: 'xml', type: 'longtext', nullable: true })
   xmlFirmado?: string;
-
-  @Column({ name: 'cdr', type: 'longblob', nullable: true })
-  cdr?: Buffer;
+  @Column({ name: 'cdr', type: 'longtext', nullable: true })
+  cdr?: string | null;
 
   @Column({ name: 'hash_cpe', type: 'varchar', length: 100 })
   hashCpe: string;
 
-  @Column({ name: 'payload_json', type: 'longtext', nullable: true })    // aquí se guarda todo el JSON del comprobante (incluye detalles, leyendas, etc.)
+  @Column({ name: 'payload_json', type: 'longtext', nullable: true }) // aquí se guarda todo el JSON del comprobante (incluye detalles, leyendas, etc.)
   payloadJson?: string;
-  @Column({ name: 'motivo_estado', type: 'varchar', length: 200, nullable: true })
+  @Column({ name: 'motivo_estado', type: 'longtext', nullable: true })
   motivoEstado?: string;
 
+  @Column({
+    name: 'fecha_creacion',
+    type: 'datetime',
+    nullable: false,
+  })
+  fechaCreate: Date;
+  // @UpdateDateColumn({
+  //   name: 'fecha_actualizacion',
+  //   type: 'datetime',
+  //   default: () => 'CURRENT_TIMESTAMP',
+  //   onUpdate: 'CURRENT_TIMESTAMP',
+  // })
+  @Column({
+    name: 'fecha_actualizacion',
+    default: () => 'CURRENT_TIMESTAMP',
+    type: 'datetime',
+    nullable: false,
+  })
+  fechaUpdate: Date;
   // Relación con Empresa
-  @ManyToOne(() => EmpresaOrmEntity, empresa => empresa.comprobantes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.comprobantes, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'empresa_id' })
   empresa: EmpresaOrmEntity;
   // Relación con Cliente
-  @ManyToOne(() => ClienteOrmEntity, cliente => cliente.comprobantes, { onDelete: 'CASCADE' })
+  @ManyToOne(() => ClienteOrmEntity, (cliente) => cliente.comprobantes, {
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'cliente_id' })
   cliente: ClienteOrmEntity;
-  @ManyToOne(() => SerieOrmEntity, serie  => serie.comprobantes, {onDelete: 'CASCADE'})
-  serie: SerieOrmEntity
+  @ManyToOne(() => SerieOrmEntity, (serie) => serie.comprobantes, {
+    onDelete: 'CASCADE',
+  })
+  serie: SerieOrmEntity;
+  @OneToMany(
+    () => SunatLogOrmEntity,
+    (sunatLog: SunatLogOrmEntity) => sunatLog.comprobante,
+  )
+  sunatLogs: SunatLogOrmEntity[];
 }

@@ -11,14 +11,10 @@ import {
 import type { Response } from 'express'; // 
 import { XmlBuilderService } from '../sunat/xml/xml-builder.service';
 import { FirmaService } from '../sunat/firma/firma.service';
-import { SunatService } from '../sunat/cliente/sunat.service';
 import { EmpresaRepositoryImpl } from '../database/repository/empresa.repository.impl';
-import { CreateFacturaUseCase } from 'src/application/comprobante/CreateFacturaUseCase';
 import { ErrorLogRepositoryImpl } from '../database/repository/error-log.repository.impl';
 import { generarCertificadoPrueba } from 'src/certificado/generarCertificadoPrueba';
-import { CreateFacturaDto } from 'src/domain/comprobante/dto/factura/CreateFacturaDto';
 import { SummaryDocumentDto } from 'src/domain/comprobante/dto/resumen/SummaryDocumentDto';
-import { CreateResumenUseCase } from 'src/application/comprobante/CreateResumenUseCase';
 import { GetAllComprobantesUseCase } from 'src/application/comprobante/GetAllComprobantesUseCase';
 import { ComprobanteRepositoryImpl } from '../database/repository/comprobante.repository.impl';
 import { GetByIdComprobantesUseCase } from 'src/application/comprobante/GetByIdComprobantesUseCase';
@@ -29,40 +25,39 @@ import { ExportXmlFirmadoComprobanteUseCase } from 'src/application/comprobante/
 
 import { ExportZipComprobanteUseCase } from 'src/application/comprobante/ExportZipComprobanteUseCase';
 import { ExportCdrZipComprobanteUseCase } from 'src/application/comprobante/ExportCdrZipComprobanteUseCase';
+import { SunatService } from '../sunat/send/sunat.service';
+import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
+import { CreateInvoiceUseCase } from 'src/application/comprobante/CreateInvoiceUseCase';
 
-@Controller('empresas/:empresaId/documents')
+@Controller('documents')
 export class ComprobanteController {
   constructor(
-    private readonly xmlBuilder: XmlBuilderService,
-    private readonly firmaService: FirmaService,
-    private readonly sunatService: SunatService,
-    private readonly empresaRepo: EmpresaRepositoryImpl,
-    private readonly errorLogRepo: ErrorLogRepositoryImpl,
+    // private readonly xmlBuilder: XmlBuilderService,
+    // private readonly firmaService: FirmaService,
+    // private readonly sunatService: SunatService,
+    // private readonly empresaRepo: EmpresaRepositoryImpl,
+    // private readonly errorLogRepo: ErrorLogRepositoryImpl,
     private readonly comprobanteRepository: ComprobanteRepositoryImpl,
+    private readonly createInvoiceUseCase: CreateInvoiceUseCase, // 👈 ya no usas new
+
   ) {}
 
   @Post('/invoices')
-  async createInvoice(@Body() body: CreateFacturaDto) {
-    const useCase = new CreateFacturaUseCase(
-      this.xmlBuilder,
-      this.firmaService,
-      this.sunatService,
-      this.empresaRepo,
-      this.errorLogRepo,
-    );
-    return useCase.execute(body);
+  async createInvoice(@Body() body: CreateInvoiceDto) {
+
+    return this.createInvoiceUseCase.execute(body);
   }
 
   @Post('/daily-summaries')
   async create(@Body() body: SummaryDocumentDto) {
-    const useCase = new CreateResumenUseCase(
-      this.xmlBuilder,
-      this.firmaService,
-      this.sunatService,
-      this.empresaRepo,
-      this.errorLogRepo,
-    );
-    return useCase.execute(body);
+    // const useCase = new CreateResumenUseCase(
+    //   this.xmlBuilder,
+    //   this.firmaService,
+    //   this.sunatService,
+    //   this.empresaRepo,
+    //   this.errorLogRepo,
+    // );
+    // return useCase.execute(body);
   }
   @Get('/generarcertificado')
   async generarCerticado() {

@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { ClienteRepository } from "src/domain/cliente/Cliente.repository";
 import { ClienteResponseDto } from "src/domain/cliente/dto/ClienteResponseDto";
 import { UpdateClienteDto } from "src/domain/cliente/dto/UpdateClienteDto";
-import { CatalogoEnum } from "src/util/CatalogoEnum";
+import { TipoCatalogoEnum } from "src/util/catalogo.enum";
 import { validarDatosSegunTipoDocumento } from "src/util/Helpers";
 import { CatalogoRepositoryImpl } from "src/infrastructure/database/repository/catalogo.repository.impl";
 
@@ -13,7 +13,7 @@ export class UpdateClienteUseCase {
     const cliente = await this.clienteRepo.findById(clienteId);
     if (!cliente) throw new NotFoundException('Cliente no encontrado');
    // 1. Validar tipo de documento contra catálogo SUNAT
-    const existCatalogo = await this.catalogoRepo.obtenerDetallePorCatalogo(CatalogoEnum.DOCUMENTO_IDENTIDAD, cliente.tipoDocumento);
+    const existCatalogo = await this.catalogoRepo.obtenerDetallePorCatalogo(TipoCatalogoEnum.DOCUMENTO_IDENTIDAD, cliente.tipoDocumento);
     if (!existCatalogo) {
       throw new BadRequestException(
         `El tipo documento ${cliente.tipoDocumento} no se encuentra en los catálogos de SUNAT`,

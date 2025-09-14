@@ -1,14 +1,17 @@
-import { SerieResponseDto } from 'src/domain/series/dto/SerieResponseDto';
+
 import { XmlBuilderService } from 'src/infrastructure/sunat/xml/xml-builder.service';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
-import { SunatService } from 'src/infrastructure/sunat/cliente/sunat.service';
 import { ZipUtil } from 'src/util/ZipUtil';
 import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
 import { ErrorMapper } from 'src/infrastructure/mapper/ErrorMapper';
 import { SummaryDocumentDto } from 'src/domain/comprobante/dto/resumen/SummaryDocumentDto';
-import { formatDateToCompact } from 'src/util/Helpers';
+import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
+import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
+import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
+import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
+import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
 
 export class CreateResumenUseCase {
   constructor(
@@ -17,6 +20,7 @@ export class CreateResumenUseCase {
     private readonly sunatService: SunatService,
     private readonly empresaRepo: EmpresaRepositoryImpl,
     private readonly errorLogRepo: ErrorLogRepositoryImpl,
+    protected readonly sunatLogRepo: SunatLogRepositoryImpl,
   ) {}
 
   async execute(data: SummaryDocumentDto): Promise<{
@@ -66,13 +70,19 @@ export class CreateResumenUseCase {
         xmlFirmado,
       };
     } catch (error: any) {
-      const create = ErrorMapper.mapError(error, {
+      const rspError = ErrorMapper.mapError(error, {
         empresaId: respCert?.empresaId ?? 0,
         tipo: 'RC',
         serie: 'RC',
-        correlativo: summaryInfo?.correlativo?.toString(),
+        correlativo: summaryInfo?.correlativo,
       });
-      await this.errorLogRepo.save(create);
+      if(rspError.tipoError === OrigenErrorEnum.SUNAT) {
+        // inserta errores de sunat
+        await this.sunatLogRepo.save(rspError.create as CreateSunatLogDto)
+      } else {
+        // inserta errores del sistema
+        await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
+      }
       throw error;
     }
   }

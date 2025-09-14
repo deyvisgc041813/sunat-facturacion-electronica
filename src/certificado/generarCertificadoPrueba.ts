@@ -45,5 +45,3 @@ export function generarCertificadoPrueba() {
   console.log('✅ Certificado de prueba generado: certificadoSunat.pfx');
   console.log('   Clave: 123456');
 }
-
-generarCertificadoPrueba();

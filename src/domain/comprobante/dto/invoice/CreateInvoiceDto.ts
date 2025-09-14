@@ -7,6 +7,8 @@ import {
   IsISO8601,
   ValidateNested,
   IsArray,
+  IsOptional,
+  Min,
 } from 'class-validator';
 import { FormaPagoDto } from './FormaPagoDto';
 import { ClienteDto } from '../ClienteDto';
@@ -14,7 +16,7 @@ import { CompanyDto } from '../CompanyDto';
 import { DetailDto } from './DetailDto';
 import { LegendDto } from './LegendDto';
 
-export class CreateFacturaDto {
+export class CreateInvoiceDto {
   @IsString({ message: 'La versión UBL debe ser un texto' })
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   ublVersion: string;
@@ -23,17 +25,16 @@ export class CreateFacturaDto {
   @IsNotEmpty({ message: 'El tipo de operación es obligatorio' })
   tipoOperacion: string;
 
-  @IsString({ message: 'El tipo de documento debe ser un texto' })
-  @IsNotEmpty({ message: 'El tipo de documento es obligatorio' })
-  tipoDoc: string;
+  @IsString({ message: 'El tipo comprobante debe ser un texto' })
+  @IsNotEmpty({ message: 'El tipo comprobante es obligatorio' })
+  tipoComprobante: string;
 
   @IsString({ message: 'La serie debe ser un texto' })
   @IsNotEmpty({ message: 'La serie es obligatoria' })
   serie: string;
-
-  @IsString({ message: 'El correlativo debe ser un texto' })
+  @IsNumber({}, { message: 'El correlativo debe ser numérico' })
   @IsNotEmpty({ message: 'El correlativo es obligatorio' })
-  correlativo: string;
+  correlativo: number;
 
   @IsISO8601({}, { message: 'La fecha de emisión debe tener formato ISO8601 (YYYY-MM-DD)' })
   fechaEmision: string;
@@ -55,16 +56,19 @@ export class CreateFacturaDto {
   company: CompanyDto;
 
   @IsNumber({}, { message: 'El monto de operaciones gravadas debe ser numérico' })
+  @Min(0, { message: 'El monto de operaciones gravadas no puede ser negativo' })
   mtoOperGravadas: number;
+
+  @IsNumber({}, { message: 'El monto de operaciones exoneradas debe ser numérico' })
+  @Min(0, { message: 'El monto de operaciones exoneradas no puede ser negativo' })
+  mtoOperExoneradas: number;
+
+  @IsNumber({}, { message: 'El monto de operaciones inafectas debe ser numérico' })
+  @Min(0, { message: 'El monto de operaciones inafectas no puede ser negativo' })
+  mtoOperInafectas: number;
 
   @IsNumber({}, { message: 'El monto de IGV debe ser numérico' })
   mtoIGV: number;
-
-  @IsNumber({}, { message: 'El valor de venta debe ser numérico' })
-  valorVenta: number;
-
-  @IsNumber({}, { message: 'El total de impuestos debe ser numérico' })
-  totalImpuestos: number;
 
   @IsNumber({}, { message: 'El subtotal debe ser numérico' })
   subTotal: number;

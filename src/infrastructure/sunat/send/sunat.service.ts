@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
+import AdmZip from 'adm-zip';
+import { parseStringPromise } from 'xml2js';
+import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
+import { mapResponseCodeToEstado } from 'src/util/Helpers';
 
 @Injectable()
 export class SunatService {
@@ -19,7 +23,7 @@ export class SunatService {
   }
 
   /** Enviar comprobante individual (Factura/Boleta/NC/ND) */
-  async sendBill(fileName: string, zipBuffer: Buffer) {
+  async sendBill(fileName: string, zipBuffer: Buffer): Promise<IResponseSunat> {
     const envelope = `
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                       xmlns:ser="http://service.sunat.gob.pe">
@@ -36,8 +40,8 @@ export class SunatService {
       const response = await axios.post(this.url, envelope, {
         headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
         auth: {
-          username: process.env.SUNAT_USER!,
-          password: process.env.SUNAT_PASSWORD!,
+          username: this.username,
+          password: this.password,
         },
         validateStatus: () => true, // 👈 evita que Axios lance error en 500
       });
@@ -62,7 +66,6 @@ export class SunatService {
         // Aquí lo guardas en DB o lo retornas
         throw new Error(JSON.stringify(error));
       }
-
       // Si no hay Fault, buscar applicationResponse
       const match = response.data.match(
         /<applicationResponse>([\s\S]*?)<\/applicationResponse>/,
@@ -70,8 +73,10 @@ export class SunatService {
       if (!match) {
         throw new Error('SUNAT no devolvió CDR');
       }
-
-      return Buffer.from(match[1], 'base64'); // ZIP del CDR
+      console.log(this.username)
+      const cdrZip = Buffer.from(match[1], 'base64');
+      const rpta = await this.extraerEstadoCdr(cdrZip);
+      return rpta;
     } catch (err) {
       console.error('Error SUNAT:', err.message || err);
       throw err;
@@ -97,8 +102,8 @@ export class SunatService {
         headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
         auth: { username: this.username, password: this.password },
       });
-      
-            // Buscar si hay Fault en el response
+
+      // Buscar si hay Fault en el response
       const faultMatch = response.data.match(
         /<soap-env:Fault[\s\S]*?<\/soap-env:Fault>/,
       );
@@ -152,4 +157,44 @@ export class SunatService {
     return Buffer.from(match[1], 'base64');
   }
 
+  async extraerEstadoCdr(cdrZip: any): Promise<IResponseSunat> {
+    // Descomprimir el ZIP y leer el estado del CDR
+    const zip = new AdmZip(cdrZip);
+    const entries = zip.getEntries();
+    const xmlEntry = entries.find((e) => e.entryName.endsWith('.xml'));
+    if (!xmlEntry) throw new Error('El CDR no contiene XML');
+    const cdrXml = xmlEntry.getData().toString('utf-8');
+    const cdrJson = await parseStringPromise(cdrXml, { explicitArray: false });
+    const responseCode =
+      cdrJson['ar:ApplicationResponse']['cac:DocumentResponse']['cac:Response'][
+        'cbc:ResponseCode'
+      ];
+    const description =
+      cdrJson['ar:ApplicationResponse']['cac:DocumentResponse']['cac:Response'][
+        'cbc:Description'
+      ];
+    const notes =
+      cdrJson['ar:ApplicationResponse']['cac:DocumentResponse']['cac:Response'][
+        'cbc:Note'
+      ];
+    // Estado SUNAT
+    const estadoResult = mapResponseCodeToEstado(
+      responseCode,
+      description,
+      notes,
+    );
+
+    const rpta: IResponseSunat = {
+      estadoSunat: estadoResult.estado,
+      codigoResponse: estadoResult.codigo,
+      mensaje: estadoResult.mensaje,
+      observaciones: estadoResult.observaciones   ? Array.isArray(estadoResult.observaciones)
+          ? estadoResult.observaciones
+          : [estadoResult.observaciones]
+        : [],
+      status: true,
+      cdr: cdrZip,
+    };
+    return rpta;
+  }
 }

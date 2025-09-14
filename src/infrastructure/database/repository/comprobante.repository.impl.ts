@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { ComprobanteOrmEntity } from '../entity/ComprobanteOrmEntity';
-import { CreateComprobanteDto } from 'src/domain/comprobante/dto/CreateComprobanteDto';
+
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { ComprobanteMapper } from 'src/infrastructure/mapper/comprobante.maper';
 import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
@@ -11,24 +11,48 @@ import {
   ConprobanteRepository,
 } from 'src/domain/comprobante/comprobante.repository';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import { DataSource } from 'typeorm';
+import { ICreateComprobante } from 'src/domain/comprobante/interface/create.interface';
+import { IResponsePs } from 'src/domain/comprobante/interface/response.ps.interface';
 
 @Injectable()
 export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   constructor(
     @InjectRepository(ComprobanteOrmEntity)
     private readonly repo: Repository<ComprobanteOrmEntity>,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
-
   async save(
-    comprobante: CreateComprobanteDto,
-  ): Promise<{ status: boolean; message: string; comprobanteId?: number }> {
-    const resp = await this.repo.save(
-      ComprobanteMapper.dtoToOrmCreate(comprobante),
+    dto: ICreateComprobante,
+    payloadJson: any,
+  ): Promise<{ status: boolean; message: string; response?: IResponsePs }> {
+    const [rows] = await this.dataSource.query(
+      `CALL sp_guardar_comprobante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        dto.empresaId,
+        dto.tipoComprobante,
+        dto.serie,
+        dto.fechaEmision,
+        dto.moneda,
+        dto.totalGravado,
+        dto.totalExonerado,
+        dto.totalInafecto,
+        dto.totalIgv,
+        dto.mtoImpVenta,
+        dto.tipoDocumento,
+        dto.numeroDocumento,
+        JSON.stringify(payloadJson),
+      ],
     );
+    const response: IResponsePs = {
+      correlativo: rows[0].numero_correlativo,
+      comprobanteId: rows[0].comprobante_id,
+      clienteId: rows[0].cliente_id,
+    };
     return {
       status: true,
       message: 'Comprobante registrado correctamente',
-      comprobanteId: ComprobanteMapper.toDomain(resp).comprobanteId,
+      response,
     };
   }
 
@@ -100,6 +124,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     const cpe = await this.repo.findOne({
       where: { comprobanteId, empresaId },
     });
+
     if (!cpe?.cdr) {
       throw new NotFoundException(
         `No se encontró el archivo cdr del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
@@ -109,9 +134,10 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     return {
       fileName: `R-${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.zip`,
       mimeType: 'application/zip',
-      content: cpe.cdr,
+      content: Buffer.from(cpe.cdr, 'base64'), // 👈 convertir de string Base64 a Buffer
     };
   }
+
   async getHashCpe(
     comprobanteId: number,
     empresaId: number,
@@ -132,10 +158,15 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     empresaId: number,
     update: IUpdateComprobante,
   ): Promise<{ status: boolean; message: string }> {
-    await this.repo.update({ comprobanteId, empresaId }, ComprobanteMapper.dtoToOrmUpdate(update));
+    await this.repo.update(
+      { comprobanteId, empresaId },
+      ComprobanteMapper.dtoToOrmUpdate(update),
+    );
     return { status: true, message: 'Comprobante actualizado correctamente' };
   }
-  async findByEstado(estado: EstadoEnumComprobante): Promise<ComprobanteResponseDto[]> {
+  async findByEstado(
+    estado: EstadoEnumComprobante,
+  ): Promise<ComprobanteResponseDto[]> {
     const cpes = await this.repo.find({ where: { estado } });
     return cpes.map((c) => ComprobanteMapper.toDomain(c));
   }
@@ -144,7 +175,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     fechaInicio: Date,
     fechaFin: Date,
   ): Promise<ComprobanteResponseDto[]> {
-     const cpes = await this.repo.find({
+    const cpes = await this.repo.find({
       where: {
         empresaId,
         fechaEmision: Between(fechaInicio, fechaFin),
@@ -152,14 +183,14 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     });
     return cpes.map((c) => ComprobanteMapper.toDomain(c));
   }
- async anularComprobante(
+  async anularComprobante(
     empresaId: number,
     id: number,
     motivo: string,
   ): Promise<{ status: boolean; message: string }> {
-        await this.repo.update(
+    await this.repo.update(
       { comprobanteId: id, empresaId },
-      { estado: EstadoEnumComprobante.ANULADO, motivoEstado: motivo }
+      { estado: EstadoEnumComprobante.ANULADO, motivoEstado: motivo },
     );
     return { status: true, message: 'Comprobante anulado correctamente' };
   }

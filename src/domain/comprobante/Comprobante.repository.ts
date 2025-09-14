@@ -1,7 +1,8 @@
 import { EstadoEnumComprobante } from "src/util/estado.enum";
 import { ComprobanteResponseDto } from "./dto/ConprobanteResponseDto";
-import { CreateComprobanteDto } from "./dto/CreateComprobanteDto";
 import { IUpdateComprobante } from "./interface/update.interface";
+import { ICreateComprobante } from "./interface/create.interface";
+import { IResponsePs } from "./interface/response.ps.interface";
 
 export interface ArchivoDescargable {
   fileName: string;   // Nombre sugerido del archivo (ej: 20600887735-01-F001-123.xml)
@@ -13,10 +14,10 @@ export interface ConprobanteRepository {
   /**
    * Crea un nuevo comprobante en estado PENDIENTE.
    */
-  save(data: CreateComprobanteDto): Promise<{
+  save(data: ICreateComprobante, payloadJson: any): Promise<{
     status: boolean;
     message: string;
-    comprobanteId?: number;
+    response?: IResponsePs 
   }>;
 
   /**
