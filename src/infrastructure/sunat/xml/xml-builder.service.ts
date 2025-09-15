@@ -4,6 +4,7 @@ import { SummaryDocumentDto } from 'src/domain/comprobante/dto/resumen/SummaryDo
 import {
   MAP_TIPO_AFECTACION_TRIBUTO,
   MAP_TRIBUTOS,
+  TIPO_AFECTACION_EXONERADAS,
   TIPO_AFECTACION_GRATUITAS,
   TIPO_AFECTACION_GRAVADAS,
 } from 'src/util/catalogo.enum';
@@ -40,7 +41,6 @@ export class XmlBuilderService {
       .txt(dto.fechaEmision.split('T')[0])
       .up()
       .ele('cbc:IssueTime')
-
       //  Esto elimina el offset "-05:00" y deja solo HH:mm:ss
       .txt(dto.fechaEmision.split('T')[1]?.substring(0, 8) || '00:00:00')
       .up()
@@ -86,7 +86,7 @@ export class XmlBuilderService {
       root,
       totalesPorTributo,
       dto.tipoMoneda,
-      dto.mtoIGV,
+      dto.mtoIGV
     );
     // Totales monetarios
     const mtoOperacion =
@@ -141,7 +141,7 @@ export class XmlBuilderService {
           .txt(totalLinea.toFixed(2))
           .up();
 
-        // 👉 Subtotal IGV
+        // // Genera el nodo TaxSubtotal con IGV (código 1000) solo para líneas con afectación gravada
         if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
           // Operacion grabadas
           this.agregarDetalleSubtotalIcbper(
@@ -154,16 +154,17 @@ export class XmlBuilderService {
             MAP_TRIBUTOS.IGV,
           );
         } else {
-          //  Agrega el tributo IGV requerido por SUNAT en operaciones exoneradas o inafectas
-          //  (SUNAT exige siempre un TaxSubtotal con IGV, incluso si la línea solo tiene ICBPER)
+          // Agrega el tributo IGV requerido por SUNAT en operaciones exoneradas o inafectas
+          // (SUNAT exige siempre un TaxSubtotal con IGV, incluso si la línea solo tiene ICBPER)
+          const mapTributo = TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv) ? MAP_TRIBUTOS.EXO : MAP_TRIBUTOS.INA
           this.agregarDetalleSubtotalIcbper(
             taxTotalLine,
-            0,
+            d.mtoBaseIgv,
             0,
             0,
             String(d.tipAfeIgv),
             dto.tipoMoneda,
-            MAP_TRIBUTOS.IGV,
+            mapTributo,
           );
         }
         //// Agrega el TaxSubtotal correspondiente al ICBPER (impuesto por bolsa plástica),
@@ -528,37 +529,6 @@ export class XmlBuilderService {
       }
     }
   }
-
-  //   private addTotalesImpuestos(
-  //   root: any,
-  //   totalesPorTributo: any,
-  //   tipoMoneda: string,
-  //   mtoIgv: any,
-  // ) {
-  //   const taxTotal = root.ele('cac:TaxTotal');
-  //   taxTotal
-  //     .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
-  //     .txt(mtoIgv.toFixed(2))
-  //     .up();
-
-  //   for (const key in totalesPorTributo) {
-  //     const { taxable, tax, info } = totalesPorTributo[key];
-  //     const taxSub = taxTotal.ele('cac:TaxSubtotal');
-  //     taxSub
-  //       .ele('cbc:TaxableAmount', { currencyID: tipoMoneda })
-  //       .txt(taxable.toFixed(2))
-  //       .up()
-  //       .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
-  //       .txt(tax.toFixed(2))
-  //       .up();
-  //     const taxCat = taxSub.ele('cac:TaxCategory');
-  //     const taxScheme = taxCat.ele('cac:TaxScheme');
-  //     taxScheme.ele('cbc:ID').txt(info.id).up();
-  //     taxScheme.ele('cbc:Name').txt(info.name).up();
-  //     taxScheme.ele('cbc:TaxTypeCode').txt(info.taxTypeCode).up();
-  //   }
-  // }
-
   private addTotalesImpuestos(
     root: any,
     totalesPorTributo: any,
@@ -584,9 +554,7 @@ export class XmlBuilderService {
     });
 
     // Ahora pintamos los TaxSubtotal en ese orden fijo
-    console.log(subtotales)
     for (const { taxable, tax, info } of subtotales) {
-      console.log("taxable ", taxable)
       const taxSub = taxTotal.ele('cac:TaxSubtotal');
       taxSub
         .ele('cbc:TaxableAmount', { currencyID: tipoMoneda })
@@ -597,10 +565,13 @@ export class XmlBuilderService {
         .up();
 
       const taxCat = taxSub.ele('cac:TaxCategory');
+      taxCat.ele('cbc:Percent').txt(mtoIgv.toFixed(2)).up();
+      taxCat.ele('cbc:TaxExemptionReasonCode').txt("20").up();
       const taxScheme = taxCat.ele('cac:TaxScheme');
       taxScheme.ele('cbc:ID').txt(info.id).up();
       taxScheme.ele('cbc:Name').txt(info.name).up();
       taxScheme.ele('cbc:TaxTypeCode').txt(info.taxTypeCode).up();
+      
     }
   }
   private agregarDetalleSubtotalIcbper(
@@ -618,6 +589,7 @@ export class XmlBuilderService {
       .ele('cbc:TaxableAmount', { currencyID: tipoMoneda })
       .txt(taxableAmount.toFixed(2))
       .up();
+
     sub
       .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
       .txt(taxAmount.toFixed(2))

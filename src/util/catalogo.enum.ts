@@ -116,5 +116,6 @@ export const MAP_TIPO_AFECTACION_TRIBUTO: Record<number, { id: string; name: str
 export const MAP_TRIBUTOS: Record<string, { id: string; name: string; taxTypeCode: string }> = {
   IGV: { id: '1000', name: 'IGV', taxTypeCode: 'VAT' },
   ICBPER: { id: '7152', name: 'ICBPER', taxTypeCode: 'OTH' },
-  // puedes agregar ISC u otros si lo necesitas
+  EXO: { id: '9997', name: 'EXO', taxTypeCode: 'VAT' },
+  INA: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }
 };
