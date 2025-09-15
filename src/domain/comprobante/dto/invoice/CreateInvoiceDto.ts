@@ -1,4 +1,3 @@
-
 import { Type } from 'class-transformer';
 import {
   IsString,
@@ -36,7 +35,10 @@ export class CreateInvoiceDto {
   @IsNotEmpty({ message: 'El correlativo es obligatorio' })
   correlativo: number;
 
-  @IsISO8601({}, { message: 'La fecha de emisión debe tener formato ISO8601 (YYYY-MM-DD)' })
+  @IsISO8601(
+    {},
+    { message: 'La fecha de emisión debe tener formato ISO8601 (YYYY-MM-DD)' },
+  )
   fechaEmision: string;
 
   @ValidateNested({ message: 'Los datos de forma de pago no son válidos' })
@@ -55,16 +57,29 @@ export class CreateInvoiceDto {
   @Type(() => CompanyDto)
   company: CompanyDto;
 
-  @IsNumber({}, { message: 'El monto de operaciones gravadas debe ser numérico' })
+  @IsNumber(
+    {},
+    { message: 'El monto de operaciones gravadas debe ser numérico' },
+  )
   @Min(0, { message: 'El monto de operaciones gravadas no puede ser negativo' })
   mtoOperGravadas: number;
 
-  @IsNumber({}, { message: 'El monto de operaciones exoneradas debe ser numérico' })
-  @Min(0, { message: 'El monto de operaciones exoneradas no puede ser negativo' })
+  @IsNumber(
+    {},
+    { message: 'El monto de operaciones exoneradas debe ser numérico' },
+  )
+  @Min(0, {
+    message: 'El monto de operaciones exoneradas no puede ser negativo',
+  })
   mtoOperExoneradas: number;
 
-  @IsNumber({}, { message: 'El monto de operaciones inafectas debe ser numérico' })
-  @Min(0, { message: 'El monto de operaciones inafectas no puede ser negativo' })
+  @IsNumber(
+    {},
+    { message: 'El monto de operaciones inafectas debe ser numérico' },
+  )
+  @Min(0, {
+    message: 'El monto de operaciones inafectas no puede ser negativo',
+  })
   mtoOperInafectas: number;
 
   @IsNumber({}, { message: 'El monto de IGV debe ser numérico' })
@@ -75,12 +90,14 @@ export class CreateInvoiceDto {
 
   @IsNumber({}, { message: 'El monto de importe de venta debe ser numérico' })
   mtoImpVenta: number;
+  @IsOptional()
+  @IsNumber({}, { message: 'El monto de ICBPER debe ser numérico' })
+  icbper: number;
 
   @IsArray({ message: 'Los detalles deben ser un arreglo' })
   @ValidateNested({ each: true, message: 'Los detalles no son válidos' })
   @Type(() => DetailDto)
   details: DetailDto[];
-
   @IsArray({ message: 'Las leyendas deben ser un arreglo' })
   @ValidateNested({ each: true, message: 'Las leyendas no son válidas' })
   @Type(() => LegendDto)

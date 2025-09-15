@@ -3,6 +3,8 @@ import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoi
 import { SummaryDocumentDto } from 'src/domain/comprobante/dto/resumen/SummaryDocumentDto';
 import {
   MAP_TIPO_AFECTACION_TRIBUTO,
+  MAP_TRIBUTOS,
+  TIPO_AFECTACION_GRATUITAS,
   TIPO_AFECTACION_GRAVADAS,
 } from 'src/util/catalogo.enum';
 import { create } from 'xmlbuilder2';
@@ -25,30 +27,15 @@ export class XmlBuilderService {
         'urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2',
     });
 
-    // 👉 Bloque UBLExtensions (necesario para la firma digital SUNAT)
-    root
-      .ele('ext:UBLExtensions')
-      .ele('ext:UBLExtension')
-      .ele('ext:ExtensionContent')
-      .up()
-      .up()
-      .up();
-
+    // Bloque UBLExtensions (necesario para la firma digital SUNAT)
+    this.addUBLExtensions(root);
     // Datos básicos
-
-    root
-      .ele('cbc:UBLVersionID')
-      .txt(dto.ublVersion)
-      .up()
-      .ele('cbc:CustomizationID')
-      .txt('2.0')
-      .up()
-      // .ele('cbc:ProfileID')
-      // .txt(dto.tipoOperacion)
-      // .up() // Operación: Venta interna
-      .ele('cbc:ID')
-      .txt(`${dto.serie}-${dto.correlativo}`)
-      .up()
+    this.addDatosBasicos(
+      root,
+      dto.ublVersion,
+      '2.0',
+      `${dto.serie}-${dto.correlativo}`,
+    )
       .ele('cbc:IssueDate')
       .txt(dto.fechaEmision.split('T')[0])
       .up()
@@ -69,89 +56,13 @@ export class XmlBuilderService {
     });
     root.ele('cbc:DocumentCurrencyCode').txt(dto.tipoMoneda).up();
     // DueDate => esto se agrega cuando se hace una factura por tipo de pago credito: aqui va la fecha de vencimiento de ese pago.( hacer luego)
-
     // 3. Firma (cac:Signature) inmediatamente después de DocumentCurrencyCode
-    const signature = root.ele('cac:Signature');
-    signature.ele('cbc:ID').txt('signatureFACTURALOPERU').up();
-    signature.ele('cbc:Note').txt('FACTURALO').up();
-    const signatory = signature.ele('cac:SignatoryParty');
-    signatory
-      .ele('cac:PartyIdentification')
-      .ele('cbc:ID')
-      .txt(dto.company.ruc)
-      .up()
-      .up();
-    signatory
-      .ele('cac:PartyName')
-      .ele('cbc:Name')
-      .dat(dto.company.razonSocial)
-      .up();
-    const digitalAttachment = signature.ele('cac:DigitalSignatureAttachment');
-    digitalAttachment
-      .ele('cac:ExternalReference')
-      .ele('cbc:URI')
-      .txt('#signatureFACTURALOPERU');
+    this.appendSignature(root, dto);
     // emisor
-    const supplier = root.ele('cac:AccountingSupplierParty').ele('cac:Party');
-    supplier
-      .ele('cac:PartyIdentification')
-      .ele('cbc:ID', { schemeID: dto.company.tipoDoc })
-      .txt(dto.company.ruc)
-      .up()
-      .up();
-    supplier
-      .ele('cac:PartyName')
-      .ele('cbc:Name')
-      .dat(dto.company.nombreComercial ?? '')
-      .up();
-
-    const supLegal = supplier.ele('cac:PartyLegalEntity');
-    supLegal.ele('cbc:RegistrationName').dat(dto.company.razonSocial).up();
-    const supAddr = supLegal.ele('cac:RegistrationAddress');
-    supAddr.ele('cbc:ID').txt(dto.company.address.ubigueo).up();
-    supAddr.ele('cbc:AddressTypeCode').txt('0000'); // validar
-    supAddr.ele('cbc:CityName').txt(dto.company.address.provincia).up();
-    supAddr
-      .ele('cbc:CountrySubentity')
-      .txt(dto.company.address.departamento)
-      .up();
-    supAddr.ele('cbc:District').txt(dto.company.address.distrito).up();
-    supAddr
-      .ele('cac:AddressLine')
-      .ele('cbc:Line')
-      .dat(dto.company.address.direccion ?? '')
-      .up();
-    supAddr.ele('cac:Country').ele('cbc:IdentificationCode').txt('PE');
-    const contact = supplier.ele('cac:Contact');
-    contact.ele('cbc:Telephone').txt('(051) 931091443').up(); // aqui falta  hacelro dinamico
-    contact.ele('cbc:ElectronicMail').txt('rdinersiones@gmail.com').up(); // aqui falta  hacelro dinamico
-
+    this.addCompany(root, dto);
     // cliente
-    const customer = root.ele('cac:AccountingCustomerParty').ele('cac:Party');
-    customer
-      .ele('cac:PartyIdentification')
-      .ele('cbc:ID', { schemeID: dto.client.tipoDoc })
-      .txt(dto.client.numDoc)
-      .up()
-      .up();
-    const custLegal = customer.ele('cac:PartyLegalEntity');
-    custLegal.ele('cbc:RegistrationName').dat(dto.client.rznSocial).up();
-    const custAddr = custLegal.ele('cac:RegistrationAddress');
-    custAddr.ele('cbc:ID').txt(dto.client.address.ubigueo).up();
-    custAddr.ele('cbc:CityName').txt(dto.client.address.provincia).up();
-    custAddr
-      .ele('cbc:CountrySubentity')
-      .txt(dto.client.address.departamento)
-      .up();
-    custAddr.ele('cbc:District').txt(dto.client.address.distrito).up();
-    custAddr
-      .ele('cac:AddressLine')
-      .ele('cbc:Line')
-      .dat(dto.client.address.direccion ?? '')
-      .up();
-    custAddr.ele('cac:Country').ele('cbc:IdentificationCode').txt('PE');
+    this.addCustomer(root, dto);
     // Medio de pago
-
     root
       .ele('cac:PaymentTerms')
       .ele('cbc:ID')
@@ -160,7 +71,6 @@ export class XmlBuilderService {
       .ele('cbc:PaymentMeansID')
       .txt(dto.formaPago.tipo)
       .up();
-
     // Agrupar montos por tributo (según tipAfeIgv de los items)
     const totalesPorTributo: Record<
       string,
@@ -170,54 +80,19 @@ export class XmlBuilderService {
         info: { id: string; name: string; taxTypeCode: string };
       }
     > = {};
-
-    for (const item of dto.details) {
-      const tributo = MAP_TIPO_AFECTACION_TRIBUTO[item.tipAfeIgv];
-      const key = tributo.id;
-
-      if (!totalesPorTributo[key]) {
-        totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributo };
-      }
-
-      //Determinar qué monto usar para TaxableAmount
-      let taxableAmount = 0;
-      if (TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)) {
-        taxableAmount = item.mtoBaseIgv; // Gravadas usan base imponible
-      } else {
-        taxableAmount = item.mtoValorVenta; // Exoneradas / Inafectas / Exportación usan valor de venta
-      }
-      totalesPorTributo[key].taxable += taxableAmount;
-      totalesPorTributo[key].tax += item.igv;
-    }
-
-    // 👉 Totales impuestos
-    const taxTotal = root.ele('cac:TaxTotal');
-    taxTotal
-      .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })
-      .txt(dto.mtoIGV.toFixed(2));
-
-    for (const key in totalesPorTributo) {
-      const { taxable, tax, info } = totalesPorTributo[key];
-      const taxSub = taxTotal.ele('cac:TaxSubtotal');
-      taxSub
-        .ele('cbc:TaxableAmount', { currencyID: dto.tipoMoneda })
-        .txt(taxable.toFixed(2))
-        .up()
-        .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })
-        .txt(tax.toFixed(2));
-      const taxCat = taxSub.ele('cac:TaxCategory');
-      const taxScheme = taxCat.ele('cac:TaxScheme');
-      taxScheme.ele('cbc:ID').txt(info.id).up();
-      taxScheme.ele('cbc:Name').txt(info.name).up();
-      taxScheme.ele('cbc:TaxTypeCode').txt(info.taxTypeCode);
-    }
-
+    this.agruparTotalesPorTipoAfetiGV(dto, totalesPorTributo);
+    // Totales impuestos
+    this.addTotalesImpuestos(
+      root,
+      totalesPorTributo,
+      dto.tipoMoneda,
+      dto.mtoIGV,
+    );
     // Totales monetarios
     const mtoOperacion =
       (dto.mtoOperGravadas ?? 0) +
       (dto.mtoOperExoneradas ?? 0) +
       (dto.mtoOperInafectas ?? 0);
-
     root
       .ele('cac:LegalMonetaryTotal')
       .ele('cbc:LineExtensionAmount', { currencyID: dto.tipoMoneda })
@@ -228,25 +103,6 @@ export class XmlBuilderService {
       .up()
       .ele('cbc:PayableAmount', { currencyID: dto.tipoMoneda })
       .txt((dto.mtoImpVenta ?? 0).toFixed(2));
-    // root.ele('cac:LegalMonetaryTotal')
-    //   .ele('cbc:LineExtensionAmount', { currencyID: dto.tipoMoneda })
-    //   .txt(lineExtensionAmount.toFixed(2))
-    //   .up()
-    //   .ele('cbc:TaxInclusiveAmount', { currencyID: dto.tipoMoneda })
-    //   .txt((lineExtensionAmount + (dto.mtoIGV ?? 0)).toFixed(2))
-    //   .up()
-    //   .ele('cbc:PayableAmount', { currencyID: dto.tipoMoneda })
-    //   .txt((dto.mtoImpVenta ?? 0).toFixed(2));
-    //     root
-    //       .ele('cac:LegalMonetaryTotal')
-    //       .ele('cbc:LineExtensionAmount', { currencyID: dto.tipoMoneda })
-    //       .txt(dto.mtoOperGravadas.toFixed(2))
-    //       .up()
-    //       .ele('cbc:TaxInclusiveAmount', { currencyID: dto.tipoMoneda })
-    //       .txt(dto.subTotal.toFixed(2))
-    //       .up()
-    //       .ele('cbc:PayableAmount', { currencyID: dto.tipoMoneda })
-    //       .txt(dto.mtoImpVenta.toFixed(2));
 
     // Detalle de líneas
     dto.details.forEach((d, i) => {
@@ -258,16 +114,16 @@ export class XmlBuilderService {
       line
         .ele('cbc:LineExtensionAmount', { currencyID: dto.tipoMoneda })
         .txt(d.mtoValorUnitario.toFixed(2));
-      // 👉 Precio de referencia (SUNAT exige precio unitario con IGV)
+      // Precio de referencia (SUNAT exige precio unitario con IGV)
       const pricingRef = line.ele('cac:PricingReference');
       const altPrice = pricingRef.ele('cac:AlternativeConditionPrice');
       altPrice
         .ele('cbc:PriceAmount', { currencyID: dto.tipoMoneda })
         .txt(d.mtoPrecioUnitario.toFixed(6))
         .up();
-      altPrice.ele('cbc:PriceTypeCode').txt('01').up(); // 01 = Precio unitario (incluye IGV) // validar
-
-      // 👉 Impuestos por línea
+      const priceTypeCode = TIPO_AFECTACION_GRATUITAS.includes(d.tipAfeIgv) ? '02' : '01';
+      altPrice.ele('cbc:PriceTypeCode').txt(priceTypeCode).up();
+      // Impuestos por línea
       const taxTotalLine = line.ele('cac:TaxTotal');
       taxTotalLine
         .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })
@@ -285,16 +141,14 @@ export class XmlBuilderService {
       const cat = sub.ele('cac:TaxCategory');
       cat.ele('cbc:Percent').txt(d.porcentajeIgv.toFixed(2)).up();
       cat.ele('cbc:TaxExemptionReasonCode').txt(String(d.tipAfeIgv)).up();
-
       const tributo = MAP_TIPO_AFECTACION_TRIBUTO[d.tipAfeIgv];
       const scheme = cat.ele('cac:TaxScheme');
       scheme.ele('cbc:ID').txt(tributo.id).up();
       scheme.ele('cbc:Name').txt(tributo.name).up();
       scheme.ele('cbc:TaxTypeCode').txt(tributo.taxTypeCode);
 
-      // 👉 Producto
+      // Producto
       line.ele('cac:Item').ele('cbc:Description').dat(d.descripcion);
-      // 👉 Precio sin
       let precioUnitario = d.mtoPrecioUnitario;
       if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
         // factura Grabada se necesita precio sin igv
@@ -305,12 +159,8 @@ export class XmlBuilderService {
         .ele('cbc:PriceAmount', { currencyID: dto.tipoMoneda })
         .txt(precioUnitario?.toFixed(6));
     });
-
     return root.end({ prettyPrint: true });
   }
-
-
-
   buildResumenBoletas(dto: SummaryDocumentDto): string {
     const root = create({ version: '1.0', encoding: 'UTF-8' }).ele(
       'SummaryDocuments',
@@ -463,6 +313,227 @@ export class XmlBuilderService {
 
     return root.end({ prettyPrint: true });
   }
+  private addUBLExtensions(root: any) {
+    root
+      .ele('ext:UBLExtensions')
+      .ele('ext:UBLExtension')
+      .ele('ext:ExtensionContent')
+      .up()
+      .up()
+      .up();
+  }
+  private addDatosBasicos(
+    root: any,
+    ublVersion: string,
+    customizationID: string,
+    id: string,
+  ) {
+    root
+      .ele('cbc:UBLVersionID')
+      .txt(ublVersion)
+      .up()
+      .ele('cbc:CustomizationID')
+      .txt(customizationID)
+      .up()
+      .ele('cbc:ID')
+      .txt(id)
+      .up();
+    return root;
+  }
+  // Firma digital base
+  private appendSignature(root: any, dto: CreateInvoiceDto) {
+    const signature = root.ele('cac:Signature');
+    signature.ele('cbc:ID').txt('signatureFACTURALOPERU').up();
+    signature.ele('cbc:Note').txt('FACTURALO').up();
+    const signatory = signature.ele('cac:SignatoryParty');
+    signatory
+      .ele('cac:PartyIdentification')
+      .ele('cbc:ID')
+      .txt(dto.company.ruc)
+      .up()
+      .up();
+    signatory
+      .ele('cac:PartyName')
+      .ele('cbc:Name')
+      .dat(dto.company.razonSocial)
+      .up();
+    const digitalAttachment = signature.ele('cac:DigitalSignatureAttachment');
+    digitalAttachment
+      .ele('cac:ExternalReference')
+      .ele('cbc:URI')
+      .txt('#signatureFACTURALOPERU');
+  }
+  private addCompany(root: any, dto: CreateInvoiceDto) {
+    const supplier = root.ele('cac:AccountingSupplierParty').ele('cac:Party');
+    supplier
+      .ele('cac:PartyIdentification')
+      .ele('cbc:ID', { schemeID: dto.company.tipoDoc })
+      .txt(dto.company.ruc)
+      .up()
+      .up();
+    supplier
+      .ele('cac:PartyName')
+      .ele('cbc:Name')
+      .dat(dto.company.nombreComercial ?? '')
+      .up();
+    const supLegal = supplier.ele('cac:PartyLegalEntity');
+    supLegal.ele('cbc:RegistrationName').dat(dto.company.razonSocial).up();
+    this.addAddres(
+      supLegal,
+      dto.company.address.ubigueo,
+      dto.company.address.provincia,
+      dto.company.address.departamento,
+      dto.company.address.distrito,
+      dto.company.address.direccion,
+      true,
+    );
 
-  
+    const contact = supplier.ele('cac:Contact');
+    contact.ele('cbc:Telephone').txt('(051) 931091443').up(); // aqui falta  hacelro dinamico
+    contact.ele('cbc:ElectronicMail').txt('rdinersiones@gmail.com').up(); // aqui falta  hacelro dinamico
+    dto.company.address.ubigueo;
+    dto.company.address.provincia;
+    dto.company.address.departamento;
+    dto.company.address.distrito;
+    dto.company.address.direccion;
+  }
+  private addCustomer(root: any, dto: CreateInvoiceDto) {
+    const customer = root.ele('cac:AccountingCustomerParty').ele('cac:Party');
+    customer
+      .ele('cac:PartyIdentification')
+      .ele('cbc:ID', { schemeID: dto.client.tipoDoc })
+      .txt(dto.client.numDoc)
+      .up()
+      .up();
+    const custLegal = customer.ele('cac:PartyLegalEntity');
+    custLegal.ele('cbc:RegistrationName').dat(dto.client.rznSocial).up(); // va el nombre o la razon social del cliente
+
+    this.addAddres(
+      custLegal,
+      dto.client.address.ubigueo,
+      dto.client.address.provincia,
+      dto.client.address.departamento,
+      dto.client.address.distrito,
+      dto.client.address.direccion,
+    );
+  }
+  private addAddres(
+    supLegal: any,
+    ubigeo: string,
+    provincia: string,
+    departamento: string,
+    distrito: string,
+    direccion: string,
+    isSupplier: any = false,
+  ) {
+    const supAddr = supLegal.ele('cac:RegistrationAddress');
+    supAddr.ele('cbc:ID').txt(ubigeo).up();
+    if (isSupplier) supAddr.ele('cbc:AddressTypeCode').txt('0000'); // validar
+    supAddr.ele('cbc:CityName').txt(provincia).up();
+    supAddr.ele('cbc:CountrySubentity').txt(departamento).up();
+    supAddr.ele('cbc:District').txt(distrito).up();
+    supAddr.ele('cac:AddressLine').ele('cbc:Line').dat(direccion).up();
+    supAddr.ele('cac:Country').ele('cbc:IdentificationCode').txt('PE');
+  }
+  // private agruparTotalesPorTipoAfetiGV(
+  //   dto: CreateInvoiceDto,
+  //   totalesPorTributo: any,
+  // ) {
+  //   for (const item of dto.details) {
+  //     const tributo = MAP_TIPO_AFECTACION_TRIBUTO[item.tipAfeIgv];
+  //     const key = tributo.id;
+  //     if (!totalesPorTributo[key]) {
+  //       totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributo };
+  //     }
+  //     //Determinar qué monto usar para TaxableAmount
+  //     let taxableAmount = 0;
+  //     if (TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)) {
+  //       taxableAmount = item.mtoBaseIgv; // Gravadas usan base imponible
+  //     } else {
+  //       taxableAmount = item.mtoValorVenta; // Exoneradas / Inafectas / Exportación usan valor de venta
+  //     }
+  //     totalesPorTributo[key].taxable += taxableAmount;
+  //     totalesPorTributo[key].tax += item.igv;
+  //   }
+  // }
+  private agruparTotalesPorTipoAfetiGV(
+  dto: CreateInvoiceDto,
+  totalesPorTributo: any,
+) {
+  for (const item of dto.details) {
+    // 1. Afectaciones IGV, EXO, INA, EXP
+    const tributo = MAP_TIPO_AFECTACION_TRIBUTO[item.tipAfeIgv];
+    if (tributo) {
+      const key = tributo.id;
+      if (!totalesPorTributo[key]) {
+        totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributo };
+      }
+      // Determinar taxable según tipo de afectación
+      let taxableAmount = 0;
+      if (TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)) {
+        taxableAmount = item.mtoBaseIgv ?? 0; // Gravadas usan base imponible
+      } else {
+        taxableAmount = item.mtoValorVenta ?? 0; // Exoneradas / Inafectas / Exportación usan valor de venta
+      }
+
+      totalesPorTributo[key].taxable += taxableAmount;
+      totalesPorTributo[key].tax += item.igv ?? 0;
+    }
+    // 2. ICBPER (no depende de tipAfeIgv)
+    // if (item.icbper && item.icbper > 0) {
+    //   const montoIcbper = item.icbper * (item.cantidad ?? 1);
+    //   if (!totalesPorTributo["ICBPER"]) {
+    //     totalesPorTributo["ICBPER"] = {
+    //       taxable: 0,
+    //       tax: 0,
+    //       info: { id: "7152", name: "ICBPER", taxTypeCode: "OTH" },
+    //     };
+    //   }
+    //   totalesPorTributo["ICBPER"].tax += montoIcbper;
+    // }
+
+    // 👉 2. ICBPER (no depende de tipAfeIgv)
+    if (item.icbper && item.icbper > 0) {
+      const montoIcbper = item.icbper * (item.cantidad ?? 1);
+      const tributoICBPER = MAP_TRIBUTOS.ICBPER; // se saca del mapa
+      const key = tributoICBPER.id;
+      if (!totalesPorTributo[key]) {
+        totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributoICBPER };
+      }
+      totalesPorTributo[key].tax += montoIcbper;
+    }
+
+  }
+}
+
+  private addTotalesImpuestos(
+  root: any,
+  totalesPorTributo: any,
+  tipoMoneda: string,
+  mtoIgv: any,
+) {
+  const taxTotal = root.ele('cac:TaxTotal');
+  taxTotal
+    .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
+    .txt(mtoIgv.toFixed(2))
+    .up();
+
+  for (const key in totalesPorTributo) {
+    const { taxable, tax, info } = totalesPorTributo[key];
+    const taxSub = taxTotal.ele('cac:TaxSubtotal');
+    taxSub
+      .ele('cbc:TaxableAmount', { currencyID: tipoMoneda })
+      .txt(taxable.toFixed(2))
+      .up()
+      .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
+      .txt(tax.toFixed(2))
+      .up();
+    const taxCat = taxSub.ele('cac:TaxCategory');
+    const taxScheme = taxCat.ele('cac:TaxScheme');
+    taxScheme.ele('cbc:ID').txt(info.id).up();
+    taxScheme.ele('cbc:Name').txt(info.name).up();
+    taxScheme.ele('cbc:TaxTypeCode').txt(info.taxTypeCode).up();
+  }
+}
+
 }

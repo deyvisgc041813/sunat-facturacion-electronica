@@ -96,7 +96,7 @@ export const MAP_TIPO_AFECTACION_TRIBUTO: Record<number, { id: string; name: str
 
   // Exoneradas
   20: { id: "9997", name: "EXO", taxTypeCode: "VAT" },   // Operación Onerosa
-  21: { id: "9997", name: "EXO", taxTypeCode: "VAT" },   // Transferencia gratuita
+  21: { id: "1000", name: "IGV", taxTypeCode: "VAT" },   // Transferencia gratuita
 
   // Inafectas
   30: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Operación Onerosa
@@ -106,9 +106,15 @@ export const MAP_TIPO_AFECTACION_TRIBUTO: Record<number, { id: string; name: str
   34: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Convenio Colectivo
   35: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Retiro por premio
   36: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Retiro por publicidad
-  37: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Transferencia gratuita
+  37: { id: "1000", name: "IGV", taxTypeCode: "FRE" },   // Transferencia gratuita
 
   // Exportación
   40: { id: "9995", name: "EXP", taxTypeCode: "FRE" },   // Exportación de Bienes o Servicios
 };
 
+// Catálogo de tributos SUNAT
+export const MAP_TRIBUTOS: Record<string, { id: string; name: string; taxTypeCode: string }> = {
+  IGV: { id: '1000', name: 'IGV', taxTypeCode: 'VAT' },
+  ICBPER: { id: '7152', name: 'ICBPER', taxTypeCode: 'OTH' },
+  // puedes agregar ISC u otros si lo necesitas
+};

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
+import { IsString, IsNotEmpty, IsNumber, IsPositive, IsOptional } from 'class-validator';
 
 export class DetailDto {
   @IsString({ message: 'El código del producto debe ser un texto' })
@@ -40,4 +40,7 @@ export class DetailDto {
 
   @IsNumber({}, { message: 'El precio unitario debe ser numérico' })
   mtoPrecioUnitario: number;
+  @IsOptional()
+  @IsNumber({}, { message: 'El monto de ICBPER debe ser numérico' })
+  icbper: number
 }
