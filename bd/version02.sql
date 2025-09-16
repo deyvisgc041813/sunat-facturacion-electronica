@@ -474,3 +474,31 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+ALTER TABLE comprobantes 
+DROP INDEX empresa_id,
+ADD UNIQUE KEY uniq_comprobante (empresa_id, serie_id, numero_comprobante);
+CREATE TABLE tributo_tasa (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    codigo_sunat VARCHAR(10) NOT NULL,   -- Ej: 1000 = IGV, 2000 = ISC, 6030 = ICBPER
+    nombre VARCHAR(100) NOT NULL,        -- Ej: IGV, ISC, ICBPER
+    tasa DECIMAL(10,4) NULL,             -- Para tributos con porcentaje (ej. 18.00%)
+    monto DECIMAL(10,4) NULL,            -- Para montos fijos (ej. 0.70 x bolsa ICBPER)
+    moneda CHAR(3) DEFAULT 'PEN',        -- PEN, USD, etc.
+    vigencia_desde DATE NOT NULL,
+    vigencia_hasta DATE NULL,            -- NULL = sigue vigente
+    observacion VARCHAR(255) NULL
+);
+
+INSERT INTO tributo_tasa 
+(codigo_sunat, nombre, tasa, monto, moneda, vigencia_desde, vigencia_hasta, observacion)
+VALUES
+('1000', 'IGV Impuesto General a las Ventas', 18.0000, NULL, 'PEN', '2011-01-01', NULL, 'IGV vigente en Perú (16% IGV + 2% IPM)'),
+('1016', 'Impuesto a la Venta Arroz Pilado', NULL, NULL, 'PEN', '2011-01-01', NULL, ''),
+('2000', 'ISC Impuesto Selectivo al Consumo', NULL, NULL, 'PEN', '2011-01-01', NULL, 'ISC bebidas alcohólicas'),
+('7152', 'Impuesto a la bolsa plastica', 0.7000, NULL, 'PEN', '2025-01-01', '2025-12-31', 'Impuesto al consumo de bolsas plásticas 2025'),
+('9995', 'Exportación', NULL, NULL, 'PEN', '2011-01-01', NULL, ''),
+('9996', 'Gratuito', NULL, NULL, 'PEN', '2011-01-01', NULL, ''),
+('9997', 'Exonerado', NULL, NULL, 'PEN', '2011-01-01', NULL, ''),
+('9998', 'Inafecto', NULL, NULL, 'PEN', '2011-01-01', NULL, ''),
+('9999', 'Otros tributos', NULL, NULL, 'PEN', '2011-01-01', NULL, '');

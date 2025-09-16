@@ -11,6 +11,7 @@ import { SerieModule } from './serie.module';
 import { SerieAuditoriaModule } from './serie-auditoria.module';
 import { ComprobanteModule } from './comprobante.module';
 import { ErrorLogModule } from './error-log.module';
+import { TasaTributoModule } from './tasa-tributo.module';
 
 @Module({
   imports: [
@@ -32,7 +33,8 @@ import { ErrorLogModule } from './error-log.module';
    SerieModule,
    SerieAuditoriaModule,
    ComprobanteModule,
-   ErrorLogModule
+   ErrorLogModule,
+   TasaTributoModule
   ],
   
   controllers: [AppController],

@@ -38,6 +38,24 @@ export enum UnidadMedidaEnum {
   LITRO = 'LTR',
   SERVICIO = 'ZZ',
 }
+// Catálogo 03: Unidad de Medida
+export enum ChargeIndicatorEnum {
+  DESCUENTO = 'false',
+  RECARGO = 'true'
+}
+
+// Catálogo 09: Códigos de tipo de nota de crédito electrónica
+export enum NotaCreditoMotivo {
+  ANULACION_OPERACION = '01',                // Anulación de la operación
+  ANULACION_ERROR_RUC = '02',                // Anulación por error en el RUC
+  CORRECCION_DESCRIPCION = '03',             // Corrección por error en la descripción
+  DESCUENTO_GLOBAL = '04',                   // Descuento global
+  DESCUENTO_POR_ITEM = '05',                 // Descuento por ítem
+  DEVOLUCION_TOTAL = '06',                   // Devolución total
+  DEVOLUCION_POR_ITEM = '07',                // Devolución por ítem
+  BONIFICACION = '08',                       // Bonificación
+  DISMINUCION_VALOR = '09'                   // Disminución en el valor
+}
 
 // 🔹 Operaciones Gravadas (con IGV, precio normal)
 export const TIPO_AFECTACION_GRAVADAS: number[] = [
@@ -50,6 +68,25 @@ export const TIPO_AFECTACION_GRAVADAS: number[] = [
   16, // Gravado - Retiro por entrega a trabajadores
   17, // Gravado - IVAP
 ];
+export enum Catalogo53DescuentoGlobal {
+  DESCUENTO_AFECTA_IGV = "00",
+}
+export enum LegendCodeEnum {
+  MONTO_EN_LETRAS = '1000', // Monto en Letras : Todas las facturas, boletas, notas de crédito y débito deben llevar esta leyenda.
+  TRANSFERENCIA_GRATUITA = '1002', // Transferencia gratuita de un bien/servicio
+  COMPROBANTE_PERCEPCION = '2000', // Comprobante de percepción
+  AMAZONIA_BIENES = '2001', // Bienes transferidos en la Amazonía - región selva
+  AMAZONIA_SERVICIOS = '2002', // Servicios prestados en la Amazonía - región selva
+  AMAZONIA_CONSTRUCCION = '2003', // Contratos de construcción en la Amazonía
+  AGENCIA_VIAJE = '2004', // Agencia de viaje - Paquete turístico
+  EMISOR_ITINERANTE = '2005', // Venta realizada por emisor itinerante
+  DETRACCION = '2006', // Operación sujeta a detracción
+  IVAP = '2007', // Operación sujeta al IVAP
+  TACNA_VENTA_EXONERADA = '2008', // Venta exonerada en zona comercial Tacna
+  TACNA_PRIMERA_VENTA = '2009', // Primera venta de mercancía identificable en zona comercial
+  RESTITUCION_DERECHOS = '2010', // Restitución Simplificado de Derechos Arancelarios
+  EXPORTACION_SERVICIOS = '2011', // Exportación de servicios - Decreto Legislativo 919
+}
 
 // 🔹 Operaciones Exoneradas
 export const TIPO_AFECTACION_EXONERADAS: number[] = [
@@ -119,3 +156,5 @@ export const MAP_TRIBUTOS: Record<string, { id: string; name: string; taxTypeCod
   EXO: { id: '9997', name: 'EXO', taxTypeCode: 'VAT' },
   INA: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }
 };
+
+

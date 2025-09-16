@@ -137,10 +137,13 @@ export class ComprobanteOrmEntity {
   })
   @JoinColumn({ name: 'cliente_id' })
   cliente: ClienteOrmEntity;
+
+  @JoinColumn({ name: 'serie_id' })
   @ManyToOne(() => SerieOrmEntity, (serie) => serie.comprobantes, {
     onDelete: 'CASCADE',
   })
   serie: SerieOrmEntity;
+  
   @OneToMany(
     () => SunatLogOrmEntity,
     (sunatLog: SunatLogOrmEntity) => sunatLog.comprobante,

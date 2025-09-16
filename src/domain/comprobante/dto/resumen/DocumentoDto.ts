@@ -7,7 +7,7 @@ import {
   IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ClienteDto } from '../ClienteDto';
+import { ClienteDto } from '../base/ClienteDto';
 import { PagoDto } from './PagoDto';
 
 export class DocumentoDto {

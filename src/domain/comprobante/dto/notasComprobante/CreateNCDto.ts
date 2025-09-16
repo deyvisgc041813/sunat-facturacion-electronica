@@ -1,0 +1,69 @@
+import { Type } from 'class-transformer';
+import {
+  ValidateNested,
+  IsArray,
+  IsOptional,
+  IsNumber,
+  Min,
+} from 'class-validator';
+import { FormaPagoDto } from '../base/FormaPagoDto';
+import { ClienteDto } from '../base/ClienteDto';
+import { CompanyDto } from '../base/CompanyDto';
+import { DetailDto } from '../base/DetailDto';
+import { LegendDto } from '../base/LegendDto';
+import { ComprobanteBaseDto } from '../base/ComprobanteBaseDto';
+import { DocumentoRelacionadoDto } from './DocumentoRelacionadoDto';
+import { MotivoNotaDto } from './MotivoNotaDto';
+import { DescuentoGlobales } from './DescuentoGlobales';
+
+export class CreateNCDto extends ComprobanteBaseDto {
+  @ValidateNested({ message: 'Los datos de forma de pago no son válidos' })
+  @Type(() => FormaPagoDto)
+  formaPago: FormaPagoDto;
+
+  @ValidateNested({ message: 'Los datos del cliente no son válidos' })
+  @Type(() => ClienteDto)
+  client: ClienteDto;
+
+  @ValidateNested({ message: 'Los datos de la empresa no son válidos' })
+  @Type(() => CompanyDto)
+  company: CompanyDto;
+
+  @ValidateNested({
+    message: 'Los datos de documentos relacionado no son validos',
+  })
+  @Type(() => DocumentoRelacionadoDto)
+  documentoRelacionado: DocumentoRelacionadoDto;
+
+  @ValidateNested({
+    message: 'Los datos del motivo de nota credito no son validos',
+  })
+  @Type(() => MotivoNotaDto)
+  motivo: MotivoNotaDto;
+  
+  @IsOptional()
+  @IsArray({ message: 'Los descuentos globales deben ser un arreglo' })
+  @ValidateNested({ each: true, message: 'Los descuentos globales no son válidos' })
+  @Type(() => DetailDto)
+  descuentosGlobales: DescuentoGlobales[];
+  @IsOptional()
+  @IsNumber(
+    {},
+    { message: 'El monto de descuento global debe ser numérico' },
+  )
+  @Min(0, { message: 'El monto de descuento global no puede ser negativo' })
+  descuentoGlobal: number;
+
+  @IsOptional()
+  @IsArray({ message: 'Los detalles deben ser un arreglo' })
+  @ValidateNested({ each: true, message: 'Los detalles no son válidos' })
+  @Type(() => DetailDto)
+  details: DetailDto[];
+  @IsOptional()
+  @IsArray({ message: 'Las leyendas deben ser un arreglo' })
+  @ValidateNested({ each: true, message: 'Las leyendas no son válidas' })
+  @Type(() => LegendDto)
+  legends: LegendDto[];
+  @IsOptional()
+  porcentajeIgv: number; // solo se usara a nivel de backend
+}

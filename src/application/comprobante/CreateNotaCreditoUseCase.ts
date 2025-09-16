@@ -2,19 +2,22 @@
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
-import {  CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { CreateComprobanteUseCase } from './base/CreateComprobanteUseCase';
 import { Injectable } from '@nestjs/common';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
 import { UpdateComprobanteUseCase } from './base/UpdateComprobanteUseCase';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
-import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
-import { CreateInvoiceBaseUseCase } from './base/CreateInvoiceBaseUseCase';
+import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
+import { CreateNotasBaseUseCase } from './base/CreateNotasBaseUseCase';
+import { CreateNCDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNCDto';
+import { FindByEmpAndTipComAndSerieUseCase } from '../Serie/FindByEmpAndTipComAndSerieUseCase';
+import { GetByCorrelativoComprobantesUseCase } from './GetByCorrelativoComprobantesUseCase';
+import { FindTasaByCodeUseCase } from '../Tasa/FindTasaByCodeUseCase';
 @Injectable()
-export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
+export class CreateNotaCreditoUseCase extends CreateNotasBaseUseCase {
   constructor(
-    xmlInvoiceBuilder: XmlBuilderInvoiceService,
+    xmlNCBuilder: XmlBuilderNotaCreditoService,
     firmaService: FirmaService,
     sunatService: SunatService,
     empresaRepo: EmpresaRepositoryImpl,
@@ -23,11 +26,15 @@ export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
     catalogoRepo: CatalogoRepositoryImpl,
     useUpdateCaseComprobante: UpdateComprobanteUseCase,
     sunatLogRepo: SunatLogRepositoryImpl,
-    
+    findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
+    findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
+    findTasaByCodeUseCase : FindTasaByCodeUseCase
   ) {
-    super(xmlInvoiceBuilder, firmaService, sunatService, empresaRepo, errorLogRepo, useCreateCaseComprobante, catalogoRepo, useUpdateCaseComprobante, sunatLogRepo);
+    super(xmlNCBuilder, firmaService, sunatService, empresaRepo, errorLogRepo, 
+      useCreateCaseComprobante, catalogoRepo, useUpdateCaseComprobante,
+      sunatLogRepo, findSerieUseCase, findCorrelativoUseCase, findTasaByCodeUseCase);
   }
-  protected buildXml(data: CreateInvoiceDto): string {
-    return this.xmlInvoiceBuilder.buildXml(data);
+  protected buildXml(data: CreateNCDto): string {
+    return this.xmlNCBuilder.buildXml(data);
   }
 }

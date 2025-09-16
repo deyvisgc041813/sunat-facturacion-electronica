@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { EmpresaOrmEntity } from './infrastructure/database/entity/EmpresaOrmEntity';
-import { XmlBuilderService } from './infrastructure/sunat/xml/xml-builder.service';
 import { FirmaService } from './infrastructure/sunat/firma/firma.service';
 import { EmpresaRepositoryImpl } from './infrastructure/database/repository/empresa.repository.impl';
 import { ComprobanteController } from './infrastructure/controllers/comprobante.controller';
@@ -18,30 +17,49 @@ import { UpdateComprobanteUseCase } from './application/comprobante/base/UpdateC
 import { SunatLogOrmEntity } from './infrastructure/database/entity/SunatLogOrmEntity';
 import { SunatLogRepositoryImpl } from './infrastructure/database/repository/sunat-log.repository.impl';
 import { CreateInvoiceUseCase } from './application/comprobante/CreateInvoiceUseCase';
+import { XmlBuilderInvoiceService } from './infrastructure/sunat/xml/xml-builder-invoice.service';
+import { CreateNotaCreditoUseCase } from './application/comprobante/CreateNotaCreditoUseCase';
+import { XmlBuilderNotaCreditoService } from './infrastructure/sunat/xml/xml-builder-nota-credito.service';
+import { FindByEmpAndTipComAndSerieUseCase } from './application/Serie/FindByEmpAndTipComAndSerieUseCase';
+import { GetByCorrelativoComprobantesUseCase } from './application/comprobante/GetByCorrelativoComprobantesUseCase';
+import { SerieRepositoryImpl } from './infrastructure/database/repository/serie.repository.impl';
+import { SerieAuditoriaOrmEntity } from './infrastructure/database/entity/SerieAuditoriaOrmEntity';
+import { TributoTasaOrmEntity } from './infrastructure/database/entity/TributoTasaOrmEntity';
+import { TasaTributoModule } from './tasa-tributo.module';
+import { FindTasaByCodeUseCase } from './application/Tasa/FindTasaByCodeUseCase';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       EmpresaOrmEntity,
       ClienteOrmEntity,
       SerieOrmEntity,
+      SerieAuditoriaOrmEntity,
       ErrorLogOrmEntity,
       ComprobanteOrmEntity,
       SunatLogOrmEntity,
+      TributoTasaOrmEntity
     ]),
     CatalogoModule,
+    TasaTributoModule
   ],
   controllers: [ComprobanteController],
   providers: [
-    XmlBuilderService,
+    XmlBuilderInvoiceService,
+    XmlBuilderNotaCreditoService,
     FirmaService,
     SunatService,
     EmpresaRepositoryImpl,
     ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
+    SerieRepositoryImpl,
     CreateComprobanteUseCase,
     UpdateComprobanteUseCase,
     CreateInvoiceUseCase,
+    CreateNotaCreditoUseCase,
+    FindByEmpAndTipComAndSerieUseCase,
+    GetByCorrelativoComprobantesUseCase,
+    FindTasaByCodeUseCase
   ],
   exports: [
     EmpresaRepositoryImpl,

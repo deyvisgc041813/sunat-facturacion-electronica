@@ -1,7 +1,6 @@
 import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
-import { XmlBuilderService } from 'src/infrastructure/sunat/xml/xml-builder.service';
 import { CreateComprobanteUseCase } from './CreateComprobanteUseCase';
 import { ICreateComprobante } from 'src/domain/comprobante/interface/create.interface';
 import { DateUtils } from 'src/util/date.util';
@@ -25,10 +24,11 @@ import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/s
 import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
+import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
 
-export abstract class CreateComprobanteBaseUseCase {
+export abstract class CreateInvoiceBaseUseCase {
   constructor(
-    protected readonly xmlBuilder: XmlBuilderService,
+    protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService,
     protected readonly firmaService: FirmaService,
     protected readonly sunatService: SunatService,
     protected readonly empresaRepo: EmpresaRepositoryImpl,
@@ -250,11 +250,9 @@ export abstract class CreateComprobanteBaseUseCase {
     zipBuffer: Buffer,
   ): Promise<IResponseSunat> {
     switch (tipoComprobante) {
-      case '01': // Factura
-      case '07': // Nota Crédito
-      case '08': // Nota Débito
-        return await this.sunatService.sendBill(`${fileName}.zip`, zipBuffer);
-      case '03': // Boleta
+      case TipoComprobanteEnum.FACTURA: // Factura
+          return await this.sunatService.sendBill(`${fileName}.zip`, zipBuffer);
+      case TipoComprobanteEnum.BOLETA: // Boleta
         return {
           cdr: null,
           estadoSunat: EstadoEnumComprobante.PENDIENTE,
@@ -265,7 +263,6 @@ export abstract class CreateComprobanteBaseUseCase {
           codigoResponse: '',
           xmlFirmado,
         };
-
       default:
         return {
           cdr: null,
@@ -275,7 +272,7 @@ export abstract class CreateComprobanteBaseUseCase {
           status: false,
           codigoResponse: "",
           xmlFirmado,
-        };
+      };
     }
   }
 }

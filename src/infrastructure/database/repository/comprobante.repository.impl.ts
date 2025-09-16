@@ -22,6 +22,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     private readonly repo: Repository<ComprobanteOrmEntity>,
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
+
   async save(
     dto: ICreateComprobante,
     payloadJson: any,
@@ -169,6 +170,26 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   ): Promise<ComprobanteResponseDto[]> {
     const cpes = await this.repo.find({ where: { estado } });
     return cpes.map((c) => ComprobanteMapper.toDomain(c));
+  }
+  async findByEmpAndSerieAndNumCorreAceptado(
+    empresaId: number,
+    numCorrelativo: number,
+    serieId: number
+  ): Promise<ComprobanteResponseDto | null> {
+    const comprobante = await this.repo.findOne({
+      where: {
+        empresaId,
+        numeroComprobante: numCorrelativo,
+        serieId,
+        estado: EstadoEnumComprobante.ACEPTADO,
+      },
+    });
+    if (!comprobante) {
+      throw new NotFoundException(
+        `No se encontró el comprobante con el numero correlativo ${numCorrelativo} para la empresa ${empresaId}.`,
+      );
+    }
+    return ComprobanteMapper.toDomain(comprobante);
   }
   async findByEmpresaAndFecha(
     empresaId: number,

@@ -1,21 +1,13 @@
-import { Type } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
+  Length,
   IsNumber,
   IsISO8601,
-  ValidateNested,
-  IsArray,
-  IsOptional,
   Min,
 } from 'class-validator';
-import { FormaPagoDto } from '../base/FormaPagoDto';
-import { ClienteDto } from '../base/ClienteDto';
-import { CompanyDto } from '../base/CompanyDto';
-import { DetailDto } from '../base/DetailDto';
-import { LegendDto } from '../base/LegendDto';
 
-export class CreateInvoiceDto {
+export class ComprobanteBaseDto {
   @IsString({ message: 'La versión UBL debe ser un texto' })
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   ublVersion: string;
@@ -40,22 +32,9 @@ export class CreateInvoiceDto {
     { message: 'La fecha de emisión debe tener formato ISO8601 (YYYY-MM-DD)' },
   )
   fechaEmision: string;
-
-  @ValidateNested({ message: 'Los datos de forma de pago no son válidos' })
-  @Type(() => FormaPagoDto)
-  formaPago: FormaPagoDto;
-
   @IsString({ message: 'El tipo de moneda debe ser un texto' })
   @IsNotEmpty({ message: 'El tipo de moneda es obligatorio' })
   tipoMoneda: string;
-
-  @ValidateNested({ message: 'Los datos del cliente no son válidos' })
-  @Type(() => ClienteDto)
-  client: ClienteDto;
-
-  @ValidateNested({ message: 'Los datos de la empresa no son válidos' })
-  @Type(() => CompanyDto)
-  company: CompanyDto;
 
   @IsNumber(
     {},
@@ -90,18 +69,4 @@ export class CreateInvoiceDto {
 
   @IsNumber({}, { message: 'El monto de importe de venta debe ser numérico' })
   mtoImpVenta: number;
-
-
-  @IsOptional()
-  @IsNumber({}, { message: 'El monto de ICBPER debe ser numérico' })
-  icbper: number;
-
-  @IsArray({ message: 'Los detalles deben ser un arreglo' })
-  @ValidateNested({ each: true, message: 'Los detalles no son válidos' })
-  @Type(() => DetailDto)
-  details: DetailDto[];
-  @IsArray({ message: 'Las leyendas deben ser un arreglo' })
-  @ValidateNested({ each: true, message: 'Las leyendas no son válidas' })
-  @Type(() => LegendDto)
-  legends: LegendDto[];
 }

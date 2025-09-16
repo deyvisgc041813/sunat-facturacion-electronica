@@ -2,14 +2,15 @@ import {
   Body,
   Controller,
   Get,
+  HttpException,
   HttpStatus,
+  InternalServerErrorException,
   Param,
   Post,
   Query,
   Res
 } from '@nestjs/common';
 import type { Response } from 'express'; // 
-import { XmlBuilderService } from '../sunat/xml/xml-builder.service';
 import { FirmaService } from '../sunat/firma/firma.service';
 import { EmpresaRepositoryImpl } from '../database/repository/empresa.repository.impl';
 import { ErrorLogRepositoryImpl } from '../database/repository/error-log.repository.impl';
@@ -25,9 +26,10 @@ import { ExportXmlFirmadoComprobanteUseCase } from 'src/application/comprobante/
 
 import { ExportZipComprobanteUseCase } from 'src/application/comprobante/ExportZipComprobanteUseCase';
 import { ExportCdrZipComprobanteUseCase } from 'src/application/comprobante/ExportCdrZipComprobanteUseCase';
-import { SunatService } from '../sunat/send/sunat.service';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { CreateInvoiceUseCase } from 'src/application/comprobante/CreateInvoiceUseCase';
+import { CreateNCDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNCDto';
+import { CreateNotaCreditoUseCase } from 'src/application/comprobante/CreateNotaCreditoUseCase';
 
 @Controller('documents')
 export class ComprobanteController {
@@ -38,14 +40,19 @@ export class ComprobanteController {
     // private readonly empresaRepo: EmpresaRepositoryImpl,
     // private readonly errorLogRepo: ErrorLogRepositoryImpl,
     private readonly comprobanteRepository: ComprobanteRepositoryImpl,
-    private readonly createInvoiceUseCase: CreateInvoiceUseCase, // 👈 ya no usas new
-
+    private readonly createInvoiceUseCase: CreateInvoiceUseCase,
+    private readonly createNCUseCase: CreateNotaCreditoUseCase,
   ) {}
 
   @Post('/invoices')
   async createInvoice(@Body() body: CreateInvoiceDto) {
 
     return this.createInvoiceUseCase.execute(body);
+  }
+  @Post('/credit-notes')
+  async createNC(@Body() body: CreateNCDto) {
+   return await this.createNCUseCase.execute(body);
+ 
   }
 
   @Post('/daily-summaries')

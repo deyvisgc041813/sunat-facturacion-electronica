@@ -1,5 +1,4 @@
 
-import { XmlBuilderService } from 'src/infrastructure/sunat/xml/xml-builder.service';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { ZipUtil } from 'src/util/ZipUtil';
 import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
@@ -15,7 +14,7 @@ import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/s
 
 export class CreateResumenUseCase {
   constructor(
-    private readonly xmlBuilder: XmlBuilderService,
+   //private readonly xmlBuilder: XmlBuilderService,
     private readonly firmaService: FirmaService,
     private readonly sunatService: SunatService,
     private readonly empresaRepo: EmpresaRepositoryImpl,
@@ -43,7 +42,7 @@ export class CreateResumenUseCase {
         );
       }
       const passworDecript = CryptoUtil.decrypt(claveDigital);
-      const xml = this.xmlBuilder.buildResumenBoletas(data);
+      const xml =  "" //this.xmlBuilder.buildResumenBoletas(data);
       // 2. Firmar
       const xmlFirmado = await this.firmaService.firmarXml(
         xml,

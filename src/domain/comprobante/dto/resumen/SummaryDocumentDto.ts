@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DocumentoDto } from './DocumentoDto';
-import { CompanyDto } from '../CompanyDto';
+import { CompanyDto } from '../base/CompanyDto';
 
 export class SummaryDocumentDto {
   @IsString({ message: 'UBLVersion debe ser texto' })
