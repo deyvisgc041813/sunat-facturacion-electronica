@@ -8,7 +8,7 @@ import {
 } from 'src/util/catalogo.enum';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
-import { CreateNCDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNCDto';
+import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 /**
  *  Tipos de Nota de Crédito SUNAT (ResponseCode)
  *
@@ -51,7 +51,7 @@ import { CreateNCDto } from 'src/domain/comprobante/dto/notasComprobante/CreateN
 
 @Injectable()
 export class XmlBuilderNotaCreditoService {
-  buildXml(dto: CreateNCDto): string {
+  buildXml(dto: CreateNotaDto): string {
     const root = create({
       version: '1.0',
       encoding: 'utf-8',
@@ -109,7 +109,7 @@ export class XmlBuilderNotaCreditoService {
     else this.addItemDetalle(root, dto);
     return root.end({ prettyPrint: true });
   }
-  private addItemDefault(root: any, dto: CreateNCDto) {
+  private addItemDefault(root: any, dto: CreateNotaDto) {
     /**
       Caso 1:  Para los motivos 01 (Anulación de la operación) y 02 (Anulación por error en el RUC),
       el comprobante se invalida totalmente, por lo que los importes del único ítem que se envía
@@ -231,7 +231,7 @@ export class XmlBuilderNotaCreditoService {
     }
   }
 
-  private addItemDetalle(root: any, dto: CreateNCDto) {
+  private addItemDetalle(root: any, dto: CreateNotaDto) {
     dto?.details?.forEach((d, i) => {
       const line = root.ele('cac:CreditNoteLine'); // cada ítem de la Nota de Crédito
 
@@ -336,7 +336,7 @@ export class XmlBuilderNotaCreditoService {
     });
   }
 
-  private addLegalMonetaryTotal(root: any, dto: CreateNCDto) {
+  private addLegalMonetaryTotal(root: any, dto: CreateNotaDto) {
     const mtoOperacion =
       (dto.mtoOperGravadas ?? 0) +
       (dto.mtoOperExoneradas ?? 0) +
@@ -353,7 +353,7 @@ export class XmlBuilderNotaCreditoService {
       .txt((dto.mtoImpVenta ?? 0).toFixed(2))
       .up();
   }
-  private addTaxTotal(root: any, dto: CreateNCDto) {
+  private addTaxTotal(root: any, dto: CreateNotaDto) {
     // Caso 1: Anulación de operación (codigo 01 y 02) (todo en cero)
     if (
       dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_OPERACION ||
@@ -445,7 +445,7 @@ export class XmlBuilderNotaCreditoService {
     }
   }
 
-  private addDiscrepancy(root: any, dto: CreateNCDto) {
+  private addDiscrepancy(root: any, dto: CreateNotaDto) {
     // ====== Motivo (DiscrepancyResponse) ======
     const discrepancy = root.ele('cac:DiscrepancyResponse');
     discrepancy
@@ -458,7 +458,7 @@ export class XmlBuilderNotaCreditoService {
     discrepancy.ele('cbc:Description').txt(dto.motivo.descripcion).up();
   }
 
-  private addDescuentoGlobal(root: any, dto: CreateNCDto) {
+  private addDescuentoGlobal(root: any, dto: CreateNotaDto) {
     if (!dto.descuentosGlobales || dto.descuentosGlobales.length === 0) {
       return; // nada que agregar
     }
@@ -479,7 +479,7 @@ export class XmlBuilderNotaCreditoService {
         .up();
     }
   }
-  private addBillingReference(root: any, dto: CreateNCDto) {
+  private addBillingReference(root: any, dto: CreateNotaDto) {
     const billingReference = root.ele('cac:BillingReference');
     const invoiceDocRef = billingReference.ele('cac:InvoiceDocumentReference');
     invoiceDocRef

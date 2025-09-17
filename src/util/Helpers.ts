@@ -209,3 +209,24 @@ export function buildMtoGlobales(mto: any): IMtoGloables[] {
 export function sonMontosCero(...montos: number[]): boolean {
   return montos.every((m) => m === 0);
 }
+export function calcularMora(
+  montoPendiente: number,
+  tasaAnual: number,
+  fechaVencimiento: Date,
+  fechaPago: Date,
+): number {
+  if (!montoPendiente || montoPendiente <= 0) return 0;
+
+  const msPorDia = 1000 * 60 * 60 * 24;
+  const diasAtraso = Math.max(
+    0,
+    Math.floor((fechaPago.getTime() - fechaVencimiento.getTime()) / msPorDia),
+  );
+
+  if (diasAtraso === 0) return 0;
+
+  const tasaDiaria = tasaAnual / 100 / 360;
+  const mora = montoPendiente * tasaDiaria * diasAtraso;
+
+  return parseFloat(mora.toFixed(2));
+}

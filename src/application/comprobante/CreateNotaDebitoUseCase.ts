@@ -8,16 +8,17 @@ import { Injectable } from '@nestjs/common';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
 import { UpdateComprobanteUseCase } from './base/UpdateComprobanteUseCase';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
-import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from '../Serie/FindByEmpAndTipComAndSerieUseCase';
 import { GetByCorrelativoComprobantesUseCase } from './GetByCorrelativoComprobantesUseCase';
 import { FindTasaByCodeUseCase } from '../Tasa/FindTasaByCodeUseCase';
-import { CreateNotaCreditoBaseUseCase } from './base/CreateNotaCreditoBaseUseCase';
+
+import { CreateNotaDebitoBaseUseCase } from './base/CreateNotaDebitoBaseUseCase';
+import { XmlBuilderNotaDebitoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-debito.service';
 @Injectable()
-export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
+export class CreateNotaDebitoUseCase extends CreateNotaDebitoBaseUseCase {
   constructor(
-    xmlNCBuilder: XmlBuilderNotaCreditoService,
+    xmlNDBuilder: XmlBuilderNotaDebitoService,
     firmaService: FirmaService,
     sunatService: SunatService,
     empresaRepo: EmpresaRepositoryImpl,
@@ -30,11 +31,11 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
     findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     findTasaByCodeUseCase : FindTasaByCodeUseCase
   ) {
-    super(xmlNCBuilder, firmaService, sunatService, empresaRepo, errorLogRepo, 
+    super(xmlNDBuilder, firmaService, sunatService, empresaRepo, errorLogRepo, 
       useCreateCaseComprobante, catalogoRepo, useUpdateCaseComprobante,
       sunatLogRepo, findSerieUseCase, findCorrelativoUseCase, findTasaByCodeUseCase);
   }
   protected buildXml(data: CreateNotaDto): string {
-    return this.xmlNCBuilder.buildXml(data);
+    return this.xmlNDBuilder.buildXml(data);
   }
 }

@@ -62,6 +62,14 @@ export enum NotaCreditoMotivo {
   DISMINUCION_VALOR = '09'                   // Disminución en el valor
 }
 
+// Catálogo 09: Códigos de tipo de nota de crédito electrónica
+export enum NotaDebitoMotivo {
+  INTERECES_MORA = '01',  // Cuando se cobra un interés adicional por pago tardío.
+  AUMENTO_VALOR = '02',   // Cuando se incrementa el importe del comprobante (ejemplo: se olvidó facturar un servicio o se corrige un precio).
+  PENALIDADES = '03',     // Cuando se cobra un monto por incumplimiento (ejemplo: devolver un equipo dañado o entregar fuera de plazo).
+}
+
+
 // 🔹 Operaciones Gravadas (con IGV, precio normal)
 export const TIPO_AFECTACION_GRAVADAS: number[] = [
   10, // Gravado - Onerosa

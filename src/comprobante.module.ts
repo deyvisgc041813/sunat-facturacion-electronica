@@ -27,6 +27,8 @@ import { SerieAuditoriaOrmEntity } from './infrastructure/database/entity/SerieA
 import { TributoTasaOrmEntity } from './infrastructure/database/entity/TributoTasaOrmEntity';
 import { TasaTributoModule } from './tasa-tributo.module';
 import { FindTasaByCodeUseCase } from './application/Tasa/FindTasaByCodeUseCase';
+import { CreateNotaDebitoUseCase } from './application/comprobante/CreateNotaDebitoUseCase';
+import { XmlBuilderNotaDebitoService } from './infrastructure/sunat/xml/xml-builder-nota-debito.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -46,6 +48,7 @@ import { FindTasaByCodeUseCase } from './application/Tasa/FindTasaByCodeUseCase'
   providers: [
     XmlBuilderInvoiceService,
     XmlBuilderNotaCreditoService,
+    XmlBuilderNotaDebitoService,
     FirmaService,
     SunatService,
     EmpresaRepositoryImpl,
@@ -57,6 +60,7 @@ import { FindTasaByCodeUseCase } from './application/Tasa/FindTasaByCodeUseCase'
     UpdateComprobanteUseCase,
     CreateInvoiceUseCase,
     CreateNotaCreditoUseCase,
+    CreateNotaDebitoUseCase,
     FindByEmpAndTipComAndSerieUseCase,
     GetByCorrelativoComprobantesUseCase,
     FindTasaByCodeUseCase

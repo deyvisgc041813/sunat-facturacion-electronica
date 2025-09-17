@@ -28,8 +28,9 @@ import { ExportZipComprobanteUseCase } from 'src/application/comprobante/ExportZ
 import { ExportCdrZipComprobanteUseCase } from 'src/application/comprobante/ExportCdrZipComprobanteUseCase';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { CreateInvoiceUseCase } from 'src/application/comprobante/CreateInvoiceUseCase';
-import { CreateNCDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNCDto';
+import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { CreateNotaCreditoUseCase } from 'src/application/comprobante/CreateNotaCreditoUseCase';
+import { CreateNotaDebitoUseCase } from 'src/application/comprobante/CreateNotaDebitoUseCase';
 
 @Controller('documents')
 export class ComprobanteController {
@@ -41,7 +42,9 @@ export class ComprobanteController {
     // private readonly errorLogRepo: ErrorLogRepositoryImpl,
     private readonly comprobanteRepository: ComprobanteRepositoryImpl,
     private readonly createInvoiceUseCase: CreateInvoiceUseCase,
-    private readonly createNCUseCase: CreateNotaCreditoUseCase,
+    private readonly createNcUseCase: CreateNotaCreditoUseCase,
+    private readonly createNdUseCase: CreateNotaDebitoUseCase,
+
   ) {}
 
   @Post('/invoices')
@@ -50,11 +53,15 @@ export class ComprobanteController {
     return this.createInvoiceUseCase.execute(body);
   }
   @Post('/credit-notes')
-  async createNC(@Body() body: CreateNCDto) {
-   return await this.createNCUseCase.execute(body);
+  async createNc(@Body() body: CreateNotaDto) {
+   return await this.createNcUseCase.execute(body);
  
   }
-
+  @Post('/debit-notes')
+  async createNd(@Body() body: CreateNotaDto) {
+   return await this.createNdUseCase.execute(body);
+ 
+  }
   @Post('/daily-summaries')
   async create(@Body() body: SummaryDocumentDto) {
     // const useCase = new CreateResumenUseCase(

@@ -1,5 +1,5 @@
 import { CreateInvoiceDto } from "src/domain/comprobante/dto/invoice/CreateInvoiceDto";
-import { CreateNCDto } from "src/domain/comprobante/dto/notasComprobante/CreateNCDto";
+import { CreateNotaDto } from "src/domain/comprobante/dto/notasComprobante/CreateNotaDto";
 
 export class XmlCommonBuilder {
   //   static buildHeader(xml: any, dto: any) {
@@ -40,7 +40,7 @@ export class XmlCommonBuilder {
     return root;
   }
   // Firma digital base
-  static appendSignature(root: any, dto: CreateInvoiceDto | CreateNCDto) {
+  static appendSignature(root: any, dto: CreateInvoiceDto | CreateNotaDto) {
     const signature = root.ele('cac:Signature');
     signature.ele('cbc:ID').txt('signatureFACTURALOPERU').up();
     signature.ele('cbc:Note').txt('FACTURALO').up();
@@ -62,7 +62,7 @@ export class XmlCommonBuilder {
       .ele('cbc:URI')
       .txt('#signatureFACTURALOPERU');
   }
-  static addCompany(root: any, dto: CreateInvoiceDto | CreateNCDto) {
+  static addCompany(root: any, dto: CreateInvoiceDto | CreateNotaDto) {
     const supplier = root.ele('cac:AccountingSupplierParty').ele('cac:Party');
     supplier
       .ele('cac:PartyIdentification')
@@ -90,7 +90,7 @@ export class XmlCommonBuilder {
     contact.ele('cbc:Telephone').txt('(051) 931091443').up(); // aqui falta  hacelro dinamico
     contact.ele('cbc:ElectronicMail').txt('rdinersiones@gmail.com').up(); // aqui falta  hacelro dinamico
   }
-  static addCustomer(root: any, dto: CreateInvoiceDto | CreateNCDto) {
+  static addCustomer(root: any, dto: CreateInvoiceDto | CreateNotaDto) {
     const customer = root.ele('cac:AccountingCustomerParty').ele('cac:Party');
     customer
       .ele('cac:PartyIdentification')

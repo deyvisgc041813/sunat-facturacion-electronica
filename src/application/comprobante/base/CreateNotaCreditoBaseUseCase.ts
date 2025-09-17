@@ -37,7 +37,7 @@ import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/s
 import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
-import { CreateNCDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNCDto';
+import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
 import { GetByCorrelativoComprobantesUseCase } from '../GetByCorrelativoComprobantesUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
@@ -46,7 +46,7 @@ import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 
-export abstract class CreateNotasBaseUseCase {
+export abstract class CreateNotaCreditoBaseUseCase {
   constructor(
     protected readonly xmlNCBuilder: XmlBuilderNotaCreditoService,
     protected readonly firmaService: FirmaService,
@@ -64,7 +64,7 @@ export abstract class CreateNotasBaseUseCase {
 
   protected abstract buildXml(data: any): string;
 
-  async execute(data: CreateNCDto): Promise<IResponseSunat> {
+  async execute(data: CreateNotaDto): Promise<IResponseSunat> {
     const empresa = await this.validarCatalogOyObtenerCertificado(data);
     let comprobanteId = 0;
     let xmlFirmadoError = '';
@@ -162,7 +162,7 @@ export abstract class CreateNotasBaseUseCase {
     }
   }
 
-  private async validarCatalogOyObtenerCertificado(data: CreateNCDto) {
+  private async validarCatalogOyObtenerCertificado(data: CreateNotaDto) {
     const existCatalogo = await this.catalogoRepo.obtenerDetallePorCatalogo(
       TipoCatalogoEnum.TIPO_COMPROBANTE,
       data.tipoComprobante,
@@ -250,7 +250,7 @@ export abstract class CreateNotasBaseUseCase {
 
   private async procesarErrorSunat(
     error: any,
-    data: CreateNCDto,
+    data: CreateNotaDto,
     comprobanteId: number,
     empresaId: number,
     xmlFirmado: string,
@@ -302,7 +302,7 @@ export abstract class CreateNotasBaseUseCase {
     }
   }
   protected async buildCreditNoteAmountsJson(
-    data: CreateNCDto,
+    data: CreateNotaDto,
     comprobante: ComprobanteResponseDto | null,
   ) {
     switch (data.motivo.codigo) {
@@ -427,7 +427,7 @@ export abstract class CreateNotasBaseUseCase {
   private aplicarDescuentoGlobal(
     mtoDescuentoGlobal: number,
     mtoGlobales: IMtoGloables[],
-    data: CreateNCDto, // dto con client, company, motivo, etc.
+    data: CreateNotaDto, // dto con client, company, motivo, etc.
   ) {
     // Inicializar objeto de cálculo
     const obj = {
@@ -551,7 +551,7 @@ export abstract class CreateNotasBaseUseCase {
   /**
    * Metodos para la nota credito descuento por item codMotivos 05
    */
-  private validarComprobanteCalculado(data: CreateNCDto) {
+  private validarComprobanteCalculado(data: CreateNotaDto) {
     const {
       mtoOperGravadas,
       mtoOperExoneradas,
@@ -674,7 +674,7 @@ export abstract class CreateNotasBaseUseCase {
     };
   }
   async obtenerComprobanteAceptado(
-    data: CreateNCDto,
+    data: CreateNotaDto,
     empresaId: number,
   ): Promise<ComprobanteResponseDto> {
     const numCorrelativoRelacionado = data?.documentoRelacionado?.correlativo;
@@ -750,7 +750,7 @@ export abstract class CreateNotasBaseUseCase {
     };
   }
   private validarComprobanteDevolucionTotal(
-    data: CreateNCDto,
+    data: CreateNotaDto,
     comprobante: ComprobanteResponseDto,
   ) {
     const {
@@ -888,7 +888,7 @@ export abstract class CreateNotasBaseUseCase {
    Los detalles para esta nota credito se toma el item que llega para hacer la devolucion.
   */
   private calcularDevolucionPorItem(
-    data: CreateNCDto,
+    data: CreateNotaDto,
     detailsComprobante: DetailDto[],
   ) {
 
@@ -952,7 +952,7 @@ export abstract class CreateNotasBaseUseCase {
     };
   }
   private validarComprobanteDevolucionPorItem(
-    data: CreateNCDto,
+    data: CreateNotaDto,
     comprobante: ComprobanteResponseDto,
   ) {
     const {
