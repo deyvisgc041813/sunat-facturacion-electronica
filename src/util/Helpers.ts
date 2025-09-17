@@ -1,8 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import {
+  CodigoProductoNotaDebito,
   TIPO_AFECTACION_EXONERADAS,
   TIPO_AFECTACION_GRAVADAS,
   TIPO_AFECTACION_INAFECTAS,
+  TipoAumentoNotaDebito,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
 } from './catalogo.enum';
@@ -14,6 +16,10 @@ import { EstadoCdrResult } from 'src/domain/comprobante/interface/estado.cdr.int
 import { parseStringPromise } from 'xml2js';
 import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
+import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
+import { convertirMontoEnLetras } from './conversion-numero-letra';
+export type TipoNotaDebito = 'GLOBAL' | 'ITEM' | 'INVALIDO';
+
 export function validarSoloNumeros(
   valor: string,
   longitud: number,
@@ -200,11 +206,7 @@ export function buildMtoGlobales(mto: any): IMtoGloables[] {
     tipo: TIPO_AFECTACION_INAFECTAS,
   };
 
-  return [
-    iMtoGlobalesGravadas,
-    iMtoGlobalesExoneradas,
-    iMtoGlobalesInafectas,
-  ]
+  return [iMtoGlobalesGravadas, iMtoGlobalesExoneradas, iMtoGlobalesInafectas];
 }
 export function sonMontosCero(...montos: number[]): boolean {
   return montos.every((m) => m === 0);
@@ -230,3 +232,66 @@ export function calcularMora(
 
   return parseFloat(mora.toFixed(2));
 }
+
+export function identificarTipoAumentoNotaDebito(
+  facturaOriginal: DetailDto[],
+  notaDebito: DetailDto[],
+): TipoNotaDebito {
+  if (!notaDebito || notaDebito.length === 0) {
+    throw new BadRequestException('La nota de débito no tiene detalles');
+  }
+
+  // Caso 1: Aumento global → exactamente 1 item con AU001
+  if (
+    notaDebito.length === 1 &&
+    notaDebito[0].codProducto ===
+      CodigoProductoNotaDebito.AJUSTE_GLOBAL_OPERACION
+  ) {
+    return TipoAumentoNotaDebito.GLOBAL;
+  }
+
+  // Caso 2: Aumento por ítem → todos deben existir en la factura original
+  const codigosFactura = facturaOriginal.map((d) => d.codProducto);
+  const todosExisten = notaDebito.every((d) =>
+    codigosFactura.includes(d.codProducto),
+  );
+
+  if (todosExisten) {
+    return TipoAumentoNotaDebito.ITEM;
+  }
+  // Caso 3: Inválido → mezcla de AU001 + productos o productos inexistentes
+  throw new BadRequestException(
+    'Nota de débito inválida: el detalle contiene códigos de producto que no existen en la factura original o una mezcla de ajuste global con ítems específicos.',
+  );
+}
+
+
+export function validateLegends(
+  legends: { code: string; value: string }[],
+  mtoImpVentaEsperado: number,
+) {
+  if (!legends || legends.length === 0) {
+    throw new BadRequestException(
+      `La Nota es inválida: debe incluir al menos la leyenda de monto en letras (code=1000).`,
+    );
+  }
+
+  const legendMonto = legends.find((l) => l.code === '1000');
+  if (!legendMonto) {
+    throw new BadRequestException(
+      `La Nota es inválida: falta la leyenda obligatoria de monto en letras (code=1000).`,
+    );
+  }
+
+  const montoEnLetrasEsperado = convertirMontoEnLetras(mtoImpVentaEsperado);
+
+  if (legendMonto.value.trim().toUpperCase() !== montoEnLetrasEsperado.trim().toUpperCase()) {
+    throw new BadRequestException(
+      `La leyenda de monto en letras no coincide con el total calculado. 
+      Esperado "${montoEnLetrasEsperado}", recibido "${legendMonto.value}".`,
+    );
+  }
+
+  return true; // Legends válidas
+}
+

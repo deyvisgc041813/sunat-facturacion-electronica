@@ -183,6 +183,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
         serieId,
         estado: EstadoEnumComprobante.ACEPTADO,
       },
+      relations: ['cliente']
     });
     if (!comprobante) {
       throw new NotFoundException(

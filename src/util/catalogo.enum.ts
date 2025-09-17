@@ -69,6 +69,18 @@ export enum NotaDebitoMotivo {
   PENALIDADES = '03',     // Cuando se cobra un monto por incumplimiento (ejemplo: devolver un equipo dañado o entregar fuera de plazo).
 }
 
+export enum CodigoProductoNotaDebito {
+  AJUSTE_GLOBAL_OPERACION = 'AU001', // Ajuste por aumento global de la operación
+  INTERES_POR_MORA = 'INT001',       // Ajuste por intereses de mora
+}
+// nota-debito.enum.ts
+export enum TipoAumentoNotaDebito {
+  GLOBAL = 'GLOBAL',
+  ITEM = 'ITEM',
+  INVALIDO = 'INVALIDO',
+}
+
+
 
 // 🔹 Operaciones Gravadas (con IGV, precio normal)
 export const TIPO_AFECTACION_GRAVADAS: number[] = [
