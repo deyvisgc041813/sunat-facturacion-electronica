@@ -33,6 +33,7 @@ import {
   identificarTipoAumentoNotaDebito,
   setobjectUpdateComprobante,
   sonMontosCero,
+  validateCodigoProductoNotaDebito,
   validateLegends,
 } from 'src/util/Helpers';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
@@ -320,6 +321,17 @@ export abstract class CreateNotaDebitoBaseUseCase {
             comprobante,
           );
         }
+      case NotaDebitoMotivo.PENALIDADES:
+        if (esEntradaSinTotalesDev) {
+          // Modo simple: calular los montos
+          return this.generarPenalidad(data);
+        } else {
+          // Modo calculado: ya se envian los montos calculados
+          return this.validateNotaDebitoCalculadaPenalidad(
+            data,
+            comprobante,
+          );
+        }
     }
   }
 
@@ -428,6 +440,10 @@ export abstract class CreateNotaDebitoBaseUseCase {
      *    (ej. penalidades distintas al interés por mora)
      */
     for (const nuevo of data.details ?? []) {
+      validateCodigoProductoNotaDebito(
+        NotaDebitoMotivo.INTERECES_MORA,
+        nuevo.codProducto,
+      );
       if (nuevo.codProducto === 'INT001') continue; // evitar duplicar el de mora
 
       if (TIPO_AFECTACION_GRAVADAS.includes(nuevo.tipAfeIgv)) {
@@ -498,8 +514,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     // 1. Validar cliente
     if (data.client.numDoc !== comprobante.cliente?.numeroDocumento) {
       throw new BadRequestException(
-        `El RUC/DNI del cliente en la ND (${data.client.numDoc}) no coincide con el de la factura original (${comprobante.cliente?.numeroDocumento}).  
-        Si no puede corregir esta inconsistencia, envíe la estructura básica con montos en cero.`,
+        `El RUC/DNI del cliente en la ND (${data.client.numDoc}) no coincide con el de la factura original (${comprobante.cliente?.numeroDocumento}).`,
       );
     }
 
@@ -651,9 +666,14 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
     // Lista de detalles recalculados
     const detallesCalculados: DetailDto[] = [];
-
+    console.log('inhreo aquii');
     if (tipoAumento === TipoAumentoNotaDebito.GLOBAL) {
       for (const d of data.details) {
+        // Penalidad = siempre nuevo ítem (PEN001) enviado por el cliente
+        validateCodigoProductoNotaDebito(
+          NotaDebitoMotivo.AUMENTO_VALOR,
+          d.codProducto,
+        );
         // Cálculo de IGV a nivel de detalle
         const base = d.mtoValorUnitario ?? 0;
         const igv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
@@ -830,6 +850,172 @@ export abstract class CreateNotaDebitoBaseUseCase {
     // 5. Validar legends (monto en letras obligatorio)
     validateLegends(data.legends, mtoImpVentaEsperado);
 
+    return true;
+  }
+  /**
+   * Reglas para Nota de Débito – Penalidades (cód. motivo 03):
+   *
+   * - Se debe agregar en el detalle únicamente el ítem correspondiente a la penalidad.
+   * - El ítem debe enviarse con la información proporcionada por el cliente.
+   * - La cabecera se debe recalcular considerando el nuevo ítem de penalidad.
+   */
+  private generarPenalidad(
+    data: CreateNotaDto, // datos de entrada (mensaje simple)
+  ): {
+    mtoOperGravadas: number;
+    mtoOperExoneradas: number;
+    mtoOperInafectas: number;
+    mtoIGV: number;
+    subTotal: number;
+    mtoImpVenta: number;
+    details: DetailDto[];
+    legends: { code: string; value: string }[];
+    origen: ProcesoNotaCreditoEnum;
+  } {
+    const totales = {
+      mtoOperGravadas: 0,
+      mtoOperExoneradas: 0,
+      mtoOperInafectas: 0,
+      mtoIGV: 0,
+    };
+
+    const detallesCalculados: DetailDto[] = [];
+
+    for (const d of data.details) {
+      // Penalidad = siempre nuevo ítem (PEN001) enviado por el cliente
+      validateCodigoProductoNotaDebito(
+        NotaDebitoMotivo.PENALIDADES,
+        d.codProducto,
+      );
+      const base = d.mtoValorUnitario ?? 0;
+
+      // IGV solo si está en afectación gravada
+      const igv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
+        : 0;
+
+      const valorVenta = base;
+      const precioUnitario = base + igv;
+
+      const detalleCalculado: DetailDto = {
+        ...d,
+        mtoBaseIgv: base,
+        igv,
+        totalImpuestos: igv,
+        mtoValorVenta: valorVenta,
+        mtoPrecioUnitario: precioUnitario,
+      };
+
+      detallesCalculados.push(detalleCalculado);
+
+      // Acumular totales
+      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+        totales.mtoOperGravadas += base;
+        totales.mtoIGV += igv;
+      } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+        totales.mtoOperExoneradas += valorVenta;
+      } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+        totales.mtoOperInafectas += valorVenta;
+      }
+    }
+
+    // Totales cabecera
+    const subTotal =
+      totales.mtoOperGravadas +
+      totales.mtoOperExoneradas +
+      totales.mtoOperInafectas;
+    const mtoImpVenta = subTotal + totales.mtoIGV;
+
+    // Leyenda obligatoria
+    const legends = [
+      {
+        code: LegendCodeEnum.MONTO_EN_LETRAS,
+        value: convertirMontoEnLetras(mtoImpVenta),
+      },
+    ];
+
+    return {
+      ...totales,
+      subTotal,
+      mtoImpVenta,
+      details: detallesCalculados,
+      legends,
+      origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
+    };
+  }
+  private validateNotaDebitoCalculadaPenalidad(
+    data: CreateNotaDto,
+    comprobanteOriginal: ComprobanteResponseDto,
+  ): boolean {
+    // 1. Validar cliente
+    if (data.client.numDoc !== comprobanteOriginal.cliente?.numeroDocumento) {
+      throw new BadRequestException(
+        `El RUC/DNI del cliente en la ND (${data.client.numDoc}) no coincide con el de la factura original (${comprobanteOriginal.cliente?.numeroDocumento}).`,
+      );
+    }
+
+    // 2. Validar totales de cabecera
+    const subTotalEsperado =
+      (data.mtoOperGravadas ?? 0) +
+      (data.mtoOperExoneradas ?? 0) +
+      (data.mtoOperInafectas ?? 0);
+
+    if (subTotalEsperado !== data.subTotal) {
+      throw new BadRequestException(
+        `El subTotal ${data.subTotal} no coincide con la suma esperada ${subTotalEsperado}.
+          Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+      );
+    }
+
+    const mtoImpVentaEsperado = subTotalEsperado + (data.mtoIGV ?? 0);
+    if (mtoImpVentaEsperado !== data.mtoImpVenta) {
+      throw new BadRequestException(
+        `El total de la venta ${data.mtoImpVenta} no coincide con el esperado ${mtoImpVentaEsperado}.
+        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+      );
+    }
+
+    // 3. Validar detalles
+    for (const d of data.details) {
+      // Validar código de producto: debe ser PEN001
+      if (d.codProducto !== CodigoProductoNotaDebito.PENALIDAD_CONTRATO) {
+        throw new BadRequestException(
+          `El producto ${d.codProducto} no es válido para ND de Penalidades. Debe ser ${CodigoProductoNotaDebito.PENALIDAD_CONTRATO}.`,
+        );
+      }
+
+      const base = d.mtoValorUnitario ?? 0;
+      const igvEsperado = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
+        : 0;
+
+      if (igvEsperado !== d.igv) {
+        throw new BadRequestException(
+          `El IGV del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.igv}.`,
+        );
+      }
+
+      const valorVentaEsperado = +(d.mtoValorUnitario * d.cantidad).toFixed(2);
+      if (valorVentaEsperado !== d.mtoValorVenta) {
+        throw new BadRequestException(
+          `El valor de venta del item ${d.codProducto} no es correcto. Esperado ${valorVentaEsperado}, recibido ${d.mtoValorVenta}.
+           Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        );
+      }
+
+      const precioUnitarioEsperado = +(
+        d.mtoValorUnitario +
+        igvEsperado / (d.cantidad || 1)
+      ).toFixed(2);
+      if (precioUnitarioEsperado !== d.mtoPrecioUnitario) {
+        throw new BadRequestException(
+          `El precio unitario del item ${d.codProducto} no es correcto. Esperado ${precioUnitarioEsperado}, recibido ${d.mtoPrecioUnitario}.
+          Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        );
+      }
+    }
+    // 4. Validar legends (monto en letras obligatorio)
+    validateLegends(data.legends, mtoImpVentaEsperado);
     return true;
   }
 }

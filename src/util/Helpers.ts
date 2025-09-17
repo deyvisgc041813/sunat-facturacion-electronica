@@ -295,3 +295,44 @@ export function validateLegends(
   return true; // Legends válidas
 }
 
+export function validateCodigoProductoNotaDebito(
+  tipoNotaDebito: string,     // código SUNAT: "01", "02", "03"
+  codProducto: string,        // código enviado en el detalle
+  existeEnFactura: boolean = false, // aplica solo para ND 02 por ítem
+): void {
+  switch (tipoNotaDebito) {
+    case '01': // Intereses por mora
+      if (codProducto !== CodigoProductoNotaDebito.INTERES_POR_MORA) {
+        throw new BadRequestException(
+          `El código de producto ${codProducto} no es válido para una Nota de Débito por Mora. Debe ser ${CodigoProductoNotaDebito.INTERES_POR_MORA}.`,
+        );
+      }
+      break;
+
+    case '02': // Aumento en el valor
+      if (
+        codProducto !== CodigoProductoNotaDebito.AJUSTE_GLOBAL_OPERACION &&
+        !existeEnFactura
+      ) {
+        throw new BadRequestException(
+          `El código de producto ${codProducto} no es válido para una Nota de Débito por Aumento. 
+          Debe ser ${CodigoProductoNotaDebito.AJUSTE_GLOBAL_OPERACION} (ajuste global) o un producto existente en la factura original.`,
+        );
+      }
+      break;
+
+    case '03': // Penalidades
+      if (codProducto !== CodigoProductoNotaDebito.PENALIDAD_CONTRATO) {
+        throw new BadRequestException(
+          `El código de producto ${codProducto} no es válido para una Nota de Débito por Penalidad. Debe ser ${CodigoProductoNotaDebito.PENALIDAD_CONTRATO}.`,
+        );
+      }
+      break;
+
+    default:
+      throw new BadRequestException(
+        `Tipo de Nota de Débito ${tipoNotaDebito} no soportado para validación de códigos.`,
+      );
+  }
+}
+

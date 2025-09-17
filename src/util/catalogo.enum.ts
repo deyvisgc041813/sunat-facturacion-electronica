@@ -72,6 +72,7 @@ export enum NotaDebitoMotivo {
 export enum CodigoProductoNotaDebito {
   AJUSTE_GLOBAL_OPERACION = 'AU001', // Ajuste por aumento global de la operación
   INTERES_POR_MORA = 'INT001',       // Ajuste por intereses de mora
+  PENALIDAD_CONTRATO = 'PEN001',     // Ajuste por penalidad
 }
 // nota-debito.enum.ts
 export enum TipoAumentoNotaDebito {
