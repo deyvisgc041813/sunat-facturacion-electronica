@@ -64,9 +64,6 @@ export class SerieRepositoryImpl implements SerieRepository {
     tipoComprobante: string,
     serie: string,
   ): Promise<SerieResponseDto | null> {
-    console.log('empresaId ', empresaId);
-    console.log('tipoComprobante ', tipoComprobante);
-    console.log('serie ', serie);
     const rsp = await this.repo.findOne({
       where: { empresaId, tipoComprobante, serie },
     });

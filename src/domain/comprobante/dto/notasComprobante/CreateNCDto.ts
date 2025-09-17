@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsNumber,
   Min,
+  IsNotEmptyObject,
 } from 'class-validator';
 import { FormaPagoDto } from '../base/FormaPagoDto';
 import { ClienteDto } from '../base/ClienteDto';
@@ -28,29 +29,35 @@ export class CreateNCDto extends ComprobanteBaseDto {
   @ValidateNested({ message: 'Los datos de la empresa no son válidos' })
   @Type(() => CompanyDto)
   company: CompanyDto;
-
+  @IsNotEmptyObject(
+    {},
+    { message: 'El nodo documento relacionado es obligatorio y no puede estar vacío' },
+  )
   @ValidateNested({
     message: 'Los datos de documentos relacionado no son validos',
   })
   @Type(() => DocumentoRelacionadoDto)
   documentoRelacionado: DocumentoRelacionadoDto;
-
+  @IsNotEmptyObject(
+    {},
+    { message: 'El nodo motivo es obligatorio y no puede estar vacío' },
+  )
   @ValidateNested({
     message: 'Los datos del motivo de nota credito no son validos',
   })
   @Type(() => MotivoNotaDto)
   motivo: MotivoNotaDto;
-  
+
   @IsOptional()
   @IsArray({ message: 'Los descuentos globales deben ser un arreglo' })
-  @ValidateNested({ each: true, message: 'Los descuentos globales no son válidos' })
+  @ValidateNested({
+    each: true,
+    message: 'Los descuentos globales no son válidos',
+  })
   @Type(() => DetailDto)
   descuentosGlobales: DescuentoGlobales[];
   @IsOptional()
-  @IsNumber(
-    {},
-    { message: 'El monto de descuento global debe ser numérico' },
-  )
+  @IsNumber({}, { message: 'El monto de descuento global debe ser numérico' })
   @Min(0, { message: 'El monto de descuento global no puede ser negativo' })
   descuentoGlobal: number;
 

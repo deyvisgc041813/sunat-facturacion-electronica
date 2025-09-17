@@ -26,4 +26,4 @@ const certPem = forge.pki.certificateToPem(certBag.cert);
 fs.writeFileSync("key.pem", privateKeyPem);
 fs.writeFileSync("cert.pem", certPem);
 
-console.log("✅ key.pem y cert.pem generados correctamente");
+console.log("key.pem y cert.pem generados correctamente");

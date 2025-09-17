@@ -206,3 +206,6 @@ export function buildMtoGlobales(mto: any): IMtoGloables[] {
     iMtoGlobalesInafectas,
   ]
 }
+export function sonMontosCero(...montos: number[]): boolean {
+  return montos.every((m) => m === 0);
+}

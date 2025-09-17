@@ -73,7 +73,6 @@ export class SunatService {
       if (!match) {
         throw new Error('SUNAT no devolvió CDR');
       }
-      console.log(this.username)
       const cdrZip = Buffer.from(match[1], 'base64');
       const rpta = await this.extraerEstadoCdr(cdrZip);
       return rpta;

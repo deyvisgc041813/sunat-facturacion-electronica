@@ -395,7 +395,6 @@ export class XmlBuilderInvoiceService {
         } else {
           taxableAmount = item.mtoValorVenta ?? 0; // Exoneradas / Inafectas / Exportación usan valor de venta
         }
-        console.log('taxableAmount ', taxableAmount);
         totalesPorTributo[key].taxable += taxableAmount;
         totalesPorTributo[key].tax += item.igv ?? 0;
       }

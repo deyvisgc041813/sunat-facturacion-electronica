@@ -43,6 +43,11 @@ export enum ChargeIndicatorEnum {
   DESCUENTO = 'false',
   RECARGO = 'true'
 }
+// Catálogo 03: Unidad de Medida
+export enum ProcesoNotaCreditoEnum {
+  GENERADA_DESDE_DATOS_SIMPLES = 'generadaDesdeDatosSimples',
+  VALIDADA_DESDE_COMPROBANTE_CALCULADO = 'validadaDesdeComprobanteCalculado'
+}
 
 // Catálogo 09: Códigos de tipo de nota de crédito electrónica
 export enum NotaCreditoMotivo {

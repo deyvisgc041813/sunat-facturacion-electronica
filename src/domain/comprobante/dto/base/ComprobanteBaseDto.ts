@@ -11,7 +11,6 @@ export class ComprobanteBaseDto {
   @IsString({ message: 'La versión UBL debe ser un texto' })
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   ublVersion: string;
-
   @IsString({ message: 'El tipo de operación debe ser un texto' })
   @IsNotEmpty({ message: 'El tipo de operación es obligatorio' })
   tipoOperacion: string;
@@ -62,11 +61,20 @@ export class ComprobanteBaseDto {
   mtoOperInafectas: number;
 
   @IsNumber({}, { message: 'El monto de IGV debe ser numérico' })
+  @Min(0, {
+    message: 'El monto de IGV no puede ser negativo',
+  })
   mtoIGV: number;
 
   @IsNumber({}, { message: 'El subtotal debe ser numérico' })
+  @Min(0, {
+    message: 'El subtotal debe no puede ser negativo',
+  })
   subTotal: number;
 
   @IsNumber({}, { message: 'El monto de importe de venta debe ser numérico' })
+  @Min(0, {
+    message: 'El monto de importe de venta no puede ser negativo',
+  })
   mtoImpVenta: number;
 }

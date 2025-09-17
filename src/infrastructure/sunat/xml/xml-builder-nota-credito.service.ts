@@ -110,8 +110,17 @@ export class XmlBuilderNotaCreditoService {
     return root.end({ prettyPrint: true });
   }
   private addItemDefault(root: any, dto: CreateNCDto) {
-    // Si el motivo es "01 - Anulación de operación"
-    if (dto.motivo?.codigo === NotaCreditoMotivo.ANULACION_OPERACION) {
+    /**
+      Caso 1:  Para los motivos 01 (Anulación de la operación) y 02 (Anulación por error en el RUC),
+      el comprobante se invalida totalmente, por lo que los importes del único ítem que se envía
+      deben ser establecidos en 0.00.
+     * 
+     */
+
+    if (
+      dto.motivo?.codigo === NotaCreditoMotivo.ANULACION_OPERACION ||
+      dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_ERROR_RUC
+    ) {
       const line = root.ele('cac:CreditNoteLine');
       line.ele('cbc:ID').txt('1').up();
       line.ele('cbc:CreditedQuantity', { unitCode: 'NIU' }).txt('1.0000').up();
@@ -145,8 +154,12 @@ export class XmlBuilderNotaCreditoService {
       scheme.ele('cbc:TaxTypeCode').txt('VAT').up();
       return; // Termina aquí
     }
+    /*
+     Caso 2: Resumen normal → generamos por tipo de afectación
+        Cuando la factura o boleta relacionada a la nc es mixta (incluye operaciones gravadas, exoneradas e inafectas),
+        se debe generar un ítem por cada tipo de operación de manera independiente.
 
-    // Caso normal: construimos lista de tipos de operación con monto > 0
+    */
     const tipos = [
       {
         tipo: 'GRAVADA',
@@ -220,54 +233,86 @@ export class XmlBuilderNotaCreditoService {
 
   private addItemDetalle(root: any, dto: CreateNCDto) {
     dto?.details?.forEach((d, i) => {
-      const line = root.ele('cac:CreditNoteLine'); //
+      const line = root.ele('cac:CreditNoteLine'); // cada ítem de la Nota de Crédito
+
+      // ID de la línea (número secuencial)
       line
         .ele('cbc:ID')
         .txt(String(i + 1))
         .up();
+
+      // Cantidad de ítems
       line
         .ele('cbc:CreditedQuantity', { unitCode: d.unidad })
         .txt(d.cantidad.toFixed(4))
         .up();
+
+      // Importe de la línea (valor neto sin IGV)
+      // Aquí va el valor de venta ya con descuento aplicado, sin IGV
+      // Ejemplo: mtoValorVenta = 90.00
       line
         .ele('cbc:LineExtensionAmount', { currencyID: dto.tipoMoneda })
-        .txt(d.mtoValorVenta.toFixed(2))
+        .txt(d.mtoValorVenta.toFixed(2)) // ej: 90.00
         .up();
-      // Precio de referencia (unitario con IGV)
+
+      // Precio de referencia (obligatorio: unitario con IGV)
+      // Es el precio unitario bruto (sin descuento) con IGV incluido
+      // Fórmula: mtoValorUnitario * (1 + IGV/100)
+      // Ejemplo: 100.00 * 1.18 = 118.000000
       const pricingRef = line.ele('cac:PricingReference');
       const altPrice = pricingRef.ele('cac:AlternativeConditionPrice');
       altPrice
         .ele('cbc:PriceAmount', { currencyID: dto.tipoMoneda })
-        .txt(d.mtoPrecioUnitario.toFixed(6))
+        .txt((d.mtoValorUnitario * (1 + d.porcentajeIgv / 100)).toFixed(6)) // ej: 118.000000
         .up();
-      altPrice.ele('cbc:PriceTypeCode').txt('01').up();
+      altPrice.ele('cbc:PriceTypeCode').txt('01').up(); // 01 = precio de referencia con IGV
 
-      // Impuestos
+      // Impuestos de la línea
       const taxTotalLine = line.ele('cac:TaxTotal');
       taxTotalLine
         .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })
-        .txt(d.totalImpuestos.toFixed(2))
+        .txt(d.totalImpuestos.toFixed(2)) //onto total del IGV en esta línea (ej: 16.20)
         .up();
 
       const sub = taxTotalLine.ele('cac:TaxSubtotal');
       sub
         .ele('cbc:TaxableAmount', { currencyID: dto.tipoMoneda })
-        .txt(d.mtoValorVenta.toFixed(2))
+        .txt(d.mtoValorVenta.toFixed(2)) // Base imponible neta sobre la que se calcula el IGV (ej: 90.00)
         .up();
       sub
         .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })
-        .txt(d.totalImpuestos.toFixed(2))
+        .txt(d.totalImpuestos.toFixed(2)) // Monto total del IGV en esta línea (ej: 16.20)
         .up();
 
       const cat = sub.ele('cac:TaxCategory');
-      cat.ele('cbc:Percent').txt(d.porcentajeIgv.toFixed(2)).up();
-      cat.ele('cbc:TaxExemptionReasonCode').txt(String(d.tipAfeIgv)).up();
+      cat.ele('cbc:Percent').txt(d.porcentajeIgv.toFixed(2)).up(); // % IGV aplicado (ej: 18.00)
+
+      cat.ele('cbc:TaxExemptionReasonCode').txt(String(d.tipAfeIgv)).up(); // Código de afectación GRavada, Exonerados, Inafecto (ej: 10 = gravado)
 
       const tributo = MAP_TIPO_AFECTACION_TRIBUTO[d.tipAfeIgv];
       const scheme = cat.ele('cac:TaxScheme');
-      scheme.ele('cbc:ID').txt(tributo.id).up();
-      scheme.ele('cbc:Name').txt(tributo.name).up();
-      scheme.ele('cbc:TaxTypeCode').txt(tributo.taxTypeCode).up();
+      scheme.ele('cbc:ID').txt(tributo.id).up(); // Código del tributo  GRavada, Exonerados, Inafecto (ej: 1000 = gravado)
+      scheme.ele('cbc:Name').txt(tributo.name).up(); // Nombre del tributo GRavada, Exonerados, Inafecto (ej: IGV = gravado)
+      scheme.ele('cbc:TaxTypeCode').txt(tributo.taxTypeCode).up(); // Tipo GRavada, Exonerados, Inafecto  (ej: VAT = gravado)
+
+      // Descuento por ítem (AllowanceCharge)
+      // Solo se incluye si hay descuento y el motivo es 05 (Descuento por ítem)
+      if (d.mtoDescuento && d.mtoDescuento > 0) {
+        const allowanceCharge = line.ele('cac:AllowanceCharge');
+        allowanceCharge.ele('cbc:ChargeIndicator').txt('false').up(); // "false" = descuento
+        allowanceCharge
+          .ele('cbc:AllowanceChargeReasonCode')
+          .txt(dto.motivo.codigo) // 05 = descuento por ítem
+          .up();
+        allowanceCharge
+          .ele('cbc:Amount', { currencyID: dto.tipoMoneda })
+          .txt(d.mtoDescuento.toFixed(2)) // Importe del descuento (ej: 10.00)
+          .up();
+        allowanceCharge
+          .ele('cbc:BaseAmount', { currencyID: dto.tipoMoneda })
+          .txt((d.mtoValorUnitario * d.cantidad).toFixed(2)) // Base sobre la que aplica el descuento (ej: 100.00)
+          .up();
+      }
 
       // Producto
       const item = line.ele('cac:Item');
@@ -278,14 +323,19 @@ export class XmlBuilderNotaCreditoService {
         .txt(d.codProducto)
         .up();
 
-      // Precio sin IGV
+      // Precio unitario neto sin IGV
+      // SUNAT espera aquí el valor unitario ya con descuento aplicado, sin IGV
+      // Fórmula: mtoValorVenta / cantidad
+      // Ejemplo: 90.00 / 1 = 90.000000
+      const priceUnitNet = d.mtoValorVenta / d.cantidad;
       line
         .ele('cac:Price')
         .ele('cbc:PriceAmount', { currencyID: dto.tipoMoneda })
-        .txt(d.mtoValorUnitario.toFixed(6))
+        .txt(priceUnitNet.toFixed(6))
         .up();
     });
   }
+
   private addLegalMonetaryTotal(root: any, dto: CreateNCDto) {
     const mtoOperacion =
       (dto.mtoOperGravadas ?? 0) +
@@ -304,8 +354,11 @@ export class XmlBuilderNotaCreditoService {
       .up();
   }
   private addTaxTotal(root: any, dto: CreateNCDto) {
-    // Caso 1: Anulación de operación (todo en cero)
-    if (dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_OPERACION) {
+    // Caso 1: Anulación de operación (codigo 01 y 02) (todo en cero)
+    if (
+      dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_OPERACION ||
+      dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_ERROR_RUC
+    ) {
       const taxTotal = root.ele('cac:TaxTotal');
       taxTotal
         .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })
@@ -329,8 +382,11 @@ export class XmlBuilderNotaCreditoService {
       scheme.ele('cbc:TaxTypeCode').txt(MAP_TRIBUTOS.IGV.taxTypeCode).up();
       return;
     }
-
-    // Caso 2: Resumen normal → generamos por tipo de afectación
+    /**
+     Caso 2: Resumen normal → generamos por tipo de afectación
+     Cuando la factura o boleta relacionada a la nc es mixta (incluye operaciones gravadas, exoneradas e inafectas),
+     se debe generar el numero de TaxTotal por cada tipo de operación de manera independiente.
+     */
     const tipos = [
       {
         monto: dto.mtoOperGravadas || 0,

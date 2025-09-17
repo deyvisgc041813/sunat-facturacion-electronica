@@ -66,7 +66,6 @@ export abstract class CreateInvoiceBaseUseCase {
         empresa.certificadoDigital,
         empresa.claveCertificado,
       );
-      console.log(xmlFirmado);
       xmlFirmadoError = xmlFirmado;
       // 3. Enviar a SUNAT
       const responseSunat = await this.enviarASunat(

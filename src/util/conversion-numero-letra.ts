@@ -1,3 +1,21 @@
+
+
+export function convertirMontoEnLetras(
+  monto: number,
+  moneda: 'SOLES' | 'DÓLARES' = 'SOLES',
+): string {
+  // Redondeamos a 2 decimales para evitar errores de coma flotante
+  const redondeado = +(monto.toFixed(2));
+
+  // Parte entera
+  const entero = Math.floor(redondeado);
+
+  // Decimales exactos (0–99)
+  const decimales = Math.round((redondeado - entero) * 100);
+
+  const letrasEntero = numeroALetras(entero);
+  return `${letrasEntero} CON ${decimales.toString().padStart(2, '0')}/100 ${moneda}`;
+}
 function numeroALetras(num: number): string {
   if (num === 0) return 'CERO';
 
@@ -108,21 +126,4 @@ function numeroALetras(num: number): string {
   }
 
   return convertir(num).trim();
-}
-
-export function convertirMontoEnLetras(
-  monto: number,
-  moneda: 'SOLES' | 'DÓLARES' = 'SOLES',
-): string {
-  // Redondeamos a 2 decimales para evitar errores de coma flotante
-  const redondeado = +(monto.toFixed(2));
-
-  // Parte entera
-  const entero = Math.floor(redondeado);
-
-  // Decimales exactos (0–99)
-  const decimales = Math.round((redondeado - entero) * 100);
-
-  const letrasEntero = numeroALetras(entero);
-  return `${letrasEntero} CON ${decimales.toString().padStart(2, '0')}/100 ${moneda}`;
 }
