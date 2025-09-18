@@ -39,12 +39,14 @@ import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.inte
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from '../GetByCorrelativoComprobantesUseCase';
+import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoComprobantesUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
 import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
+import { ValidarAnulacionComprobanteUseCase } from '../validate/ValidarAnulacionComprobanteUseCase';
+import { validarComprobante } from 'src/util/notas-credito-debito.validator';
 
 export abstract class CreateNotaCreditoBaseUseCase {
   constructor(
@@ -60,6 +62,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     protected readonly findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
     protected readonly findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
+    protected readonly validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
   ) {}
 
   protected abstract buildXml(data: any): string;
@@ -69,21 +72,25 @@ export abstract class CreateNotaCreditoBaseUseCase {
     let comprobanteId = 0;
     let xmlFirmadoError = '';
     try {
+      validarComprobante(data);
+      if (NotaCreditoMotivo.ANULACION_OPERACION == data.motivo.codigo) {
+        await this.validarAnulacionComprobanteUseCase.execute(
+          empresa.empresaId,
+          data.tipoComprobante,
+          data.motivo.codigo,
+          EstadoEnumComprobante.ACEPTADO,
+          data.documentoRelacionado.serie,
+          data.documentoRelacionado.correlativo,
+        );
+      }
       const tributoTasa = await this.findTasaByCodeUseCase.execute(
         MAP_TRIBUTOS.IGV.id,
       );
       data.porcentajeIgv = !tributoTasa ? 0.18 : (tributoTasa.tasa ?? 0) / 100;
-      let comprobanteOriginal: ComprobanteResponseDto | null = null;
-      const motivosValidosObtenerComprobante = new Set([
-        NotaCreditoMotivo.DESCUENTO_GLOBAL,
-        NotaCreditoMotivo.DEVOLUCION_TOTAL,
-        NotaCreditoMotivo.DEVOLUCION_POR_ITEM,
-      ]);
-      if (motivosValidosObtenerComprobante.has(data.motivo.codigo)) {
-        comprobanteOriginal =
-          (await this.obtenerComprobanteAceptado(data, empresa.empresaId)) ??
-          null;
-      }
+      let comprobanteOriginal = await this.obtenerComprobanteAceptado(
+        data,
+        empresa.empresaId,
+      );
       const mtoCalculados: any = await this.buildCreditNoteAmountsJson(
         data,
         comprobanteOriginal,
@@ -109,13 +116,14 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
         if (mtoCalculados?.details && mtoCalculados.details.length > 0) {
           data.details = mtoCalculados.details;
-        } else if (data.motivo.codigo === NotaCreditoMotivo.DEVOLUCION_POR_ITEM) {
+        } else if (
+          data.motivo.codigo === NotaCreditoMotivo.DEVOLUCION_POR_ITEM
+        ) {
           data.details = data.details; // ya viene del cliente
         } else {
           data.details = comprobanteOriginal?.payloadJson?.details;
         }
-        // data.details = mtoCalculados?.details && mtoCalculados?.details?.length > 0 ? mtoCalculados.details : NotaCreditoMotivo.DEVOLUCION_POR_ITEM == data.motivo.codigo
-        //  ? data.details :  comprobanteOriginal?.payloadJson?.details;
+
         data.legends = mtoCalculados?.legends ?? data.legends;
         jsonFinal = data;
       }
@@ -307,6 +315,8 @@ export abstract class CreateNotaCreditoBaseUseCase {
   ) {
     switch (data.motivo.codigo) {
       case NotaCreditoMotivo.ANULACION_OPERACION:
+        return this.calcularAnulacion(comprobante?.payloadJson?.details);
+        break;
       case NotaCreditoMotivo.ANULACION_ERROR_RUC:
         return null;
       case NotaCreditoMotivo.DESCUENTO_GLOBAL:
@@ -376,6 +386,51 @@ export abstract class CreateNotaCreditoBaseUseCase {
         }
     }
   }
+
+  private calcularAnulacion(details: DetailDto[]) {
+    const { mtoOperGravadas, mtoOperExoneradas, mtoOperInafectas, mtoIGV } =
+      details?.reduce(
+        (acc, d) => {
+          if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+            acc.mtoOperGravadas += d.mtoBaseIgv;
+            acc.mtoIGV += d.igv;
+          } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+            acc.mtoOperExoneradas += d.mtoValorVenta;
+          } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+            acc.mtoOperInafectas += d.mtoValorVenta;
+          }
+          return acc;
+        },
+        {
+          mtoOperGravadas: 0,
+          mtoOperExoneradas: 0,
+          mtoOperInafectas: 0,
+          mtoIGV: 0,
+        },
+      );
+
+    const subTotal = mtoOperGravadas + mtoOperExoneradas + mtoOperInafectas;
+    const mtoImpVenta = subTotal + mtoIGV;
+    const legends = [
+      {
+        code: LegendCodeEnum.MONTO_EN_LETRAS,
+        value: convertirMontoEnLetras(mtoImpVenta),
+      },
+    ];
+
+    return {
+      mtoOperGravadas,
+      mtoOperExoneradas,
+      mtoOperInafectas,
+      mtoIGV,
+      subTotal,
+      mtoImpVenta,
+      details,
+      legends,
+      origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
+    };
+  }
+
   /**
    *
    * Fórmula de prorrateo del descuento global
@@ -402,6 +457,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
   /**
    * Metodos para la nota credito descuento global codMotivos 04
    */
+
   private calcularMtosGlobales(details: DetailDto[]) {
     const { gravadas, exoneradas, inafectas } = details.reduce(
       (acc: any, { tipAfeIgv, mtoValorVenta }) => {
@@ -697,7 +753,9 @@ export abstract class CreateNotaCreditoBaseUseCase {
       serie?.serieId,
     );
     if (!comprobante) {
-      throw new NotFoundException(`No se encontró el comprobante `);
+      throw new NotFoundException(
+       `No se encontró un comprobante asociado al documento relacionado con la serie ${serieRelacionado} y correlativo ${numCorrelativoRelacionado}.`
+      );
     }
     return comprobante;
   }
@@ -891,7 +949,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     data: CreateNotaDto,
     detailsComprobante: DetailDto[],
   ) {
-
     const totales = {
       mtoOperGravadas: 0,
       mtoOperExoneradas: 0,

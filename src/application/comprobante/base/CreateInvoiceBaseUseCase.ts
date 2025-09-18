@@ -58,8 +58,8 @@ export abstract class CreateInvoiceBaseUseCase {
         data,
         empresa.empresaId,
       );
-      comprobanteId = comprobante.response?.comprobanteId ?? 0;
-      data.correlativo = comprobante.response?.correlativo ?? data.correlativo;
+      comprobanteId = comprobante.response?.comprobanteId ?? data.correlativo;
+      data.correlativo = comprobanteId;
       // 2. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
         data,

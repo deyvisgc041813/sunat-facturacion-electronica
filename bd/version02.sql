@@ -445,7 +445,9 @@ BEGIN
 	  SIGNAL SQLSTATE '45000'
 		SET MESSAGE_TEXT = 'Serie no encontrada en la tabla series';
 	END IF;
-  -- 2. Insertar comprobante (estado siempre PENDIENTE)
+  -- 2. Corregir el correlativo en el JSON antes de guardar
+    SET p_payload_json = JSON_SET(p_payload_json, '$.correlativo', v_numero);
+  -- 3. Insertar comprobante (estado siempre PENDIENTE)
   INSERT INTO comprobantes (
     empresa_id, cliente_id, serie_id, numero_comprobante, fecha_emision, moneda,
     mto_oper_gravadas, mto_oper_exoneradas, mto_oper_inafectas, mto_igv, mto_imp_venta, estado,
@@ -457,10 +459,10 @@ BEGIN
     p_payload_json, now(), now()
   );
 
-  -- 3. Guardar el ID generado
+  -- 4. Guardar el ID generado
   SET v_comprobante_id = LAST_INSERT_ID();
 
-  -- 4. Actualizar correlativo de la serie
+  -- 5. Actualizar correlativo de la serie
   UPDATE series
   SET correlativo_actual = v_numero
   WHERE serie_id = v_serie_id;

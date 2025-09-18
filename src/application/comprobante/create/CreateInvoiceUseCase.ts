@@ -4,13 +4,13 @@ import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/em
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
 import {  CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
-import { CreateComprobanteUseCase } from './base/CreateComprobanteUseCase';
 import { Injectable } from '@nestjs/common';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
-import { UpdateComprobanteUseCase } from './base/UpdateComprobanteUseCase';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
 import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
-import { CreateInvoiceBaseUseCase } from './base/CreateInvoiceBaseUseCase';
+import { CreateInvoiceBaseUseCase } from '../base/CreateInvoiceBaseUseCase';
+import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from '../base/UpdateComprobanteUseCase';
 @Injectable()
 export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
   constructor(

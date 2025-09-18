@@ -11,26 +11,23 @@ import {
   Res
 } from '@nestjs/common';
 import type { Response } from 'express'; // 
-import { FirmaService } from '../sunat/firma/firma.service';
-import { EmpresaRepositoryImpl } from '../database/repository/empresa.repository.impl';
-import { ErrorLogRepositoryImpl } from '../database/repository/error-log.repository.impl';
 import { generarCertificadoPrueba } from 'src/certificado/generarCertificadoPrueba';
 import { SummaryDocumentDto } from 'src/domain/comprobante/dto/resumen/SummaryDocumentDto';
-import { GetAllComprobantesUseCase } from 'src/application/comprobante/GetAllComprobantesUseCase';
+import { GetAllComprobantesUseCase } from 'src/application/comprobante/query/GetAllComprobantesUseCase';
 import { ComprobanteRepositoryImpl } from '../database/repository/comprobante.repository.impl';
-import { GetByIdComprobantesUseCase } from 'src/application/comprobante/GetByIdComprobantesUseCase';
+import { GetByIdComprobantesUseCase } from 'src/application/comprobante/query/GetByIdComprobantesUseCase';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
-import { GetByEstadoComprobantesUseCase } from 'src/application/comprobante/GetByEstadoComprobantesUseCase';
-import { GetByEmpresaAndFechaComprobantesUseCase } from 'src/application/comprobante/GetByEmpresaAndFechaComprobantesUseCase';
-import { ExportXmlFirmadoComprobanteUseCase } from 'src/application/comprobante/ExportXmlFirmadoComprobanteUseCase';
+import { GetByEstadoComprobantesUseCase } from 'src/application/comprobante/query/GetByEstadoComprobantesUseCase';
+import { GetByEmpresaAndFechaComprobantesUseCase } from 'src/application/comprobante/query/GetByEmpresaAndFechaComprobantesUseCase';
+import { ExportXmlFirmadoComprobanteUseCase } from 'src/application/comprobante/export/ExportXmlFirmadoComprobanteUseCase';
 
-import { ExportZipComprobanteUseCase } from 'src/application/comprobante/ExportZipComprobanteUseCase';
-import { ExportCdrZipComprobanteUseCase } from 'src/application/comprobante/ExportCdrZipComprobanteUseCase';
+import { ExportZipComprobanteUseCase } from 'src/application/comprobante/export/ExportZipComprobanteUseCase';
+import { ExportCdrZipComprobanteUseCase } from 'src/application/comprobante/export/ExportCdrZipComprobanteUseCase';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
-import { CreateInvoiceUseCase } from 'src/application/comprobante/CreateInvoiceUseCase';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
-import { CreateNotaCreditoUseCase } from 'src/application/comprobante/CreateNotaCreditoUseCase';
-import { CreateNotaDebitoUseCase } from 'src/application/comprobante/CreateNotaDebitoUseCase';
+import { CreateNotaCreditoUseCase } from 'src/application/comprobante/create/CreateNotaCreditoUseCase';
+import { CreateNotaDebitoUseCase } from 'src/application/comprobante/create/CreateNotaDebitoUseCase';
+import { CreateInvoiceUseCase } from 'src/application/comprobante/create/CreateInvoiceUseCase';
 
 @Controller('documents')
 export class ComprobanteController {

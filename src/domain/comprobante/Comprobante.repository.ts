@@ -98,4 +98,12 @@ export interface ConprobanteRepository {
     id: number,
     motivo: string,
   ): Promise<{ status: boolean; message: string }>;
+  findComprobanteByReferencia(
+    empresaId: number,
+    tipoComprobante:string, 
+    motivo: string,
+    estado: string,
+    serieRef: string,
+    correlativoRef: number,
+  ): Promise<ComprobanteResponseDto | null>;
 }

@@ -355,10 +355,7 @@ export class XmlBuilderNotaCreditoService {
   }
   private addTaxTotal(root: any, dto: CreateNotaDto) {
     // Caso 1: Anulación de operación (codigo 01 y 02) (todo en cero)
-    if (
-      dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_OPERACION ||
-      dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_ERROR_RUC
-    ) {
+    if (dto?.motivo?.codigo === NotaCreditoMotivo.ANULACION_ERROR_RUC) {
       const taxTotal = root.ele('cac:TaxTotal');
       taxTotal
         .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })

@@ -46,7 +46,7 @@ import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from '../GetByCorrelativoComprobantesUseCase';
+import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoComprobantesUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
@@ -79,6 +79,10 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const tributoTasa = await this.findTasaByCodeUseCase.execute(
         MAP_TRIBUTOS.IGV.id,
       );
+      const tributoTasaAnualMoras = await this.findTasaByCodeUseCase.execute(
+        MAP_TRIBUTOS.MORA.id,
+      );
+      const tasaAnual = tributoTasaAnualMoras?.tasa ?? 14.64;
       data.porcentajeIgv = !tributoTasa ? 0.18 : (tributoTasa.tasa ?? 0) / 100;
       const comprobanteOriginal = await this.obtenerComprobanteAceptado(
         data,
@@ -87,8 +91,8 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const mtoCalculados: any = await this.buildCreditNoteAmountsJson(
         data,
         comprobanteOriginal,
+        tasaAnual,
       );
-
       data.mtoOperGravadas =
         mtoCalculados?.mtoOperGravadas ?? data.mtoOperGravadas;
       data.mtoOperExoneradas =
@@ -285,6 +289,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
   protected async buildCreditNoteAmountsJson(
     data: CreateNotaDto,
     comprobante: ComprobanteResponseDto,
+    tasaAnual: number,
   ) {
     const esEntradaSinTotalesDev = sonMontosCero(
       data.mtoOperGravadas,
@@ -301,6 +306,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
             data,
             comprobante,
             comprobante.fechaEmision,
+            tasaAnual,
           );
         } else {
           // Modo calculado: ya se envian los montos calculados
@@ -313,10 +319,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       case NotaDebitoMotivo.AUMENTO_VALOR:
         if (esEntradaSinTotalesDev) {
           // Modo simple: calular los montos
-          return this.generarAumentoValor(
-            data,
-            comprobante,
-          );
+          return this.generarAumentoValor(data, comprobante);
         } else {
           // Modo calculado: ya se envian los montos calculados
           return this.validateNotaDebitoCalculadaAumentoValor(
@@ -359,7 +362,10 @@ export abstract class CreateNotaDebitoBaseUseCase {
       serie?.serieId,
     );
     if (!comprobante) {
-      throw new NotFoundException(`No se encontró el comprobante `);
+      throw new NotFoundException(
+       `No se encontró un comprobante asociado al documento relacionado con la serie ${serieRelacionado} y correlativo ${numCorrelativoRelacionado}.`
+
+      );
     }
     return comprobante;
   }
@@ -375,6 +381,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     data: CreateNotaDto,
     comprobanteOriginal: ComprobanteResponseDto,
     fechaVencimiento: Date,
+    tasaAnual: number,
   ) {
     // 1. Validar cliente
     validarNumeroDocumentoCliente(
@@ -407,7 +414,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
     /**
      * 2. Calcular la mora usando tasa SUNAT o contractual
      */
-    const tasaAnual = 14.64; // % anual (parametrizable)
     const fechaPago = new Date(data.fechaPago ?? new Date());
 
     const montoMora = calcularMora(

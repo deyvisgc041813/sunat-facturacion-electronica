@@ -16,19 +16,20 @@ import { CatalogoModule } from './catalogo.module';
 import { UpdateComprobanteUseCase } from './application/comprobante/base/UpdateComprobanteUseCase';
 import { SunatLogOrmEntity } from './infrastructure/database/entity/SunatLogOrmEntity';
 import { SunatLogRepositoryImpl } from './infrastructure/database/repository/sunat-log.repository.impl';
-import { CreateInvoiceUseCase } from './application/comprobante/CreateInvoiceUseCase';
 import { XmlBuilderInvoiceService } from './infrastructure/sunat/xml/xml-builder-invoice.service';
-import { CreateNotaCreditoUseCase } from './application/comprobante/CreateNotaCreditoUseCase';
+import { CreateNotaCreditoUseCase } from './application/comprobante/create/CreateNotaCreditoUseCase';
 import { XmlBuilderNotaCreditoService } from './infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { FindByEmpAndTipComAndSerieUseCase } from './application/Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from './application/comprobante/GetByCorrelativoComprobantesUseCase';
+import { GetByCorrelativoComprobantesUseCase } from './application/comprobante/query/GetByCorrelativoComprobantesUseCase';
 import { SerieRepositoryImpl } from './infrastructure/database/repository/serie.repository.impl';
 import { SerieAuditoriaOrmEntity } from './infrastructure/database/entity/SerieAuditoriaOrmEntity';
 import { TributoTasaOrmEntity } from './infrastructure/database/entity/TributoTasaOrmEntity';
 import { TasaTributoModule } from './tasa-tributo.module';
 import { FindTasaByCodeUseCase } from './application/Tasa/FindTasaByCodeUseCase';
-import { CreateNotaDebitoUseCase } from './application/comprobante/CreateNotaDebitoUseCase';
+import { CreateNotaDebitoUseCase } from './application/comprobante/create/CreateNotaDebitoUseCase';
 import { XmlBuilderNotaDebitoService } from './infrastructure/sunat/xml/xml-builder-nota-debito.service';
+import { CreateInvoiceUseCase } from './application/comprobante/create/CreateInvoiceUseCase';
+import { ValidarAnulacionComprobanteUseCase } from './application/comprobante/validate/ValidarAnulacionComprobanteUseCase';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -63,6 +64,7 @@ import { XmlBuilderNotaDebitoService } from './infrastructure/sunat/xml/xml-buil
     CreateNotaDebitoUseCase,
     FindByEmpAndTipComAndSerieUseCase,
     GetByCorrelativoComprobantesUseCase,
+    ValidarAnulacionComprobanteUseCase,
     FindTasaByCodeUseCase
   ],
   exports: [
@@ -70,6 +72,7 @@ import { XmlBuilderNotaDebitoService } from './infrastructure/sunat/xml/xml-buil
     ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
+    ValidarAnulacionComprobanteUseCase
   ],
 })
 export class ComprobanteModule {}

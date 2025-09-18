@@ -186,7 +186,9 @@ export const MAP_TRIBUTOS: Record<string, { id: string; name: string; taxTypeCod
   IGV: { id: '1000', name: 'IGV', taxTypeCode: 'VAT' },
   ICBPER: { id: '7152', name: 'ICBPER', taxTypeCode: 'OTH' },
   EXO: { id: '9997', name: 'EXO', taxTypeCode: 'VAT' },
-  INA: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }
+  INA: { id: '9998', name: 'INA', taxTypeCode: 'FRE' },
+  MORA: { id: 'TIM2025', name: 'MOTA', taxTypeCode: 'MORA' },
+  
 };
 
 

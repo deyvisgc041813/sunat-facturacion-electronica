@@ -14,6 +14,7 @@ import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { DataSource } from 'typeorm';
 import { ICreateComprobante } from 'src/domain/comprobante/interface/create.interface';
 import { IResponsePs } from 'src/domain/comprobante/interface/response.ps.interface';
+import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 
 @Injectable()
 export class ComprobanteRepositoryImpl implements ConprobanteRepository {
@@ -174,7 +175,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   async findByEmpAndSerieAndNumCorreAceptado(
     empresaId: number,
     numCorrelativo: number,
-    serieId: number
+    serieId: number,
   ): Promise<ComprobanteResponseDto | null> {
     const comprobante = await this.repo.findOne({
       where: {
@@ -183,13 +184,9 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
         serieId,
         estado: EstadoEnumComprobante.ACEPTADO,
       },
-      relations: ['cliente']
+      relations: ['cliente'],
     });
-    if (!comprobante) {
-      throw new NotFoundException(
-        `No se encontró el comprobante con el numero correlativo ${numCorrelativo} para la empresa ${empresaId}.`,
-      );
-    }
+    if (!comprobante) return null
     return ComprobanteMapper.toDomain(comprobante);
   }
   async findByEmpresaAndFecha(
@@ -215,5 +212,52 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
       { estado: EstadoEnumComprobante.ANULADO, motivoEstado: motivo },
     );
     return { status: true, message: 'Comprobante anulado correctamente' };
+  }
+  async findComprobanteByReferencia(
+    empresaId: number,
+    tipoComprobante: string,
+    motivo: string,
+    estado: string,
+    serieRef: string,
+    correlativoRef: number,
+  ): Promise<ComprobanteResponseDto | null> {
+    const qb = this.repo.createQueryBuilder('c');
+    qb.where('c.empresa_id = :empresaId', { empresaId })
+      .andWhere(
+        "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.tipoComprobante')) = :tipoComprobante",
+        { tipoComprobante },
+      )
+      .andWhere('c.estado = :estado', { estado });
+
+    // Solo aplicar filtros de comprobanteReferencia cuando es NC (07) o ND (08)
+    if (
+      tipoComprobante === TipoComprobanteEnum.NOTA_CREDITO ||
+      tipoComprobante === TipoComprobanteEnum.NOTA_DEBITO
+    ) {
+      qb.andWhere(
+        "JSON_CONTAINS_PATH(c.payload_json, 'one', '$.documentoRelacionado.serie') = 1",
+      )
+        .andWhere(
+          "JSON_CONTAINS_PATH(c.payload_json, 'one', '$.documentoRelacionado.correlativo') = 1",
+        )
+        .andWhere(
+          "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.documentoRelacionado.serie')) = :serieRef",
+          { serieRef },
+        )
+        .andWhere(
+          "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.documentoRelacionado.correlativo')) = :correlativoRef",
+          { correlativoRef: String(correlativoRef) },
+        )
+        .andWhere(
+          "JSON_CONTAINS_PATH(c.payload_json, 'one', '$.motivo.codigo') = 1",
+        )
+        .andWhere(
+          "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.motivo.codigo')) = :motivo",
+          { motivo },
+        );
+    }
+    const comprobante = await qb.getOne();
+    if (!comprobante) return null;
+    return ComprobanteMapper.toDomain(comprobante);
   }
 }
