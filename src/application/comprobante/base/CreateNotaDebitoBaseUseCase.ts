@@ -23,16 +23,20 @@ import {
   TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
+  TipoDocumentoLetras,
 } from 'src/util/catalogo.enum';
 import { UpdateComprobanteUseCase } from './UpdateComprobanteUseCase';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import {
+  buildMensajeRecalculo,
   calcularMora,
   extraerHashCpe,
   identificarTipoAumentoNotaDebito,
   setobjectUpdateComprobante,
   sonMontosCero,
+  validarNumeroDocumentoCliente,
+  validarTipoAfectacionUnico,
   validateCodigoProductoNotaDebito,
   validateLegends,
 } from 'src/util/Helpers';
@@ -110,8 +114,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         empresa.certificadoDigital,
         empresa.claveCertificado,
       );
-
-      console.log(xmlFirmado);
+      //console.log(xmlFirmado);
       xmlFirmadoError = xmlFirmado;
       // 3. Enviar a SUNAT
       const responseSunat = await this.sunatService.sendBill(
@@ -296,7 +299,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo simple: calular los montos
           return this.generarMontosNotaDebitoMora(
             data,
-            comprobante?.payloadJson?.details,
+            comprobante,
             comprobante.fechaEmision,
           );
         } else {
@@ -312,7 +315,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo simple: calular los montos
           return this.generarAumentoValor(
             data,
-            comprobante?.payloadJson?.details,
+            comprobante,
           );
         } else {
           // Modo calculado: ya se envian los montos calculados
@@ -324,13 +327,10 @@ export abstract class CreateNotaDebitoBaseUseCase {
       case NotaDebitoMotivo.PENALIDADES:
         if (esEntradaSinTotalesDev) {
           // Modo simple: calular los montos
-          return this.generarPenalidad(data);
+          return this.generarPenalidad(data, comprobante);
         } else {
           // Modo calculado: ya se envian los montos calculados
-          return this.validateNotaDebitoCalculadaPenalidad(
-            data,
-            comprobante,
-          );
+          return this.validateNotaDebitoCalculadaPenalidad(data, comprobante);
         }
     }
   }
@@ -371,12 +371,21 @@ export abstract class CreateNotaDebitoBaseUseCase {
    * - La cabecera debe recalcularse considerando los montos del comprobante original
    *   más el nuevo ítem de interés por mora.
    */
-
   private generarMontosNotaDebitoMora(
     data: CreateNotaDto,
-    detailsComprobante: DetailDto[],
+    comprobanteOriginal: ComprobanteResponseDto,
     fechaVencimiento: Date,
   ) {
+    // 1. Validar cliente
+    validarNumeroDocumentoCliente(
+      TipoDocumentoLetras.NOTA_DEBITO,
+      data.client.numDoc,
+      comprobanteOriginal.cliente?.numeroDocumento ?? '',
+    );
+    const detailsComprobante = comprobanteOriginal?.payloadJson
+      ?.details as DetailDto[];
+    const tipAfeigv = validarTipoAfectacionUnico(detailsComprobante);
+
     const totales = {
       mtoOperGravadas: 0,
       mtoOperExoneradas: 0,
@@ -410,27 +419,46 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
     /**
      * 3. Generar ítem de mora (si hay monto > 0),
-     *    pero tomando la metadata del detalle ya recibido en data.details
+     *    tomando la metadata de data.details
      */
     if (montoMora > 0) {
-      const baseMora = data.details?.find((d) => d.codProducto === 'INT001');
-      if (baseMora) {
-        const igv = +(montoMora * (baseMora.porcentajeIgv / 100)).toFixed(2);
+      const baseMora = data.details?.find(
+        (d) => d.codProducto === CodigoProductoNotaDebito.INTERES_POR_MORA,
+      );
 
-        const itemMora: DetailDto = {
-          ...baseMora, // conserva codProducto, unidad, descripcion, etc.
-          cantidad: 1,
-          mtoValorUnitario: montoMora,
-          mtoBaseIgv: montoMora,
-          igv,
-          totalImpuestos: igv,
-          mtoValorVenta: montoMora,
-          mtoPrecioUnitario: +(
+      if (baseMora) {
+        let igv = 0;
+        let mtoBaseIgv = 0;
+        let mtoValorVenta = montoMora;
+        let mtoPrecioUnitario = montoMora;
+        let porcentajeIgv = 0;
+        if (TIPO_AFECTACION_GRAVADAS.includes(baseMora.tipAfeIgv)) {
+          mtoBaseIgv = montoMora;
+          igv = +(montoMora * (baseMora.porcentajeIgv / 100)).toFixed(2);
+          mtoPrecioUnitario = +(
             montoMora *
             (1 + baseMora.porcentajeIgv / 100)
-          ).toFixed(2),
+          ).toFixed(2);
+          porcentajeIgv = baseMora.porcentajeIgv;
+        } else if (
+          TIPO_AFECTACION_EXONERADAS.includes(baseMora.tipAfeIgv) ||
+          TIPO_AFECTACION_INAFECTAS.includes(baseMora.tipAfeIgv)
+        ) {
+          mtoBaseIgv = 0;
+          igv = 0;
+          mtoPrecioUnitario = montoMora;
+        }
+        const itemMora: DetailDto = {
+          ...baseMora,
+          cantidad: 1,
+          mtoValorUnitario: montoMora,
+          mtoBaseIgv,
+          igv,
+          totalImpuestos: igv,
+          mtoValorVenta,
+          mtoPrecioUnitario,
+          porcentajeIgv,
         };
-
         detallesNotaDebito.push(itemMora);
       }
     }
@@ -444,7 +472,17 @@ export abstract class CreateNotaDebitoBaseUseCase {
         NotaDebitoMotivo.INTERECES_MORA,
         nuevo.codProducto,
       );
-      if (nuevo.codProducto === 'INT001') continue; // evitar duplicar el de mora
+      // Validar que el tipo de afectación de ND coincida con el de la factura original
+      if (nuevo.tipAfeIgv !== tipAfeigv) {
+        throw new BadRequestException(
+          `El tipo de afectación IGV del ítem ${nuevo.codProducto} (${nuevo.tipAfeIgv}) no coincide con el de la factura original (${tipAfeigv}). 
+           La Nota de Débito por Mora debe mantener la misma naturaleza tributaria que el comprobante original.`,
+        );
+      }
+
+      // Evitar duplicar el ítem de mora (ya se calculó en el bloque anterior)
+      if (nuevo.codProducto === CodigoProductoNotaDebito.INTERES_POR_MORA)
+        continue;
 
       if (TIPO_AFECTACION_GRAVADAS.includes(nuevo.tipAfeIgv)) {
         nuevo.mtoBaseIgv = nuevo.mtoValorUnitario * nuevo.cantidad;
@@ -461,12 +499,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
         nuevo.mtoBaseIgv = 0;
         nuevo.igv = 0;
         nuevo.totalImpuestos = 0;
+        nuevo.porcentajeIgv = 0;
         nuevo.mtoValorVenta = nuevo.mtoValorUnitario * nuevo.cantidad;
         nuevo.mtoPrecioUnitario = nuevo.mtoValorUnitario;
       }
+
       detallesNotaDebito.push(nuevo);
     }
-
     /**
      * 5. Recalcular totales globales
      */
@@ -512,19 +551,19 @@ export abstract class CreateNotaDebitoBaseUseCase {
     const original = comprobante.payloadJson;
 
     // 1. Validar cliente
-    if (data.client.numDoc !== comprobante.cliente?.numeroDocumento) {
-      throw new BadRequestException(
-        `El RUC/DNI del cliente en la ND (${data.client.numDoc}) no coincide con el de la factura original (${comprobante.cliente?.numeroDocumento}).`,
-      );
-    }
+    validarNumeroDocumentoCliente(
+      TipoDocumentoLetras.NOTA_DEBITO,
+      data.client.numDoc,
+      comprobante.cliente?.numeroDocumento ?? '',
+    );
 
-    // 1. Calcular monto pendiente (base del original)
+    // 2. Calcular monto pendiente (base del original)
     const montoPendiente =
       (original.mtoOperGravadas ?? 0) +
       (original.mtoOperExoneradas ?? 0) +
       (original.mtoOperInafectas ?? 0);
 
-    // 2. Calcular mora esperada
+    // 3. Calcular mora esperada
     const tasaAnual = 14.64; // parametrizable
     const fechaVencimiento = new Date(original?.fechaEmision);
     const montoMora = calcularMora(
@@ -533,101 +572,127 @@ export abstract class CreateNotaDebitoBaseUseCase {
       fechaVencimiento,
       fechaPago,
     );
-    const igvMora = +(montoMora * data.porcentajeIgv).toFixed(2); // 18% fijo
 
-    // 3. Validar que los totales no sean menores al comprobante original
-    if (data.mtoOperGravadas < original.mtoOperGravadas) {
-      throw new BadRequestException(
-        `El monto gravado (${data.mtoOperGravadas}) no puede ser menor al comprobante original (${original.mtoOperGravadas}).
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
-      );
+    // 4. Determinar el tipo de afectación único del comprobante
+    const tipAfeigv = validarTipoAfectacionUnico(original.details);
+
+    // 5. Inicializar valores esperados
+    let mtoOperGravadasEsperado = original.mtoOperGravadas ?? 0;
+    let mtoOperExoneradasEsperado = original.mtoOperExoneradas ?? 0;
+    let mtoOperInafectasEsperado = original.mtoOperInafectas ?? 0;
+    let mtoIGVEsperado = original.mtoIGV ?? 0;
+
+    let igvMora = 0;
+
+    // 6. Sumar la mora en la categoría correspondiente
+    if (TIPO_AFECTACION_GRAVADAS.includes(tipAfeigv)) {
+      igvMora = +(montoMora * data.porcentajeIgv).toFixed(2);
+      mtoOperGravadasEsperado += montoMora;
+      mtoIGVEsperado += igvMora;
+    } else if (TIPO_AFECTACION_EXONERADAS.includes(tipAfeigv)) {
+      mtoOperExoneradasEsperado += montoMora;
+    } else if (TIPO_AFECTACION_INAFECTAS.includes(tipAfeigv)) {
+      mtoOperInafectasEsperado += montoMora;
     }
-    if (data.mtoOperExoneradas < original.mtoOperExoneradas) {
-      throw new BadRequestException(
-        `El monto exonerado (${data.mtoOperExoneradas}) no puede ser menor al comprobante original (${original.mtoOperExoneradas})).
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
-      );
-    }
-    if (data.mtoOperInafectas < original.mtoOperInafectas) {
-      throw new BadRequestException(
-        `El monto inafecto (${data.mtoOperInafectas}) no puede ser menor al comprobante original (${original.mtoOperInafectas})).
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
-      );
-    }
-    // 4. Validar ítems
+
+    const subTotalEsperado =
+      mtoOperGravadasEsperado +
+      mtoOperExoneradasEsperado +
+      mtoOperInafectasEsperado;
+
+    const mtoImpVentaEsperado = subTotalEsperado + mtoIGVEsperado;
+
+    // 7. Validar ítems
     for (const d of data.details) {
       const existeEnOriginal = original.details.find(
         (o) => o.codProducto === d.codProducto,
       );
 
       if (existeEnOriginal) {
-        // No se deben modificar campos clave del ítem original
         if (d.unidad !== existeEnOriginal.unidad) {
           throw new BadRequestException(
-            `El ítem ${d.codProducto} no puede cambiar de unidad (${d.unidad} vs ${existeEnOriginal.unidad}))`,
-          );
-        }
-        if (d.codProducto !== existeEnOriginal.codProducto) {
-          throw new BadRequestException(
-            `El ítem recibido tiene código ${d.codProducto}, pero en el comprobante original era ${existeEnOriginal.codProducto}.`,
+            `El ítem ${d.codProducto} no puede cambiar de unidad (${d.unidad} vs ${existeEnOriginal.unidad})`,
           );
         }
       } else {
-        // Solo se admite el ítem de mora
-        if (d.codProducto !== CodigoProductoNotaDebito.INTERES_POR_MORA) {
+        validateCodigoProductoNotaDebito(
+          NotaDebitoMotivo.INTERECES_MORA,
+          d.codProducto,
+        );
+        // Validar cálculo del ítem de mora
+        if (d.mtoValorUnitario !== montoMora) {
           throw new BadRequestException(
-            `El ítem ${d.codProducto} no existe en el comprobante original y no es un concepto válido adicional.`,
+            `El ítem de mora está mal calculado.  Esperado: Valor ${montoMora}, Recibido: Valor ${d.mtoValorUnitario}. 
+             ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
           );
         }
 
-        // Validar que el ítem de mora esté bien calculado
-        if (d.mtoValorUnitario !== montoMora || d.igv !== igvMora) {
-          throw new BadRequestException(
-            `El ítem de mora está mal calculado. Se esperaba valor ${montoMora} e IGV ${igvMora}.
-            Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
-          );
+        // Solo validar IGV si la factura original es gravada
+        if (TIPO_AFECTACION_GRAVADAS.includes(tipAfeigv)) {
+          if (d.igv !== igvMora) {
+            throw new BadRequestException(
+              `El ítem de mora está mal calculado en IGV.   Esperado: ${igvMora}, Recibido: ${d.igv}. 
+                ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+            );
+          }
+        } else {
+          if (d.igv !== 0) {
+            throw new BadRequestException(
+              `El ítem de mora no debe tener IGV porque el comprobante original es ${tipAfeigv}. 
+              Se recibió IGV ${d.igv} en lugar de 0. 
+              ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+            );
+          }
         }
       }
     }
 
-    // 5. Totales esperados
-    const mtoOperGravadasEsperado = +(
-      original.mtoOperGravadas + montoMora
-    ).toFixed(2);
-    const mtoIGVEsperado = +(original.mtoIGV + igvMora).toFixed(2);
-    const subTotalEsperado =
-      mtoOperGravadasEsperado +
-      (original.mtoOperExoneradas ?? 0) +
-      (original.mtoOperInafectas ?? 0);
-    const mtoImpVentaEsperado = subTotalEsperado + mtoIGVEsperado;
-
-    // 6. Validar totales
+    // 8. Validaciones de totales
     if (data.mtoOperGravadas !== mtoOperGravadasEsperado) {
       throw new BadRequestException(
-        `El monto gravado (${data.mtoOperGravadas}) no coincide con el esperado (${mtoOperGravadasEsperado})).
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        `El monto gravado (${data.mtoOperGravadas}) no coincide con el esperado (${mtoOperGravadasEsperado}). 
+       ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
     }
+
     if (data.mtoIGV !== mtoIGVEsperado) {
       throw new BadRequestException(
-        `El IGV (${data.mtoIGV}) no coincide con el esperado (${mtoIGVEsperado})).
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        `El IGV (${data.mtoIGV}) no coincide con el esperado (${mtoIGVEsperado}). 
+       ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
     }
+
+    if (data.mtoOperExoneradas !== mtoOperExoneradasEsperado) {
+      throw new BadRequestException(
+        `El monto exonerado (${data.mtoOperExoneradas}) no coincide con el esperado (${mtoOperExoneradasEsperado}). 
+       ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+      );
+    }
+
+    if (data.mtoOperInafectas !== mtoOperInafectasEsperado) {
+      throw new BadRequestException(
+        `El monto inafecto (${data.mtoOperInafectas}) no coincide con el esperado (${mtoOperInafectasEsperado}). 
+       ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+      );
+    }
+
     if (data.subTotal !== subTotalEsperado) {
       throw new BadRequestException(
-        `El subTotal (${data.subTotal}) no coincide con el esperado (${subTotalEsperado})).
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        `El subTotal (${data.subTotal}) no coincide con el esperado (${subTotalEsperado}). 
+       ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
     }
+
     if (data.mtoImpVenta !== mtoImpVentaEsperado) {
       throw new BadRequestException(
-        `El total de la venta (${data.mtoImpVenta}) no coincide con el esperado (${mtoImpVentaEsperado})).
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        `El total de la venta (${data.mtoImpVenta}) no coincide con el esperado (${mtoImpVentaEsperado}). 
+       ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
     }
-    // 7. Validar legends (monto en letras obligatorio)
+
+    // 9. Validar leyendas
     validateLegends(data.legends, mtoImpVentaEsperado);
+
     return true;
   }
 
@@ -650,14 +715,22 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
   private generarAumentoValor(
     data: CreateNotaDto,
-    detailsComprobante: DetailDto[],
+    comprobanteOriginal: ComprobanteResponseDto,
   ) {
+    // 1. Validar cliente
+    validarNumeroDocumentoCliente(
+      TipoDocumentoLetras.NOTA_DEBITO,
+      data.client.numDoc,
+      comprobanteOriginal.cliente?.numeroDocumento ?? '',
+    );
     const totales = {
       mtoOperGravadas: 0,
       mtoOperExoneradas: 0,
       mtoOperInafectas: 0,
       mtoIGV: 0,
     };
+    const detailsComprobante = comprobanteOriginal?.payloadJson
+      ?.details as DetailDto[];
 
     const tipoAumento = identificarTipoAumentoNotaDebito(
       detailsComprobante,
@@ -666,7 +739,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
     // Lista de detalles recalculados
     const detallesCalculados: DetailDto[] = [];
-    console.log('inhreo aquii');
     if (tipoAumento === TipoAumentoNotaDebito.GLOBAL) {
       for (const d of data.details) {
         // Penalidad = siempre nuevo ítem (PEN001) enviado por el cliente
@@ -679,6 +751,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
         const igv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
           ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
           : 0;
+        const porcentajeIgv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+          ? d.porcentajeIgv
+          : 0;
         const valorVenta = base;
         const precioUnitario = base + igv;
         // Recalculo del detalle
@@ -689,6 +764,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           totalImpuestos: igv,
           mtoValorVenta: valorVenta,
           mtoPrecioUnitario: precioUnitario,
+          porcentajeIgv,
         };
         detallesCalculados.push(detalleCalculado);
         // Acumular totales
@@ -720,7 +796,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
           : 0;
         const valorVenta = base;
         const precioUnitario = base + igv;
-
+        const porcentajeIgv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+          ? d.porcentajeIgv
+          : 0;
         const detalleCalculado: DetailDto = {
           ...d,
           mtoBaseIgv: base,
@@ -728,6 +806,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           totalImpuestos: igv,
           mtoValorVenta: valorVenta,
           mtoPrecioUnitario: precioUnitario,
+          porcentajeIgv,
         };
         detallesCalculados.push(detalleCalculado);
 
@@ -756,7 +835,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
         value: convertirMontoEnLetras(mtoImpVenta),
       },
     ];
-
     return {
       ...totales,
       subTotal,
@@ -771,11 +849,11 @@ export abstract class CreateNotaDebitoBaseUseCase {
     comprobanteOriginal: ComprobanteResponseDto,
   ): boolean {
     // 1. Validar cliente
-    if (data.client.numDoc !== comprobanteOriginal.cliente?.numeroDocumento) {
-      throw new BadRequestException(
-        `El RUC/DNI del cliente en la ND (${data.client.numDoc}) no coincide con el de la factura original (${comprobanteOriginal.cliente?.numeroDocumento}).`,
-      );
-    }
+    validarNumeroDocumentoCliente(
+      TipoDocumentoLetras.NOTA_DEBITO,
+      data.client.numDoc,
+      comprobanteOriginal.cliente?.numeroDocumento ?? '',
+    );
     // 2. Validar totales de cabecera
     const subTotalEsperado =
       (data.mtoOperGravadas ?? 0) +
@@ -785,7 +863,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     if (subTotalEsperado !== data.subTotal) {
       throw new BadRequestException(
         `El subTotal ${data.subTotal} no coincide con la suma esperada ${subTotalEsperado}. 
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+      ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
     }
 
@@ -794,8 +872,67 @@ export abstract class CreateNotaDebitoBaseUseCase {
     if (mtoImpVentaEsperado !== data.mtoImpVenta) {
       throw new BadRequestException(
         `El total de la venta ${data.mtoImpVenta} no coincide con la suma esperada ${mtoImpVentaEsperado}. 
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+      ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
+    }
+
+    // 2.1 Validación de cabecera: coherencia entre afectaciones
+    const tieneGravadas = (data.mtoOperGravadas ?? 0) > 0;
+    const tieneExoneradas = (data.mtoOperExoneradas ?? 0) > 0;
+    const tieneInafectas = (data.mtoOperInafectas ?? 0) > 0;
+
+    if (tieneGravadas) {
+      if (
+        (data.mtoOperExoneradas ?? 0) > 0 ||
+        (data.mtoOperInafectas ?? 0) > 0
+      ) {
+        throw new BadRequestException(
+          `Cuando existe monto gravado, los montos exonerados e inafectos deben ser cero.`,
+        );
+      }
+    }
+
+    if (tieneExoneradas) {
+      if ((data.mtoOperGravadas ?? 0) > 0 || (data.mtoOperInafectas ?? 0) > 0) {
+        throw new BadRequestException(
+          `Cuando existe monto exonerado, los montos gravados e inafectos deben ser cero.`,
+        );
+      }
+    }
+
+    if (tieneInafectas) {
+      if (
+        (data.mtoOperGravadas ?? 0) > 0 ||
+        (data.mtoOperExoneradas ?? 0) > 0
+      ) {
+        throw new BadRequestException(
+          `Cuando existe monto inafecto, los montos gravados y exonerados deben ser cero.`,
+        );
+      }
+    }
+
+    // 2.2 Validaciones especiales para aumento global (AU001)
+    const detallesGlobal = data.details.filter(
+      (d) => d.codProducto === CodigoProductoNotaDebito.AJUSTE_GLOBAL_OPERACION,
+    );
+
+    if (detallesGlobal.length > 1) {
+      throw new BadRequestException(
+        `Para un aumento global (AU001) solo debe existir un ítem en el detalle.`,
+      );
+    }
+
+    if (detallesGlobal.length === 1) {
+      const cantidadAfectaciones = [
+        tieneGravadas,
+        tieneExoneradas,
+        tieneInafectas,
+      ].filter(Boolean).length;
+      if (cantidadAfectaciones !== 1) {
+        throw new BadRequestException(
+          `En un aumento global (AU001) solo puede existir un tipo de afectación (gravada, exonerada o inafecta).`,
+        );
+      }
     }
 
     // 3. Validar detalles
@@ -804,12 +941,47 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const igvEsperado = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
         ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
         : 0;
+      // 4. Validar escenario: por ítem vs global
 
-      if (igvEsperado !== d.igv) {
+      const itemFactura = comprobanteOriginal?.payloadJson?.details.find(
+        (f) => f.codProducto === d.codProducto,
+      );
+
+      if (
+        !itemFactura &&
+        d.codProducto !== CodigoProductoNotaDebito.AJUSTE_GLOBAL_OPERACION
+      ) {
         throw new BadRequestException(
-          `El IGV del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.igv}. 
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+          `El producto ${d.codProducto} no existe en la factura original ni corresponde a un ajuste global.`,
         );
+      }
+
+      // Validar que el tipo de afectación coincida
+      if (itemFactura && itemFactura.tipAfeIgv !== d.tipAfeIgv) {
+        throw new BadRequestException(
+          `El item ${d.codProducto} tiene un tipo de afectación distinto al de la factura original. 
+          Original: ${itemFactura.tipAfeIgv}, ND: ${d.tipAfeIgv}.`,
+        );
+      }
+      // 3.1 Validar IGV según tipo de afectación
+      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+        if (igvEsperado !== d.igv) {
+          throw new BadRequestException(
+            `El IGV del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.igv}. 
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+          );
+        }
+      } else {
+        if ((d.igv ?? 0) !== 0) {
+          throw new BadRequestException(
+            `El IGV del item ${d.codProducto} debe ser 0 porque su afectación (${d.tipAfeIgv}) no está gravada. Recibido ${d.igv}.`,
+          );
+        }
+      }
+      // 3.2 Validar totalImpuestos
+      if (d.totalImpuestos !== igvEsperado) {
+        throw new BadRequestException(`El total de impuestos del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.totalImpuestos}. 
+            ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`);
       }
 
       const valorVentaEsperado = +(d.mtoValorUnitario * d.cantidad).toFixed(2);
@@ -817,7 +989,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       if (valorVentaEsperado !== d.mtoValorVenta) {
         throw new BadRequestException(
           `El valor de venta del item ${d.codProducto} no es correcto. Esperado ${valorVentaEsperado}, recibido ${d.mtoValorVenta}. 
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+         ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
         );
       }
 
@@ -829,8 +1001,42 @@ export abstract class CreateNotaDebitoBaseUseCase {
       if (precioUnitarioEsperado !== d.mtoPrecioUnitario) {
         throw new BadRequestException(
           `El precio unitario del item ${d.codProducto} no es correcto. Esperado ${precioUnitarioEsperado}, recibido ${d.mtoPrecioUnitario}. 
-          Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
         );
+      }
+
+      // 3.2 Validar coherencia entre detalle y cabecera
+      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+        if (
+          (data.mtoOperExoneradas ?? 0) > 0 ||
+          (data.mtoOperInafectas ?? 0) > 0
+        ) {
+          throw new BadRequestException(
+            `El item ${d.codProducto} es GRAVADO (tipAfeIgv ${d.tipAfeIgv}), pero en la cabecera se reportan montos exonerados o inafectos.`,
+          );
+        }
+      }
+
+      if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+        if (
+          (data.mtoOperGravadas ?? 0) > 0 ||
+          (data.mtoOperInafectas ?? 0) > 0
+        ) {
+          throw new BadRequestException(
+            `El item ${d.codProducto} es EXONERADO (tipAfeIgv ${d.tipAfeIgv}), pero en la cabecera se reportan montos gravados o inafectos.`,
+          );
+        }
+      }
+
+      if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+        if (
+          (data.mtoOperGravadas ?? 0) > 0 ||
+          (data.mtoOperExoneradas ?? 0) > 0
+        ) {
+          throw new BadRequestException(
+            `El item ${d.codProducto} es INAFECTO (tipAfeIgv ${d.tipAfeIgv}), pero en la cabecera se reportan montos gravados o exonerados.`,
+          );
+        }
       }
 
       // 4. Validar escenario: por ítem vs global
@@ -847,11 +1053,69 @@ export abstract class CreateNotaDebitoBaseUseCase {
         );
       }
     }
+
     // 5. Validar legends (monto en letras obligatorio)
     validateLegends(data.legends, mtoImpVentaEsperado);
 
+    // 6. Validar que la cabecera coincida con la suma de los detalles (para ítem)
+    let totalGravadas = 0;
+    let totalExoneradas = 0;
+    let totalInafectas = 0;
+    let totalIgv = 0;
+
+    for (const d of data.details) {
+      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+        totalGravadas += d.mtoBaseIgv ?? 0;
+        totalIgv += d.igv ?? 0;
+      } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+        totalExoneradas += d.mtoValorVenta ?? 0;
+      } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+        totalInafectas += d.mtoValorVenta ?? 0;
+      }
+    }
+
+    const subTotalDetalles = totalGravadas + totalExoneradas + totalInafectas;
+    const mtoImpVentaDetalles = subTotalDetalles + totalIgv;
+
+    if (data.mtoOperGravadas !== totalGravadas) {
+      throw new BadRequestException(
+        `El monto de operaciones gravadas en cabecera (${data.mtoOperGravadas}) no coincide con la suma de los detalles (${totalGravadas}).`,
+      );
+    }
+
+    if (data.mtoOperExoneradas !== totalExoneradas) {
+      throw new BadRequestException(
+        `El monto de operaciones exoneradas en cabecera (${data.mtoOperExoneradas}) no coincide con la suma de los detalles (${totalExoneradas}).`,
+      );
+    }
+
+    if (data.mtoOperInafectas !== totalInafectas) {
+      throw new BadRequestException(
+        `El monto de operaciones inafectas en cabecera (${data.mtoOperInafectas}) no coincide con la suma de los detalles (${totalInafectas}).`,
+      );
+    }
+
+    if (data.mtoIGV !== totalIgv) {
+      throw new BadRequestException(
+        `El IGV en cabecera (${data.mtoIGV}) no coincide con la suma de los detalles (${totalIgv}).`,
+      );
+    }
+
+    if (data.subTotal !== subTotalDetalles) {
+      throw new BadRequestException(
+        `El SubTotal en cabecera (${data.subTotal}) no coincide con la suma de los detalles (${subTotalDetalles}).`,
+      );
+    }
+
+    if (data.mtoImpVenta !== mtoImpVentaDetalles) {
+      throw new BadRequestException(
+        `El total de la venta en cabecera (${data.mtoImpVenta}) no coincide con la suma de los detalles (${mtoImpVentaDetalles}).`,
+      );
+    }
+
     return true;
   }
+
   /**
    * Reglas para Nota de Débito – Penalidades (cód. motivo 03):
    *
@@ -861,6 +1125,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
    */
   private generarPenalidad(
     data: CreateNotaDto, // datos de entrada (mensaje simple)
+    comprobanteOriginal: ComprobanteResponseDto,
   ): {
     mtoOperGravadas: number;
     mtoOperExoneradas: number;
@@ -878,22 +1143,29 @@ export abstract class CreateNotaDebitoBaseUseCase {
       mtoOperInafectas: 0,
       mtoIGV: 0,
     };
+    validarNumeroDocumentoCliente(
+      TipoDocumentoLetras.NOTA_DEBITO,
+      data.client.numDoc,
+      comprobanteOriginal.cliente?.numeroDocumento ?? '',
+    );
 
     const detallesCalculados: DetailDto[] = [];
-
     for (const d of data.details) {
       // Penalidad = siempre nuevo ítem (PEN001) enviado por el cliente
       validateCodigoProductoNotaDebito(
         NotaDebitoMotivo.PENALIDADES,
         d.codProducto,
       );
+      this.validarTipoAfectacionPenalidad(comprobanteOriginal, d.tipAfeIgv);
       const base = d.mtoValorUnitario ?? 0;
 
       // IGV solo si está en afectación gravada
       const igv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
         ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
         : 0;
-
+      const porcentajeIgv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        ? d.porcentajeIgv
+        : 0;
       const valorVenta = base;
       const precioUnitario = base + igv;
 
@@ -904,6 +1176,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         totalImpuestos: igv,
         mtoValorVenta: valorVenta,
         mtoPrecioUnitario: precioUnitario,
+        porcentajeIgv,
       };
 
       detallesCalculados.push(detalleCalculado);
@@ -943,79 +1216,239 @@ export abstract class CreateNotaDebitoBaseUseCase {
       origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
     };
   }
+
   private validateNotaDebitoCalculadaPenalidad(
     data: CreateNotaDto,
     comprobanteOriginal: ComprobanteResponseDto,
   ): boolean {
     // 1. Validar cliente
-    if (data.client.numDoc !== comprobanteOriginal.cliente?.numeroDocumento) {
+    validarNumeroDocumentoCliente(
+      TipoDocumentoLetras.NOTA_DEBITO,
+      data.client.numDoc,
+      comprobanteOriginal.cliente?.numeroDocumento ?? '',
+    );
+
+    // 2. Validar que exista un solo detalle
+    if (data.details.length !== 1) {
       throw new BadRequestException(
-        `El RUC/DNI del cliente en la ND (${data.client.numDoc}) no coincide con el de la factura original (${comprobanteOriginal.cliente?.numeroDocumento}).`,
+        `La ND por penalidad debe contener exactamente un (1) ítem de detalle.`,
       );
     }
 
-    // 2. Validar totales de cabecera
-    const subTotalEsperado =
-      (data.mtoOperGravadas ?? 0) +
-      (data.mtoOperExoneradas ?? 0) +
-      (data.mtoOperInafectas ?? 0);
+    const d = data.details[0];
 
-    if (subTotalEsperado !== data.subTotal) {
+    // 3. Validar código de producto fijo (PEN001)
+    validateCodigoProductoNotaDebito(
+      NotaDebitoMotivo.PENALIDADES,
+      d.codProducto,
+    );
+    this.validarTipoAfectacionPenalidad(comprobanteOriginal, d.tipAfeIgv);
+
+    // 3.1 Validar coherencia tipAfeIgv vs montos
+    if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+      if (d.mtoBaseIgv !== 0) {
+        throw new BadRequestException(
+          `El item ${d.codProducto} es exonerado (afectación ${d.tipAfeIgv}), por lo tanto mtoBaseIgv debe ser 0, recibido ${d.mtoBaseIgv}.
+           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+        );
+      }
+      if (d.porcentajeIgv !== 0) {
+        throw new BadRequestException(
+          `El item ${d.codProducto} es exonerado (afectación ${d.tipAfeIgv}), por lo tanto porcentajeIgv debe ser 0, recibido ${d.porcentajeIgv}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+        );
+      }
+      if (d.igv !== 0 || d.totalImpuestos !== 0) {
+        throw new BadRequestException(
+          `El item ${d.codProducto} es exonerado (afectación ${d.tipAfeIgv}), no debe tener IGV ni impuestos, recibido igv=${d.igv}, totalImpuestos=${d.totalImpuestos}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+        );
+      }
+    }
+
+    if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+      if (d.mtoBaseIgv !== 0) {
+        throw new BadRequestException(
+          `El item ${d.codProducto} es inafecto (afectación ${d.tipAfeIgv}), por lo tanto mtoBaseIgv debe ser 0, recibido ${d.mtoBaseIgv}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}
+          `,
+        );
+      }
+      if (d.porcentajeIgv !== 0) {
+        throw new BadRequestException(
+          `El item ${d.codProducto} es inafecto (afectación ${d.tipAfeIgv}), por lo tanto porcentajeIgv debe ser 0, recibido ${d.porcentajeIgv}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}
+          `,
+        );
+      }
+      if (d.igv !== 0 || d.totalImpuestos !== 0) {
+        throw new BadRequestException(
+          `El item ${d.codProducto} es inafecto (afectación ${d.tipAfeIgv}), no debe tener IGV ni impuestos, recibido igv=${d.igv}, totalImpuestos=${d.totalImpuestos}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+        );
+      }
+    }
+
+    // 6. Validar cálculos del detalle
+    const base = d.mtoValorUnitario ?? 0;
+    const igvEsperado = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+      ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
+      : 0;
+
+    if (d.igv !== igvEsperado) {
       throw new BadRequestException(
-        `El subTotal ${data.subTotal} no coincide con la suma esperada ${subTotalEsperado}.
-          Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        `El IGV del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.igv}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
     }
 
-    const mtoImpVentaEsperado = subTotalEsperado + (data.mtoIGV ?? 0);
-    if (mtoImpVentaEsperado !== data.mtoImpVenta) {
+    if (d.totalImpuestos !== igvEsperado) {
       throw new BadRequestException(
-        `El total de la venta ${data.mtoImpVenta} no coincide con el esperado ${mtoImpVentaEsperado}.
-        Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+        `El total de impuestos del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.totalImpuestos}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
       );
     }
 
-    // 3. Validar detalles
-    for (const d of data.details) {
-      // Validar código de producto: debe ser PEN001
-      if (d.codProducto !== CodigoProductoNotaDebito.PENALIDAD_CONTRATO) {
-        throw new BadRequestException(
-          `El producto ${d.codProducto} no es válido para ND de Penalidades. Debe ser ${CodigoProductoNotaDebito.PENALIDAD_CONTRATO}.`,
-        );
-      }
+    const valorVentaEsperado = +(d.mtoValorUnitario * d.cantidad).toFixed(2);
+    if (valorVentaEsperado !== d.mtoValorVenta) {
+      throw new BadRequestException(
+        `El valor de venta del item ${d.codProducto} no es correcto. Esperado ${valorVentaEsperado}, recibido ${d.mtoValorVenta}.
+       ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+      );
+    }
 
-      const base = d.mtoValorUnitario ?? 0;
-      const igvEsperado = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
-        ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
-        : 0;
+    const precioUnitarioEsperado = +(
+      d.mtoValorUnitario +
+      igvEsperado / (d.cantidad || 1)
+    ).toFixed(2);
+    if (precioUnitarioEsperado !== d.mtoPrecioUnitario) {
+      throw new BadRequestException(
+        `El precio unitario del item ${d.codProducto} no es correcto. Esperado ${precioUnitarioEsperado}, recibido ${d.mtoPrecioUnitario}.
+      ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+      );
+    }
 
-      if (igvEsperado !== d.igv) {
+    // 7. Validar cabecera vs detalle
+    if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+      if (data.mtoOperGravadas !== d.mtoBaseIgv) {
         throw new BadRequestException(
-          `El IGV del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.igv}.`,
-        );
-      }
-
-      const valorVentaEsperado = +(d.mtoValorUnitario * d.cantidad).toFixed(2);
-      if (valorVentaEsperado !== d.mtoValorVenta) {
-        throw new BadRequestException(
-          `El valor de venta del item ${d.codProducto} no es correcto. Esperado ${valorVentaEsperado}, recibido ${d.mtoValorVenta}.
-           Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
-        );
-      }
-
-      const precioUnitarioEsperado = +(
-        d.mtoValorUnitario +
-        igvEsperado / (d.cantidad || 1)
-      ).toFixed(2);
-      if (precioUnitarioEsperado !== d.mtoPrecioUnitario) {
-        throw new BadRequestException(
-          `El precio unitario del item ${d.codProducto} no es correcto. Esperado ${precioUnitarioEsperado}, recibido ${d.mtoPrecioUnitario}.
-          Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero.`,
+          `El monto gravado en cabecera (${data.mtoOperGravadas}) no coincide con el detalle (${d.mtoBaseIgv}).
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
         );
       }
     }
-    // 4. Validar legends (monto en letras obligatorio)
-    validateLegends(data.legends, mtoImpVentaEsperado);
+    if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+      if (data.mtoOperExoneradas !== d.mtoValorVenta) {
+        throw new BadRequestException(
+          `El monto exonerado en cabecera (${data.mtoOperExoneradas}) no coincide con el detalle (${d.mtoValorVenta}).
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+        );
+      }
+    }
+    if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+      if (data.mtoOperInafectas !== d.mtoValorVenta) {
+        throw new BadRequestException(
+          `El monto inafecto en cabecera (${data.mtoOperInafectas}) no coincide con el detalle (${d.mtoValorVenta}).
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+        );
+      }
+    }
+
+    // Validar que la cabecera corresponda al tipo de afectación
+    if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+      if (data.mtoOperExoneradas !== 0 || data.mtoOperInafectas !== 0) {
+        throw new BadRequestException(
+          `Si la ND es gravada, no puede tener montos en Exoneradas ni Inafectas.`,
+        );
+      }
+    }
+
+    if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+      if (data.mtoOperGravadas !== 0 || data.mtoOperInafectas !== 0) {
+        throw new BadRequestException(
+          `Si la ND es exonerada, no puede tener montos en Gravadas ni Inafectas.`,
+        );
+      }
+    }
+
+    if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+      if (data.mtoOperGravadas !== 0 || data.mtoOperExoneradas !== 0) {
+        throw new BadRequestException(
+          `Si la ND es inafecta, no puede tener montos en Gravadas ni Exoneradas.`,
+        );
+      }
+    }
+
+    if (data.mtoIGV !== d.igv) {
+      throw new BadRequestException(
+        `El IGV en cabecera (${data.mtoIGV}) no coincide con el detalle (${d.igv}).
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+      );
+    }
+
+    if (data.subTotal !== d.mtoValorVenta) {
+      throw new BadRequestException(
+        `El SubTotal en cabecera (${data.subTotal}) no coincide con el detalle (${d.mtoValorVenta}).
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+      );
+    }
+
+    if (data.mtoImpVenta !== d.mtoValorVenta + d.igv) {
+      throw new BadRequestException(
+        `El Total en cabecera (${data.mtoImpVenta}) no coincide con el detalle (${d.mtoValorVenta + d.igv}).
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_DEBITO)}`,
+      );
+    }
+
+    // 8. Validar legends
+    validateLegends(data.legends, d.mtoValorVenta);
+
     return true;
+  }
+
+  private validarTipoAfectacionPenalidad(
+    comprobanteOriginal: ComprobanteResponseDto,
+    tipoAfecIgv: number,
+  ) {
+    // 4. Determinar afectación tributaria de la factura original a nivel de detalle
+    const tiposAfectacionFactura = new Set(
+      comprobanteOriginal.payloadJson.details.map((f) => f.tipAfeIgv),
+    );
+
+    const esFacturaGravada = [...tiposAfectacionFactura].every((t: any) =>
+      TIPO_AFECTACION_GRAVADAS.includes(t),
+    );
+    const esFacturaExonerada = [...tiposAfectacionFactura].every((t: any) =>
+      TIPO_AFECTACION_EXONERADAS.includes(t),
+    );
+    const esFacturaInafecta = [...tiposAfectacionFactura].every((t: any) =>
+      TIPO_AFECTACION_INAFECTAS.includes(t),
+    );
+
+    if (!(esFacturaGravada || esFacturaExonerada || esFacturaInafecta)) {
+      throw new BadRequestException(
+        `La factura original contiene ítems con diferentes tipos de afectación tributaria. 
+       No es posible emitir ND de penalidad en este caso.`,
+      );
+    }
+    // 5. Validar que la ND herede el régimen de la factura
+    if (esFacturaGravada && !TIPO_AFECTACION_GRAVADAS.includes(tipoAfecIgv)) {
+      throw new BadRequestException(
+        `La factura original es gravada, pero la ND de penalidad se envió con afectación distinta (${tipoAfecIgv}). Debe ser gravada (ej. 10).`,
+      );
+    }
+    if (
+      esFacturaExonerada &&
+      !TIPO_AFECTACION_EXONERADAS.includes(tipoAfecIgv)
+    ) {
+      throw new BadRequestException(
+        `La factura original es exonerada, pero la ND de penalidad se envió con afectación distinta (${tipoAfecIgv}). Debe ser exonerada (20).`,
+      );
+    }
+    if (esFacturaInafecta && !TIPO_AFECTACION_INAFECTAS.includes(tipoAfecIgv)) {
+      throw new BadRequestException(
+        `La factura original es inafecta, pero la ND de penalidad se envió con afectación distinta (${tipoAfecIgv}). Debe ser inafecta (30–36).`,
+      );
+    }
   }
 }

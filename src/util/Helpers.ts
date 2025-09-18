@@ -7,6 +7,7 @@ import {
   TipoAumentoNotaDebito,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
+  TipoDocumentoLetras,
 } from './catalogo.enum';
 import { CreateClienteDto } from '../domain/cliente/dto/CreateRequestDto';
 import { UpdateClienteDto } from '../domain/cliente/dto/UpdateClienteDto';
@@ -18,6 +19,7 @@ import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.inte
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { convertirMontoEnLetras } from './conversion-numero-letra';
+import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 export type TipoNotaDebito = 'GLOBAL' | 'ITEM' | 'INVALIDO';
 
 export function validarSoloNumeros(
@@ -265,7 +267,6 @@ export function identificarTipoAumentoNotaDebito(
   );
 }
 
-
 export function validateLegends(
   legends: { code: string; value: string }[],
   mtoImpVentaEsperado: number,
@@ -285,7 +286,10 @@ export function validateLegends(
 
   const montoEnLetrasEsperado = convertirMontoEnLetras(mtoImpVentaEsperado);
 
-  if (legendMonto.value.trim().toUpperCase() !== montoEnLetrasEsperado.trim().toUpperCase()) {
+  if (
+    legendMonto.value.trim().toUpperCase() !==
+    montoEnLetrasEsperado.trim().toUpperCase()
+  ) {
     throw new BadRequestException(
       `La leyenda de monto en letras no coincide con el total calculado. 
       Esperado "${montoEnLetrasEsperado}", recibido "${legendMonto.value}".`,
@@ -296,8 +300,8 @@ export function validateLegends(
 }
 
 export function validateCodigoProductoNotaDebito(
-  tipoNotaDebito: string,     // código SUNAT: "01", "02", "03"
-  codProducto: string,        // código enviado en el detalle
+  tipoNotaDebito: string, // código SUNAT: "01", "02", "03"
+  codProducto: string, // código enviado en el detalle
   existeEnFactura: boolean = false, // aplica solo para ND 02 por ítem
 ): void {
   switch (tipoNotaDebito) {
@@ -336,3 +340,38 @@ export function validateCodigoProductoNotaDebito(
   }
 }
 
+/**
+ * Valida que el comprobante original tenga un único tipo de afectación IGV
+ * y retorna dicho tipo.
+ *
+ * @throws BadRequestException si existen múltiples tipos de afectación en la factura original
+ */
+export function validarTipoAfectacionUnico(details: DetailDto[]): any {
+  const tiposAfeOriginales = [...new Set(details.map((d) => d.tipAfeIgv))];
+
+  if (tiposAfeOriginales.length > 1) {
+    throw new BadRequestException(
+      `El comprobante original contiene ítems con diferentes tipos de afectación IGV (${tiposAfeOriginales.join(
+        ', ',
+      )}). No es posible generar una Nota de Débito global.`,
+    );
+  }
+
+  return tiposAfeOriginales[0];
+}
+
+export function buildMensajeRecalculo(tipo: TipoDocumentoLetras): string {
+  return `La ${tipo} debe enviarse con los montos correctos o, en su defecto, envíe con los montos en cero para que el sistema los recalcule.`;
+}
+export function validarNumeroDocumentoCliente(
+  tipo: TipoDocumentoLetras,
+  numDocNd: string,
+  numDocOriginal: string,
+) {
+  // 1. Validar cliente
+  if (numDocNd !== numDocOriginal) {
+    throw new BadRequestException(
+      `El RUC/DNI del cliente en la ${tipo} (${numDocNd}) no coincide con el de la factura original (${numDocOriginal}).`,
+    );
+  }
+}

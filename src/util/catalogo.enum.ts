@@ -80,6 +80,12 @@ export enum TipoAumentoNotaDebito {
   ITEM = 'ITEM',
   INVALIDO = 'INVALIDO',
 }
+export enum TipoDocumentoLetras {
+  FACTURA = 'Factura',
+  BOLETA = 'Boleta',
+  NOTA_DEBITO = 'Nota de Débito',
+  NOTA_CREDITO = 'Nota de Crédito',
+}
 
 
 
