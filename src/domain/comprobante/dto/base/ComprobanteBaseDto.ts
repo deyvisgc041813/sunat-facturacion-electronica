@@ -5,14 +5,20 @@ import {
   IsNumber,
   IsISO8601,
   Min,
+  IsIn,
 } from 'class-validator';
 
 export class ComprobanteBaseDto {
   @IsString({ message: 'La versión UBL debe ser un texto' })
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
+  @IsIn(['2.1'], { message: 'La versión UBL debe ser 2.1' })
   ublVersion: string;
   @IsString({ message: 'El tipo de operación debe ser un texto' })
   @IsNotEmpty({ message: 'El tipo de operación es obligatorio' })
+  @IsIn(['0101', '0200', '0301'], {
+    message:
+      'El tipo de operación no es válido. Valores permitidos: 0101, 0200, 0301',
+  })
   tipoOperacion: string;
 
   @IsString({ message: 'El tipo comprobante debe ser un texto' })
@@ -22,6 +28,7 @@ export class ComprobanteBaseDto {
   @IsString({ message: 'La serie debe ser un texto' })
   @IsNotEmpty({ message: 'La serie es obligatoria' })
   serie: string;
+
   @IsNumber({}, { message: 'El correlativo debe ser numérico' })
   @IsNotEmpty({ message: 'El correlativo es obligatorio' })
   correlativo: number;
@@ -33,6 +40,7 @@ export class ComprobanteBaseDto {
   fechaEmision: string;
   @IsString({ message: 'El tipo de moneda debe ser un texto' })
   @IsNotEmpty({ message: 'El tipo de moneda es obligatorio' })
+  @IsIn(['PEN', 'USD'], { message: 'La moneda debe ser PEN o USD' })
   tipoMoneda: string;
 
   @IsNumber(

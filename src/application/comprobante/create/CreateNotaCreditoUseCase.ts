@@ -5,7 +5,7 @@ import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
 import { Injectable } from '@nestjs/common';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
-import { UpdateComprobanteUseCase } from '../base/UpdateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
@@ -14,6 +14,7 @@ import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoCo
 import { FindTasaByCodeUseCase } from '../../Tasa/FindTasaByCodeUseCase';
 import { CreateNotaCreditoBaseUseCase } from '../base/CreateNotaCreditoBaseUseCase';
 import { ValidarAnulacionComprobanteUseCase } from '../validate/ValidarAnulacionComprobanteUseCase';
+import { AnularComprobanteUseCase } from '../update/AnularComprobanteUseCase';
 @Injectable()
 export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
   constructor(
@@ -30,6 +31,7 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
     findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     findTasaByCodeUseCase: FindTasaByCodeUseCase,
     validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
+    anularComprobanteUseCase: AnularComprobanteUseCase
   ) {
     super(
       xmlNCBuilder,
@@ -45,6 +47,7 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
       findCorrelativoUseCase,
       findTasaByCodeUseCase,
       validarAnulacionComprobanteUseCase,
+      anularComprobanteUseCase
     );
   }
   protected buildXml(data: CreateNotaDto): string {

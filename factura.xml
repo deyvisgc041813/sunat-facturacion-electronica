@@ -2,7 +2,7 @@
 <CreditNote xmlns="urn:oasis:names:specification:ubl:schema:xsd:CreditNote-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2">
   <ext:UBLExtensions>
     <ext:UBLExtension>
-      <ext:ExtensionContent><ds:Signature Id="signatureFACTURALOPERU" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>bxfhWAvbKvMFb6s3NChOgcTIll8VTa1AZH3yBQalQl0=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>RWhqVneuQSWh21pGfdbkoW5Nr42iTOrvtKTZmkYItkHwieUwMiaoOdOHF+mxdaSSucmoaPRXxS7OvlUhDxBcKafco6J0Tm9NLhK0jWpgH1k/ajM3XmsIMekK5rLkLQvpf8qifFim1tnpSaWRBuY5Ceq01GQR6NuzkvJwFfXanyp3gcwuTPhIY1hOsgl29tMsehDrWgJROB1eNZGX/MnBQ+bBAXNRHfqRDCZuG3jpLcSAYd4VYyHkF7H8Qdt8BULibWWWuWOqkxBGtu8EMnG++q1Y5OSiAgrZfPlbh9yUk7+SXKKHlFlXuYos/0WiExt2vZNnc2USM32OpVOBUWoENg==</ds:SignatureValue><ds:KeyInfo>
+      <ext:ExtensionContent><ds:Signature Id="signatureFACTURALOPERU" xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo><ds:CanonicalizationMethod Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/><ds:SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"/><ds:Reference URI=""><ds:Transforms><ds:Transform Algorithm="http://www.w3.org/2000/09/xmldsig#enveloped-signature"/><ds:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/></ds:Transforms><ds:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/><ds:DigestValue>l4u2KumBhfIrR9YIJ5SET2G0mHur9n/BFvoS3oijfu8=</ds:DigestValue></ds:Reference></ds:SignedInfo><ds:SignatureValue>JZF9pLydy2iM+DmQZetblzU3veRhZYOuBcmUzlPaByZwrLkgLQzu7uibtgxl9Eipe2MK+oD+lUsUaPf7vGfIxG8/4IhgnBzjC19yJx8/KIYfgGn3tFnLKguGeMsbxqNA9m6SRAuqMA37kei+6qVSNpAXHCqXi+K2Uq49nTMIdYTId8TQRvj3HrSWNo3zsMSIguda+IO3p0ZZ42VsrA4vig78SxGDz+wwYwddhAETRiZVw/+xSdm4jiLbeB3LlfvNfVE9YjgSBsDcGIj42qRuKlzcz5LNtpCLm37o8zfefQVtdt5b0BLDG2PMrdmY7uohEke7XkbQ98kM361OOVZl1w==</ds:SignatureValue><ds:KeyInfo>
       <ds:X509Data>
         <ds:X509Certificate>MIIDPzCCAiegAwIBAgIBATANBgkqhkiG9w0BAQsFADBjMQswCQYDVQQGEwJQRTENMAsGA1UECBMETGltYTENMAsGA1UEBxMETGltYTEOMAwGA1UEChMFU1VOQVQxEDAOBgNVBAsTB1BydWViYXMxFDASBgNVBAMTCzIwMDAwMDAwMDAxMB4XDTI1MDkxMjE4Mjg0OVoXDTI2MDkxMjE4Mjg0OVowYzELMAkGA1UEBhMCUEUxDTALBgNVBAgTBExpbWExDTALBgNVBAcTBExpbWExDjAMBgNVBAoTBVNVTkFUMRAwDgYDVQQLEwdQcnVlYmFzMRQwEgYDVQQDEwsyMDAwMDAwMDAwMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJ4A1yyVBYCgMv8HB3Hml+lNOod6HzkyJVfFslOxShmfieDlAg9YGxomFb4jvrvBLZT1YIWnYomfUGzxj2oubCzaoyGYDZR01+daY7VZDtWdQGtgx1D7zDYHuYsmSkqXlIIwpd5a7Eh84fpi00afOFUh10pIoj73rrELaeWSG/fq5hvboD0V16V/k9UkH2jMo2UO1YFxuWyfxvQmT7/inFbD0ekpvH9Zm28jADrr4wZ6RMhBQ7WYkjyNEsjh3uEgEqW2vLNvFzbZUwRUs8e+/0xpr1lUSxyvtwpoHrth7/+ky4fpujKy4JPSVqFXVhfaDDjH7nlxVjyoon9A81DbBNECAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAdaE1GrIs+NYRffazbsqOvrrfip6iHwIAYYmLEJLTtt2OePq9VdTCbttaf4NXX6kMMQETn4khzh68dUerc/bcAW/6bzN0riXdRO5C1TBlnmaylFSDS+HOisQ22KZwt2NFMuyZNnMIXGGvUi/bpcaKPtvD+ghRc62EwLlPjBMGQlpfBia33/zzisq7ZRpaxrNHjMh2dMWFwTdCYUKjpcaFCz3M/UMftx0L/gmVkd5v6BF8kcOhu3qMJubb6mU+jqM55jUhZZf9MBkqs8mKRP3+avAH+oKtY9eL8KVlQ90xserNIXx3CC40/5CLJ8akIOz7W6ZF2K699jxAur/oZK3oGg==</ds:X509Certificate>
       </ds:X509Data>
@@ -11,19 +11,19 @@
   </ext:UBLExtensions>
   <cbc:UBLVersionID>2.1</cbc:UBLVersionID>
   <cbc:CustomizationID>2.0</cbc:CustomizationID>
-  <cbc:ID>FC01-223</cbc:ID>
-  <cbc:IssueDate>2025-09-15</cbc:IssueDate>
+  <cbc:ID>FC01-276</cbc:ID>
+  <cbc:IssueDate>2025-09-16</cbc:IssueDate>
   <cbc:IssueTime>18:00:00</cbc:IssueTime>
-  <cbc:Note languageLocaleID="1000"><![CDATA[CERO con 00/100]]></cbc:Note>
+  <cbc:Note languageLocaleID="1000"><![CDATA[CIENTO SEIS con 20/100]]></cbc:Note>
   <cbc:DocumentCurrencyCode>PEN</cbc:DocumentCurrencyCode>
   <cac:DiscrepancyResponse>
-    <cbc:ReferenceID>F001-64</cbc:ReferenceID>
-    <cbc:ResponseCode>01</cbc:ResponseCode>
-    <cbc:Description>Anulación de la operación</cbc:Description>
+    <cbc:ReferenceID>F001-313</cbc:ReferenceID>
+    <cbc:ResponseCode>05</cbc:ResponseCode>
+    <cbc:Description>Descuento por ítem</cbc:Description>
   </cac:DiscrepancyResponse>
   <cac:BillingReference>
     <cac:InvoiceDocumentReference>
-      <cbc:ID>F001-64</cbc:ID>
+      <cbc:ID>F001-313</cbc:ID>
       <cbc:DocumentTypeCode>01</cbc:DocumentTypeCode>
     </cac:InvoiceDocumentReference>
   </cac:BillingReference>
@@ -97,12 +97,12 @@
     </cac:Party>
   </cac:AccountingCustomerParty>
   <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+    <cbc:TaxAmount currencyID="PEN">14.40</cbc:TaxAmount>
     <cac:TaxSubtotal>
-      <cbc:TaxableAmount currencyID="PEN">0.00</cbc:TaxableAmount>
-      <cbc:TaxAmount currencyID="PEN">0.00</cbc:TaxAmount>
+      <cbc:TaxableAmount currencyID="PEN">80.00</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="PEN">14.40</cbc:TaxAmount>
       <cac:TaxCategory>
-        <cbc:Percent>0.00</cbc:Percent>
+        <cbc:Percent>18.00</cbc:Percent>
         <cbc:TaxExemptionReasonCode>10</cbc:TaxExemptionReasonCode>
         <cac:TaxScheme>
           <cbc:ID>1000</cbc:ID>
@@ -113,11 +113,10 @@
     </cac:TaxSubtotal>
   </cac:TaxTotal>
   <cac:LegalMonetaryTotal>
-    <cbc:LineExtensionAmount currencyID="PEN">0.00</cbc:LineExtensionAmount>
-    <cbc:TaxInclusiveAmount currencyID="PEN">0.00</cbc:TaxInclusiveAmount>
-    <cbc:PayableAmount currencyID="PEN">0.00</cbc:PayableAmount>
+    <cbc:LineExtensionAmount currencyID="PEN">80.00</cbc:LineExtensionAmount>
+    <cbc:TaxInclusiveAmount currencyID="PEN">94.40</cbc:TaxInclusiveAmount>
+    <cbc:PayableAmount currencyID="PEN">94.40</cbc:PayableAmount>
   </cac:LegalMonetaryTotal>
-  
   <cac:CreditNoteLine>
     <cbc:ID>1</cbc:ID>
     <cbc:CreditedQuantity unitCode="NIU">1.0000</cbc:CreditedQuantity>
@@ -154,8 +153,6 @@
       <cbc:PriceAmount currencyID="PEN">555.080000</cbc:PriceAmount>
     </cac:Price>
   </cac:CreditNoteLine>
-
-
   <cac:CreditNoteLine>
     <cbc:ID>2</cbc:ID>
     <cbc:CreditedQuantity unitCode="NIU">1.0000</cbc:CreditedQuantity>

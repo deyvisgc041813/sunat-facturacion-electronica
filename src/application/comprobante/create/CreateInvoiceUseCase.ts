@@ -10,7 +10,7 @@ import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/s
 import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
 import { CreateInvoiceBaseUseCase } from '../base/CreateInvoiceBaseUseCase';
 import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
-import { UpdateComprobanteUseCase } from '../base/UpdateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 @Injectable()
 export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
   constructor(

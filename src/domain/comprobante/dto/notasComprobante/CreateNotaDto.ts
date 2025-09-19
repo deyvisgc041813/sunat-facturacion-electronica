@@ -3,12 +3,9 @@ import {
   ValidateNested,
   IsArray,
   IsOptional,
-  IsNumber,
-  Min,
   IsNotEmptyObject,
   IsDate,
 } from 'class-validator';
-import { FormaPagoDto } from '../base/FormaPagoDto';
 import { ClienteDto } from '../base/ClienteDto';
 import { CompanyDto } from '../base/CompanyDto';
 import { DetailDto } from '../base/DetailDto';
@@ -19,9 +16,6 @@ import { MotivoNotaDto } from './MotivoNotaDto';
 import { DescuentoGlobales } from './DescuentoGlobales';
 
 export class CreateNotaDto extends ComprobanteBaseDto {
-  @ValidateNested({ message: 'Los datos de forma de pago no son válidos' })
-  @Type(() => FormaPagoDto)
-  formaPago: FormaPagoDto;
 
   @ValidateNested({ message: 'Los datos del cliente no son válidos' })
   @Type(() => ClienteDto)
@@ -55,12 +49,9 @@ export class CreateNotaDto extends ComprobanteBaseDto {
     each: true,
     message: 'Los descuentos globales no son válidos',
   })
-  @Type(() => DetailDto)
-  descuentosGlobales: DescuentoGlobales[];
-  @IsOptional()
-  @IsNumber({}, { message: 'El monto de descuento global debe ser numérico' })
-  @Min(0, { message: 'El monto de descuento global no puede ser negativo' })
-  descuentoGlobal: number;
+  @Type(() => DescuentoGlobales)
+  descuentoGlobal: DescuentoGlobales[];
+
   @IsOptional()
   @Type(() => Date)
   @IsDate({ message: 'La fecha de pago debe ser una fecha válida (YYYY-MM-DD)' })

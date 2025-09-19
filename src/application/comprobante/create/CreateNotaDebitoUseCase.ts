@@ -6,7 +6,7 @@ import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
 import { Injectable } from '@nestjs/common';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
-import { UpdateComprobanteUseCase } from '../base/UpdateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from '../../Serie/FindByEmpAndTipComAndSerieUseCase';

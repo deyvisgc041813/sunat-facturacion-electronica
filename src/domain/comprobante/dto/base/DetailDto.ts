@@ -5,6 +5,8 @@ import {
   IsPositive,
   IsOptional,
   Min,
+  Length,
+  IsIn,
 } from 'class-validator';
 
 export class DetailDto {
@@ -18,7 +20,7 @@ export class DetailDto {
 
   @IsString({ message: 'La descripción debe ser un texto' })
   @IsNotEmpty({ message: 'La descripción es obligatoria' })
-  
+  @Length(2, 250, { message: 'La descripción debe tener entre 2 y 250 caracteres' })
   descripcion: string;
 
   @IsNumber({}, { message: 'La cantidad debe ser un número' })
@@ -47,6 +49,7 @@ export class DetailDto {
   @Min(0, {
     message: 'El porcentaje de IGV no puede ser negativo',
   })
+  @IsIn([0, 10, 18], { message: 'El porcentaje de IGV debe ser 0, 10 o 18 según SUNAT' })
   porcentajeIgv: number;
 
   @IsNumber({}, { message: 'El IGV debe ser numérico' })

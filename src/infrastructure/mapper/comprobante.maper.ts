@@ -28,6 +28,8 @@ export class ComprobanteMapper {
       serie,
       orm.hashCpe,
       orm.payloadJson,
+      orm.fechaAnulacion,
+      orm.descripcionEstado
     );
   }
 
@@ -36,8 +38,8 @@ export class ComprobanteMapper {
     if (dto.estado !== undefined) {
       comprobante.estado = dto.estado;
     }
-    if (dto.motivoEstado !== undefined) {
-      comprobante.motivoEstado = dto.motivoEstado;
+    if (dto.descripcionEstado !== undefined) {
+      comprobante.descripcionEstado = dto.descripcionEstado;
     }
     if (dto.xmlFirmado !== undefined) {
       comprobante.xmlFirmado = dto.xmlFirmado;

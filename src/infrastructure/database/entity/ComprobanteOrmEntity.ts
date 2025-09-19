@@ -103,8 +103,8 @@ export class ComprobanteOrmEntity {
 
   @Column({ name: 'payload_json', type: 'longtext', nullable: true }) // aquí se guarda todo el JSON del comprobante (incluye detalles, leyendas, etc.)
   payloadJson?: string;
-  @Column({ name: 'motivo_estado', type: 'longtext', nullable: true })
-  motivoEstado?: string;
+  @Column({ name: 'descripcion_estado', type: 'text', nullable: true })
+  descripcionEstado?: string;
 
   @Column({
     name: 'fecha_creacion',
@@ -125,6 +125,14 @@ export class ComprobanteOrmEntity {
     nullable: false,
   })
   fechaUpdate: Date;
+  @Column({
+    name: 'fecha_anulacion',
+    default: () => 'CURRENT_TIMESTAMP',
+    type: 'datetime',
+    nullable: false,
+  })
+  fechaAnulacion: Date;
+
   // Relación con Empresa
   @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.comprobantes, {
     onDelete: 'CASCADE',
@@ -143,7 +151,7 @@ export class ComprobanteOrmEntity {
     onDelete: 'CASCADE',
   })
   serie: SerieOrmEntity;
-  
+
   @OneToMany(
     () => SunatLogOrmEntity,
     (sunatLog: SunatLogOrmEntity) => sunatLog.comprobante,

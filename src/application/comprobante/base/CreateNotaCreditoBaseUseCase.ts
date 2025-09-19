@@ -22,15 +22,20 @@ import {
   TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
+  TipoDocumentoLetras,
 } from 'src/util/catalogo.enum';
-import { UpdateComprobanteUseCase } from './UpdateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import {
+  buildMensajeRecalculo,
   buildMtoGlobales,
   extraerHashCpe,
+  generateLegends,
   setobjectUpdateComprobante,
   sonMontosCero,
+  validarNumeroDocumentoCliente,
+  validateLegends,
 } from 'src/util/Helpers';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
@@ -42,12 +47,20 @@ import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByE
 import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoComprobantesUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
-import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { ValidarAnulacionComprobanteUseCase } from '../validate/ValidarAnulacionComprobanteUseCase';
-import { validarComprobante } from 'src/util/notas-credito-debito.validator';
-
+import {
+  validarComprobante,
+  validarProductoYTipoAfectacion,
+} from 'src/util/notas-credito-debito.validator';
+import { DescuentoGlobales } from 'src/domain/comprobante/dto/notasComprobante/DescuentoGlobales';
+import { AnularComprobanteUseCase } from '../update/AnularComprobanteUseCase';
+const motivosAnulacionTotal = [
+  NotaCreditoMotivo.ANULACION_OPERACION,
+  NotaCreditoMotivo.ANULACION_ERROR_RUC,
+  NotaCreditoMotivo.DEVOLUCION_TOTAL,
+];
 export abstract class CreateNotaCreditoBaseUseCase {
   constructor(
     protected readonly xmlNCBuilder: XmlBuilderNotaCreditoService,
@@ -63,6 +76,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     protected readonly findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
+    protected readonly anularComprobanteUseCase: AnularComprobanteUseCase,
   ) {}
 
   protected abstract buildXml(data: any): string;
@@ -73,16 +87,13 @@ export abstract class CreateNotaCreditoBaseUseCase {
     let xmlFirmadoError = '';
     try {
       validarComprobante(data);
-      if (NotaCreditoMotivo.ANULACION_OPERACION == data.motivo.codigo) {
-        await this.validarAnulacionComprobanteUseCase.execute(
-          empresa.empresaId,
-          data.tipoComprobante,
-          data.motivo.codigo,
-          EstadoEnumComprobante.ACEPTADO,
-          data.documentoRelacionado.serie,
-          data.documentoRelacionado.correlativo,
-        );
-      }
+      await this.verificarAnulacionPrevia(
+        empresa.empresaId,
+        data.tipoComprobante,
+        data.documentoRelacionado.serie,
+        data.documentoRelacionado.correlativo,
+        motivosAnulacionTotal,
+      );
       const tributoTasa = await this.findTasaByCodeUseCase.execute(
         MAP_TRIBUTOS.IGV.id,
       );
@@ -91,6 +102,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         data,
         empresa.empresaId,
       );
+
       const mtoCalculados: any = await this.buildCreditNoteAmountsJson(
         data,
         comprobanteOriginal,
@@ -124,7 +136,14 @@ export abstract class CreateNotaCreditoBaseUseCase {
           data.details = comprobanteOriginal?.payloadJson?.details;
         }
 
-        data.legends = mtoCalculados?.legends ?? data.legends;
+        if (
+          NotaCreditoMotivo.ANULACION_ERROR_RUC == data.motivo.codigo ||
+          NotaCreditoMotivo.ANULACION_OPERACION == data.motivo.codigo
+        ) {
+          data.legends = generateLegends(data.mtoImpVenta);
+        } else {
+          data.legends = mtoCalculados?.legends ?? data.legends;
+        }
         jsonFinal = data;
       }
       const comprobante = await this.registrarComprobante(
@@ -140,9 +159,10 @@ export abstract class CreateNotaCreditoBaseUseCase {
         empresa.certificadoDigital,
         empresa.claveCertificado,
       );
+      xmlFirmadoError = xmlFirmado;
 
       //console.log(xmlFirmado);
-      xmlFirmadoError = xmlFirmado;
+
       // 3. Enviar a SUNAT
       const responseSunat = await this.sunatService.sendBill(
         `${fileName}.zip`,
@@ -157,6 +177,15 @@ export abstract class CreateNotaCreditoBaseUseCase {
         xmlFirmado,
         responseSunat,
       );
+      // 5 anular comprobante referencial
+      if (motivosAnulacionTotal.includes(data.motivo.codigo)) {
+        await this.anularComprobanteUseCase.execute(
+          empresa.empresaId,
+          comprobanteOriginal.serie?.serieId ?? 0,
+          data.documentoRelacionado?.correlativo,
+          `${data.motivo.codigo} - ${data.motivo.descripcion}`,
+        );
+      }
       return responseSunat;
     } catch (error: any) {
       await this.procesarErrorSunat(
@@ -240,7 +269,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     const motivo = responseSunat?.observaciones
       ? JSON.stringify(responseSunat.observaciones)
       : null;
-
     const objectUpdate = setobjectUpdateComprobante(
       tipoComprobante,
       xmlFirmado,
@@ -313,14 +341,20 @@ export abstract class CreateNotaCreditoBaseUseCase {
     data: CreateNotaDto,
     comprobante: ComprobanteResponseDto | null,
   ) {
+    validarNumeroDocumentoCliente(
+      TipoDocumentoLetras.NOTA_CREDITO,
+      data.client.numDoc,
+      comprobante?.cliente?.numeroDocumento ?? '',
+    );
+    const detalleComprobanteOriginal: DetailDto[] =
+      comprobante?.payloadJson?.details ?? [];
+
     switch (data.motivo.codigo) {
       case NotaCreditoMotivo.ANULACION_OPERACION:
-        return this.calcularAnulacion(comprobante?.payloadJson?.details);
-        break;
+        return this.calcularAnulacion(detalleComprobanteOriginal);
       case NotaCreditoMotivo.ANULACION_ERROR_RUC:
-        return null;
+        return { details: this.generarDummyItems(data.motivo.descripcion) };
       case NotaCreditoMotivo.DESCUENTO_GLOBAL:
-        // payload_json viene como string → parsear a objeto
         const mtosGlobales = this.calcularMtosGlobales(
           comprobante?.payloadJson?.details,
         );
@@ -338,23 +372,28 @@ export abstract class CreateNotaCreditoBaseUseCase {
           subTotal: +subTotal.toFixed(2),
           mtoImpVenta: +mtoImpVenta.toFixed(2),
         };
+
       case NotaCreditoMotivo.DESCUENTO_POR_ITEM:
         const esEntradaSinTotales =
           data.mtoImpVenta === 0 &&
           data.details.some((d) => !d.mtoBaseIgv || d.mtoBaseIgv === 0);
         if (esEntradaSinTotales) {
           // Modo simple: calular los montos
-          return this.calcularComprobanteSimple(data.details);
+          return this.calcularDescuentosItems(
+            data.details,
+            detalleComprobanteOriginal,
+          );
         } else {
           // Modo calculado: ya se envian los montos calculados
-          return this.validarComprobanteCalculado(data);
+          return this.validarDescuentoItemsCalculado(
+            data,
+            detalleComprobanteOriginal,
+          );
         }
       case NotaCreditoMotivo.DEVOLUCION_TOTAL:
         if (data.details.length === 0) {
           // Modo simple: calular los montos
-          return this.calcularDevolucionTotal(
-            comprobante?.payloadJson?.details,
-          );
+          return this.calcularDevolucionTotal(detalleComprobanteOriginal);
         } else {
           // Modo calculado: ya se envian los montos calculados
           return this.validarComprobanteDevolucionTotal(
@@ -375,7 +414,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
           // Modo simple: calular los montos
           return this.calcularDevolucionPorItem(
             data,
-            comprobante?.payloadJson?.details,
+            detalleComprobanteOriginal,
           );
         } else {
           // Modo calculado: ya se envian los montos calculados
@@ -411,12 +450,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
     const subTotal = mtoOperGravadas + mtoOperExoneradas + mtoOperInafectas;
     const mtoImpVenta = subTotal + mtoIGV;
-    const legends = [
-      {
-        code: LegendCodeEnum.MONTO_EN_LETRAS,
-        value: convertirMontoEnLetras(mtoImpVenta),
-      },
-    ];
 
     return {
       mtoOperGravadas,
@@ -426,7 +459,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       subTotal,
       mtoImpVenta,
       details,
-      legends,
+      legends: generateLegends(mtoImpVenta),
       origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
     };
   }
@@ -479,11 +512,10 @@ export abstract class CreateNotaCreditoBaseUseCase {
       mtoOperInafectas: +inafectas.toFixed(2),
     };
   }
-
   private aplicarDescuentoGlobal(
-    mtoDescuentoGlobal: number,
+    descuentos: DescuentoGlobales[], // ahora siempre es array
     mtoGlobales: IMtoGloables[],
-    data: CreateNotaDto, // dto con client, company, motivo, etc.
+    data: CreateNotaDto,
   ) {
     // Inicializar objeto de cálculo
     const obj = {
@@ -495,53 +527,63 @@ export abstract class CreateNotaCreditoBaseUseCase {
       descInafectas: 0.0,
     };
 
-    // Filtrar montos distintos de cero
-    const activos = mtoGlobales.filter((mto) => mto.mtoOperacion > 0);
+    // Total de operaciones (base para prorrateo si hace falta)
+    const baseTotal = mtoGlobales.reduce(
+      (acc, mto) => acc + mto.mtoOperacion,
+      0,
+    );
 
-    // Caso 1: Solo un tipo con valor > 0
-    if (activos.length === 1) {
-      const tipo = activos[0].tipo;
-      const montoOriginal = activos[0].mtoOperacion;
-      const newMonto = montoOriginal - mtoDescuentoGlobal;
+    for (const descuento of descuentos) {
+      const mtoDescuentoGlobal = descuento.monto;
 
-      if (tipo.some((t) => TIPO_AFECTACION_GRAVADAS.includes(t))) {
-        obj.mtoOperGravadas = newMonto;
-        obj.descGravadas = mtoDescuentoGlobal;
-      } else if (tipo.some((t) => TIPO_AFECTACION_EXONERADAS.includes(t))) {
-        obj.mtoOperExoneradas = newMonto;
-        obj.descExoneradas = mtoDescuentoGlobal;
-      } else if (tipo.some((t) => TIPO_AFECTACION_INAFECTAS.includes(t))) {
-        obj.mtoOperInafectas = newMonto;
-        obj.descInafectas = mtoDescuentoGlobal;
-      }
-    } else {
-      // Caso 2: Varios tipos con valor > 0 → aplicar prorrateo
-      const baseTotal = activos.reduce((acc, mto) => acc + mto.mtoOperacion, 0);
+      // Filtrar montos distintos de cero
+      const activos = mtoGlobales.filter((mto) => mto.mtoOperacion > 0);
 
-      for (const mto of activos) {
-        const porcentaje = mto.mtoOperacion / baseTotal;
-        const descuentoAsignado = +(mtoDescuentoGlobal * porcentaje).toFixed(2);
-        const newMonto = +(mto.mtoOperacion - descuentoAsignado).toFixed(2);
+      if (activos.length === 1) {
+        // Caso 1: solo un tipo con valor > 0
+        const tipo = activos[0].tipo;
+        const montoOriginal = activos[0].mtoOperacion;
+        const newMonto = montoOriginal - mtoDescuentoGlobal;
 
-        if (mto.tipo.some((t) => TIPO_AFECTACION_GRAVADAS.includes(t))) {
+        if (tipo.some((t) => TIPO_AFECTACION_GRAVADAS.includes(t))) {
           obj.mtoOperGravadas = newMonto;
-          obj.descGravadas = descuentoAsignado;
-        } else if (
-          mto.tipo.some((t) => TIPO_AFECTACION_EXONERADAS.includes(t))
-        ) {
+          obj.descGravadas += mtoDescuentoGlobal;
+        } else if (tipo.some((t) => TIPO_AFECTACION_EXONERADAS.includes(t))) {
           obj.mtoOperExoneradas = newMonto;
-          obj.descExoneradas = descuentoAsignado;
-        } else if (
-          mto.tipo.some((t) => TIPO_AFECTACION_INAFECTAS.includes(t))
-        ) {
+          obj.descExoneradas += mtoDescuentoGlobal;
+        } else if (tipo.some((t) => TIPO_AFECTACION_INAFECTAS.includes(t))) {
           obj.mtoOperInafectas = newMonto;
-          obj.descInafectas = descuentoAsignado;
+          obj.descInafectas += mtoDescuentoGlobal;
+        }
+      } else {
+        // Caso 2: varios tipos → prorrateo
+        for (const mto of activos) {
+          const porcentaje = mto.mtoOperacion / baseTotal;
+          const descuentoAsignado = +(mtoDescuentoGlobal * porcentaje).toFixed(
+            2,
+          );
+          const newMonto = +(mto.mtoOperacion - descuentoAsignado).toFixed(2);
+
+          if (mto.tipo.some((t) => TIPO_AFECTACION_GRAVADAS.includes(t))) {
+            obj.mtoOperGravadas = newMonto;
+            obj.descGravadas += descuentoAsignado;
+          } else if (
+            mto.tipo.some((t) => TIPO_AFECTACION_EXONERADAS.includes(t))
+          ) {
+            obj.mtoOperExoneradas = newMonto;
+            obj.descExoneradas += descuentoAsignado;
+          } else if (
+            mto.tipo.some((t) => TIPO_AFECTACION_INAFECTAS.includes(t))
+          ) {
+            obj.mtoOperInafectas = newMonto;
+            obj.descInafectas += descuentoAsignado;
+          }
         }
       }
     }
 
-    // 📌 Paso 4: Recalcular IGV, Subtotal y Total
-    const mtoIGV = +(obj.mtoOperGravadas * data.porcentajeIgv).toFixed(2); // solo sobre gravadas
+    // 📌 Recalcular IGV, Subtotal y Total
+    const mtoIGV = +(obj.mtoOperGravadas * data.porcentajeIgv).toFixed(2);
     const subTotal = +(
       obj.mtoOperGravadas +
       obj.mtoOperExoneradas +
@@ -549,126 +591,61 @@ export abstract class CreateNotaCreditoBaseUseCase {
     ).toFixed(2);
     const mtoImpVenta = +(subTotal + mtoIGV).toFixed(2);
 
-    // 📌 Paso 5: Armar JSON final de Nota de Crédito
-
-    // "SEISCIENTOS SETENTA Y CUATRO CON 99/100 SOLES"
+    // 📌 Armar JSON final
     const jsonFinal = {
-      ublVersion: data.ublVersion,
-      tipoOperacion: data.tipoOperacion,
-      tipoComprobante: data.tipoComprobante, // 07
-      serie: data.serie,
-      correlativo: data.correlativo,
-      fechaEmision: data.fechaEmision,
-      tipoMoneda: data.tipoMoneda,
-      porcentajeIgv: data.porcentajeIgv,
-      client: data.client,
-      company: data.company,
-      documentoRelacionado: data.documentoRelacionado,
-      motivo: data.motivo,
+      ...data,
       descuentosGlobales:
         data.motivo.codigo === NotaCreditoMotivo.DESCUENTO_GLOBAL
-          ? [
-              {
-                montoBase: mtoGlobales.reduce(
-                  (acc, mto) => acc + mto.mtoOperacion,
-                  0,
-                ),
-                monto: mtoDescuentoGlobal,
-                codigo: Catalogo53DescuentoGlobal.DESCUENTO_AFECTA_IGV, // Catálogo 53 - Descuento
-              },
-            ]
+          ? descuentos.map((d) => ({
+              montoBase: baseTotal,
+              monto: d.monto,
+              codigo: d.codigo,
+            }))
           : [],
-
       mtoOperGravadas: obj.mtoOperGravadas,
       mtoOperExoneradas: obj.mtoOperExoneradas,
       mtoOperInafectas: obj.mtoOperInafectas,
       mtoIGV,
       subTotal,
       mtoImpVenta,
-      details: [], // en NC 04 puede ir vacío
-      legends: [
-        {
-          code: LegendCodeEnum.MONTO_EN_LETRAS,
-          value: convertirMontoEnLetras(mtoImpVenta),
-        },
-      ],
-      // opcional: auditoría de cómo se repartió el descuento
+      details: [],
+      legends: generateLegends(mtoImpVenta),
       auditoriaDescuentos: {
         descGravadas: obj.descGravadas,
         descExoneradas: obj.descExoneradas,
         descInafectas: obj.descInafectas,
       },
     };
-    if (data.motivo.codigo === NotaCreditoMotivo.DESCUENTO_GLOBAL) {
-    }
+
     return jsonFinal;
   }
 
   /**
    * Metodos para la nota credito descuento por item codMotivos 05
    */
-  private validarComprobanteCalculado(data: CreateNotaDto) {
-    const {
-      mtoOperGravadas,
-      mtoOperExoneradas,
-      mtoOperInafectas,
-      subTotal,
-      mtoIGV,
-      mtoImpVenta,
-      details,
-    } = data;
-    // Validar totales
-    const subtotalEsperado =
-      mtoOperGravadas + mtoOperExoneradas + mtoOperInafectas;
-    if (
-      parseFloat(subtotalEsperado.toFixed(2)) !==
-      parseFloat(subTotal.toFixed(2))
-    ) {
-      throw new BadRequestException(
-        `El subTotal (${subTotal}) no coincide con la suma de operaciones (${subtotalEsperado})`,
-      );
-    }
 
-    const totalEsperado = subTotal + mtoIGV;
-    if (
-      parseFloat(totalEsperado.toFixed(2)) !==
-      parseFloat(mtoImpVenta.toFixed(2))
-    ) {
-      throw new BadRequestException(
-        `El total de la venta (${mtoImpVenta}) no coincide con la suma subtotal+IGV (${totalEsperado})`,
-      );
-    }
-
-    // Validar ítems
-    for (const d of details) {
-      if (
-        TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv) &&
-        (!d.igv || d.igv <= 0)
-      ) {
-        throw new BadRequestException(
-          `El ítem ${d.codProducto} es gravado pero no tiene IGV válido`,
-        );
-      }
-      if (
-        (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv) ||
-          TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) &&
-        d.igv &&
-        d.igv > 0
-      ) {
-        throw new BadRequestException(
-          `El ítem ${d.codProducto} no debería tener IGV`,
-        );
-      }
-    }
-    return {
-      valido: true,
-      origen: ProcesoNotaCreditoEnum.VALIDADA_DESDE_COMPROBANTE_CALCULADO,
-      mensaje: 'Comprobante calculado correctamente validado',
-    };
-  }
-  async calcularComprobanteSimple(details: DetailDto[]) {
+  async calcularDescuentosItems(
+    details: DetailDto[],
+    detComOriginal: DetailDto[],
+  ) {
     // MODO SIMPLE → calculamos todo
+
     const detallesCalculados = details?.map((d: DetailDto) => {
+      const existComprobante = detComOriginal?.find(
+        (f) => f.codProducto === d.codProducto,
+      );
+
+      if (!existComprobante) {
+        throw new BadRequestException(
+          `El producto con código ${d.codProducto} no existe en el comprobante original. Debe enviar el mismo código del ítem al que se aplicará el descuento.`,
+        );
+      }
+
+      if (existComprobante.tipAfeIgv !== d.tipAfeIgv) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene tipo de afectación IGV distinto al comprobante original.  Enviado: ${d.tipAfeIgv}, Original: ${existComprobante.tipAfeIgv}`,
+        );
+      }
       const precioBase = d.mtoValorUnitario - (d.mtoDescuento || 0);
 
       const mtoBaseIgv = precioBase * d.cantidad;
@@ -710,13 +687,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     const subTotal = mtoOperGravadas + mtoOperExoneradas + mtoOperInafectas;
     const mtoImpVenta = subTotal + mtoIGV;
 
-    const legends = [
-      {
-        code: LegendCodeEnum.MONTO_EN_LETRAS,
-        value: convertirMontoEnLetras(mtoImpVenta),
-      },
-    ];
-
     return {
       mtoOperGravadas,
       mtoOperExoneradas,
@@ -725,39 +695,218 @@ export abstract class CreateNotaCreditoBaseUseCase {
       subTotal,
       mtoImpVenta,
       details: detallesCalculados,
-      legends,
+      legends: generateLegends(mtoImpVenta),
       origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
     };
   }
-  async obtenerComprobanteAceptado(
+
+  private validarDescuentoItemsCalculado(
     data: CreateNotaDto,
-    empresaId: number,
-  ): Promise<ComprobanteResponseDto> {
-    const numCorrelativoRelacionado = data?.documentoRelacionado?.correlativo;
-    const tipCompRelacionado = data?.documentoRelacionado?.tipoComprobante;
-    const serieRelacionado = data?.documentoRelacionado?.serie;
-    const serie = await this.findSerieUseCase.execute(
-      empresaId,
-      tipCompRelacionado,
-      serieRelacionado,
-    );
-    if (!serie) {
+    detComOriginal: DetailDto[],
+  ) {
+    const {
+      mtoOperGravadas,
+      mtoOperExoneradas,
+      mtoOperInafectas,
+      subTotal,
+      mtoIGV,
+      mtoImpVenta,
+      details,
+    } = data;
+
+    let sumaGravadas = 0;
+    let sumaExoneradas = 0;
+    let sumaInafectas = 0;
+    let sumaIgv = 0;
+
+    for (const d of details) {
+      // --- Validar que el item exista en el comprobante original ---
+      const existComprobante = detComOriginal.find(
+        (c) => c.codProducto === c.codProducto,
+      );
+      validarProductoYTipoAfectacion(d, existComprobante);
+      // --- Recalcular valores correctos ---
+      const precioBase = d.mtoValorUnitario - (d.mtoDescuento || 0);
+      if (precioBase < 0) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene un descuento mayor al valor unitario. Enviado: ${d.mtoDescuento}, máximo permitido: ${d.mtoValorUnitario}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+
+      const mtoBaseIgv = Number((precioBase * d.cantidad).toFixed(2));
+      const igvCalc = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        ? Number((mtoBaseIgv * (d.porcentajeIgv / 100)).toFixed(2))
+        : 0;
+      const valorVentaCalc = mtoBaseIgv;
+      const precioUnitCalc = Number(
+        (precioBase * (1 + d.porcentajeIgv / 100)).toFixed(2),
+      );
+
+      // --- Comparar valores enviados vs calculados ---
+      if (Number(d.mtoValorVenta.toFixed(2)) !== valorVentaCalc) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene un valor de venta incorrecto. Enviado: ${d.mtoValorVenta}, esperado: ${valorVentaCalc}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+      if (Number(d.igv.toFixed(2)) !== igvCalc) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene un IGV incorrecto. Enviado: ${d.igv}, esperado: ${igvCalc}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+      if (Number(d.mtoBaseIgv.toFixed(2)) !== mtoBaseIgv) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene una base imponible incorrecta. Enviado: ${d.mtoBaseIgv}, esperado: ${mtoBaseIgv}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+      if (
+        Number(d.mtoPrecioUnitario.toFixed(2)) !== precioUnitCalc &&
+        TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+      ) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene un precio unitario con IGV incorrecto. Enviado: ${d.mtoPrecioUnitario}, esperado: ${precioUnitCalc}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+      if (
+        !TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv) &&
+        d.porcentajeIgv > 0
+      ) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene un porcentaje IGV inválido. Solo los ítems gravados pueden tener IGV > 0. Enviado: ${d.porcentajeIgv}, esperado: 0.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+
+      if (Number(d.totalImpuestos.toFixed(2)) !== igvCalc) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene un total de impuestos incorrecto. Enviado: ${d.totalImpuestos}, esperado: ${igvCalc}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+      // --- Acumular para totales ---
+      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+        sumaGravadas += valorVentaCalc;
+        sumaIgv += igvCalc;
+      } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+        sumaExoneradas += valorVentaCalc;
+
+        // 🔹 Validaciones específicas para exonerados
+        if (d.igv !== 0 || d.totalImpuestos !== 0) {
+          throw new BadRequestException(
+            `El ítem ${d.codProducto} es exonerado y no debe tener impuestos. IGV enviado: ${d.igv}, totalImpuestos enviado: ${d.totalImpuestos}.
+            ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+          );
+        }
+        if (
+          Number(d.mtoPrecioUnitario.toFixed(2)) !==
+          Number(precioBase.toFixed(2))
+        ) {
+          throw new BadRequestException(
+            `El ítem ${d.codProducto} es exonerado y su precio unitario debe ser ${precioBase}, pero se envió ${d.mtoPrecioUnitario}.
+            ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+          );
+        }
+      } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+        sumaInafectas += valorVentaCalc;
+
+        // 🔹 Validaciones específicas para inafectos
+        if (d.igv !== 0 || d.totalImpuestos !== 0) {
+          throw new BadRequestException(
+            `El ítem ${d.codProducto} es inafecto y no debe tener impuestos. IGV enviado: ${d.igv}, totalImpuestos enviado: ${d.totalImpuestos}.
+            ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+          );
+        }
+        if (
+          Number(d.mtoPrecioUnitario.toFixed(2)) !==
+          Number(precioBase.toFixed(2))
+        ) {
+          throw new BadRequestException(
+            `El ítem ${d.codProducto} es inafecto y su precio unitario debe ser ${precioBase}, pero se envió ${d.mtoPrecioUnitario}.
+            ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+          );
+        }
+      }
+
+      // --- Validaciones de IGV según tipo de afectación ---
+      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv) && igvCalc <= 0) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} es gravado pero no tiene un IGV válido. Enviado: ${d.igv}, esperado: ${igvCalc}.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+      if (
+        (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv) ||
+          TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) &&
+        igvCalc > 0
+      ) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} no debería tener IGV. Enviado: ${d.igv}, esperado: 0.
+          ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+        );
+      }
+    }
+
+    // --- Validaciones de sumatorias contra cabecera ---
+    if (
+      Number(sumaGravadas.toFixed(2)) !== Number(mtoOperGravadas.toFixed(2))
+    ) {
       throw new BadRequestException(
-        `El tipo de comprobante ${data.tipoComprobante} no se encuentra registrado en el sistema`,
+        `El total de operaciones gravadas es incorrecto. Enviado: ${mtoOperGravadas}, esperado: ${sumaGravadas.toFixed(2)}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
     }
-    // 1. Buscar comprobante original
-    const comprobante = await this.findCorrelativoUseCase.execute(
-      empresaId,
-      numCorrelativoRelacionado,
-      serie?.serieId,
-    );
-    if (!comprobante) {
-      throw new NotFoundException(
-       `No se encontró un comprobante asociado al documento relacionado con la serie ${serieRelacionado} y correlativo ${numCorrelativoRelacionado}.`
+
+    if (
+      Number(sumaExoneradas.toFixed(2)) !== Number(mtoOperExoneradas.toFixed(2))
+    ) {
+      throw new BadRequestException(
+        `El total de operaciones exoneradas es incorrecto. Enviado: ${mtoOperExoneradas}, esperado: ${sumaExoneradas.toFixed(2)}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
     }
-    return comprobante;
+
+    if (
+      Number(sumaInafectas.toFixed(2)) !== Number(mtoOperInafectas.toFixed(2))
+    ) {
+      throw new BadRequestException(
+        `El total de operaciones inafectas es incorrecto. Enviado: ${mtoOperInafectas}, esperado: ${sumaInafectas.toFixed(2)}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+      );
+    }
+
+    const subtotalEsperado = sumaGravadas + sumaExoneradas + sumaInafectas;
+    if (Number(subtotalEsperado.toFixed(2)) !== Number(subTotal.toFixed(2))) {
+      throw new BadRequestException(
+        `El subtotal es incorrecto. Enviado: ${subTotal}, esperado: ${subtotalEsperado.toFixed(2)}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+      );
+    }
+
+    if (Number(sumaIgv.toFixed(2)) !== Number(mtoIGV.toFixed(2))) {
+      throw new BadRequestException(
+        `El IGV total es incorrecto. Enviado: ${mtoIGV}, esperado: ${sumaIgv.toFixed(2)}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+      );
+    }
+
+    const totalEsperado = subtotalEsperado + sumaIgv;
+    if (Number(totalEsperado.toFixed(2)) !== Number(mtoImpVenta.toFixed(2))) {
+      throw new BadRequestException(
+        `El total de la venta es incorrecto. Enviado: ${mtoImpVenta}, esperado: ${totalEsperado.toFixed(2)}.
+        ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
+      );
+    }
+    validateLegends(data.legends, mtoImpVenta);
+    return {
+      valido: true,
+      details: data.details,
+      origen: ProcesoNotaCreditoEnum.VALIDADA_DESDE_COMPROBANTE_CALCULADO,
+      mensaje: 'Comprobante calculado y validado correctamente',
+    };
   }
 
   /** 
@@ -788,13 +937,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
     const subTotal = mtoOperGravadas + mtoOperExoneradas + mtoOperInafectas;
     const mtoImpVenta = subTotal + mtoIGV;
-    const legends = [
-      {
-        code: LegendCodeEnum.MONTO_EN_LETRAS,
-        value: convertirMontoEnLetras(mtoImpVenta),
-      },
-    ];
-
     return {
       mtoOperGravadas,
       mtoOperExoneradas,
@@ -803,7 +945,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       subTotal,
       mtoImpVenta,
       details: [],
-      legends,
+      legends: generateLegends(mtoImpVenta),
       origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
     };
   }
@@ -821,33 +963,95 @@ export abstract class CreateNotaCreditoBaseUseCase {
       details,
     } = data;
 
+    const original = comprobante?.payloadJson;
+    const detCompOriginal = original?.details;
+
+    if (!original || !detCompOriginal) {
+      throw new BadRequestException(
+        `El comprobante original no contiene información suficiente para validar.`,
+      );
+    }
+
     // --- Validación de consistencia interna ---
     const subtotalEsperado =
       (mtoOperGravadas || 0) +
       (mtoOperExoneradas || 0) +
       (mtoOperInafectas || 0);
 
-    if (
-      parseFloat(subtotalEsperado.toFixed(2)) !==
-      parseFloat((subTotal || 0).toFixed(2))
-    ) {
+    if (+subtotalEsperado.toFixed(2) !== +(subTotal || 0).toFixed(2)) {
       throw new BadRequestException(
         `El subTotal (${subTotal}) no coincide con la suma de operaciones (${subtotalEsperado})`,
       );
     }
 
     const totalEsperado = (subTotal || 0) + (mtoIGV || 0);
-    if (
-      parseFloat(totalEsperado.toFixed(2)) !==
-      parseFloat((mtoImpVenta || 0).toFixed(2))
-    ) {
+    if (+totalEsperado.toFixed(2) !== +(mtoImpVenta || 0).toFixed(2)) {
       throw new BadRequestException(
         `El total de la venta (${mtoImpVenta}) no coincide con la suma subtotal+IGV (${totalEsperado})`,
       );
     }
 
-    // Validar ítems (coherencia con tipo de afectación)
+    // --- Validaciones contra el comprobante original (cabecera) ---
+    const camposCabecera: (keyof typeof original)[] = [
+      'mtoOperGravadas',
+      'mtoOperExoneradas',
+      'mtoOperInafectas',
+      'mtoIGV',
+      'mtoImpVenta',
+    ];
+
+    for (const campo of camposCabecera) {
+      const valorEnviado = Number(data[campo as keyof CreateNotaDto]);
+      const valorOriginal = Number(original[campo]);
+
+      if (valorEnviado.toFixed(2) !== valorOriginal.toFixed(2)) {
+        throw new BadRequestException(
+          `El campo ${String(campo)} (${valorEnviado}) no coincide con el comprobante original (${valorOriginal}). 
+        Si no es posible cuadrar, envíe la estructura mínima del comprobante con montos en 0 y details: [].`,
+        );
+      }
+    }
+
+    if (details.length !== detCompOriginal.length) {
+      throw new BadRequestException(
+        `La cantidad de ítems (${details.length}) no coincide con el comprobante original (${detCompOriginal.length}).`,
+      );
+    }
+
+    // --- Validaciones de ítems ---
     for (const d of details) {
+      const existComprobante = detCompOriginal.find(
+        (c) => c.codProducto === d.codProducto,
+      );
+      validarProductoYTipoAfectacion(d, existComprobante);
+      // Cantidad (igual obligatoria en devolución total)
+      if (d.cantidad !== existComprobante.cantidad) {
+        throw new BadRequestException(
+          `En devolución total, el ítem ${d.codProducto} debe tener la misma cantidad. 
+         Enviado: ${d.cantidad}, Original: ${existComprobante.cantidad}`,
+        );
+      }
+
+      // Unidad
+      if (existComprobante.unidad !== d.unidad) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene una unidad distinta. 
+         Enviado: ${d.unidad}, Original: ${existComprobante.unidad}`,
+        );
+      }
+
+      // Porcentaje IGV (solo gravadas)
+      if (
+        TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv) &&
+        d.porcentajeIgv !== existComprobante.porcentajeIgv
+      ) {
+        throw new BadRequestException(
+          `El ítem ${d.codProducto} tiene un porcentaje de IGV distinto. 
+         Enviado: ${d.porcentajeIgv}, Original: ${existComprobante.porcentajeIgv}`,
+        );
+      }
+
+      // Validar reglas de IGV según tipo de afectación
       if (
         TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv) &&
         (!d.igv || d.igv <= 0)
@@ -859,85 +1063,41 @@ export abstract class CreateNotaCreditoBaseUseCase {
       if (
         (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv) ||
           TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) &&
-        d.igv &&
         d.igv > 0
       ) {
         throw new BadRequestException(
-          `El ítem ${d.codProducto} no debería tener IGV`,
+          `El ítem ${d.codProducto} no debería tener IGV. Enviado: ${d.igv}, esperado: 0`,
         );
+      }
+
+      // Montos numéricos que deben coincidir exactamente en devolución total
+      const camposNumericos: (keyof DetailDto)[] = [
+        'mtoValorUnitario',
+        'mtoValorVenta',
+        'mtoBaseIgv',
+        'igv',
+        'totalImpuestos',
+        'mtoPrecioUnitario',
+      ];
+
+      for (const campo of camposNumericos) {
+        const valorEnviado = Number(d[campo]);
+        const valorOriginal = Number(existComprobante[campo]);
+
+        if (valorEnviado.toFixed(2) !== valorOriginal.toFixed(2)) {
+          throw new BadRequestException(
+            `El ítem ${d.codProducto} tiene un valor distinto en ${String(campo)}. 
+           Enviado: ${valorEnviado}, Original: ${valorOriginal}`,
+          );
+        }
       }
     }
 
-    // --- Validación contra comprobante original ---
-    const original = comprobante?.payloadJson;
-    if (!original) {
-      throw new BadRequestException(
-        `El comprobante original no contiene información para validar`,
-      );
-    }
-
-    if (
-      parseFloat(mtoOperGravadas.toFixed(2)) !==
-      parseFloat(original.mtoOperGravadas.toFixed(2))
-    ) {
-      throw new BadRequestException(
-        `El monto gravado (${mtoOperGravadas}) no coincide con el comprobante original (${original.mtoOperGravadas}).
-        Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
-      );
-    }
-
-    if (
-      parseFloat(mtoOperExoneradas.toFixed(2)) !==
-      parseFloat(original.mtoOperExoneradas.toFixed(2))
-    ) {
-      throw new BadRequestException(
-        `El monto exonerado (${mtoOperExoneradas}) no coincide con el comprobante original (${original.mtoOperExoneradas}).
-        Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
-      );
-    }
-
-    if (
-      parseFloat(mtoOperInafectas.toFixed(2)) !==
-      parseFloat(original.mtoOperInafectas.toFixed(2))
-    ) {
-      throw new BadRequestException(
-        `El monto inafecto (${mtoOperInafectas}) no coincide con el comprobante original (${original.mtoOperInafectas}).
-        Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
-      );
-    }
-
-    if (
-      parseFloat(mtoIGV.toFixed(2)) !== parseFloat(original.mtoIGV.toFixed(2))
-    ) {
-      throw new BadRequestException(
-        `El IGV (${mtoIGV}) no coincide con el comprobante original (${original.mtoIGV}).
-        Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
-      );
-    }
-
-    if (
-      parseFloat(mtoImpVenta.toFixed(2)) !==
-      parseFloat(original.mtoImpVenta.toFixed(2))
-    ) {
-      throw new BadRequestException(
-        `El total de la venta (${mtoImpVenta}) no coincide con el comprobante original (${original.mtoImpVenta}).
-        Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
-      );
-    }
-
-    if (details.length !== original.details.length) {
-      throw new BadRequestException(
-        `La cantidad de ítems (${details.length}) no coincide con el comprobante original (${original.details.length}).
-        Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
-      );
-    }
-    // Aquí también podrías validar item por item (codProducto, montos, igv, etc.)
-    // para garantizar que los detalles son idénticos.
     return {
       valido: true,
       origen: ProcesoNotaCreditoEnum.VALIDADA_DESDE_COMPROBANTE_CALCULADO,
       mensaje:
-        'Comprobante calculado y validado correctamente contra el original',
+        'Nota de Crédito de Devolución Total validada correctamente contra el comprobante original',
     };
   }
 
@@ -964,24 +1124,22 @@ export abstract class CreateNotaCreditoBaseUseCase {
         (dtcom) => dtcom.codProducto === dt.codProducto,
       );
 
-      if (!itemOriginal) {
-        throw new BadRequestException(
-          `El producto ${dt.codProducto} no existe en el comprobante original`,
-        );
+      validarProductoYTipoAfectacion(dt, itemOriginal);
+      if (itemOriginal) {
+        // Acumular según tipo de afectación
+        if (TIPO_AFECTACION_GRAVADAS.includes(itemOriginal.tipAfeIgv)) {
+          totales.mtoOperGravadas += itemOriginal.mtoBaseIgv ?? 0;
+          totales.mtoIGV += itemOriginal.igv ?? 0;
+        } else if (
+          TIPO_AFECTACION_EXONERADAS.includes(itemOriginal.tipAfeIgv)
+        ) {
+          totales.mtoOperExoneradas += itemOriginal.mtoValorVenta ?? 0;
+        } else if (TIPO_AFECTACION_INAFECTAS.includes(itemOriginal.tipAfeIgv)) {
+          totales.mtoOperInafectas += itemOriginal.mtoValorVenta ?? 0;
+        }
+        // Agregar detalle devuelto
+        detallesNotaCredito.push(itemOriginal);
       }
-
-      // Acumular según tipo de afectación
-      if (TIPO_AFECTACION_GRAVADAS.includes(itemOriginal.tipAfeIgv)) {
-        totales.mtoOperGravadas += itemOriginal.mtoBaseIgv ?? 0;
-        totales.mtoIGV += itemOriginal.igv ?? 0;
-      } else if (TIPO_AFECTACION_EXONERADAS.includes(itemOriginal.tipAfeIgv)) {
-        totales.mtoOperExoneradas += itemOriginal.mtoValorVenta ?? 0;
-      } else if (TIPO_AFECTACION_INAFECTAS.includes(itemOriginal.tipAfeIgv)) {
-        totales.mtoOperInafectas += itemOriginal.mtoValorVenta ?? 0;
-      }
-
-      // Agregar detalle devuelto
-      detallesNotaCredito.push(itemOriginal);
     }
 
     // Calcular totales finales
@@ -991,20 +1149,12 @@ export abstract class CreateNotaCreditoBaseUseCase {
       totales.mtoOperInafectas;
     const mtoImpVenta = subTotal + totales.mtoIGV;
 
-    // Generar leyenda (monto en letras)
-    const legends = [
-      {
-        code: LegendCodeEnum.MONTO_EN_LETRAS,
-        value: convertirMontoEnLetras(mtoImpVenta),
-      },
-    ];
-
     return {
       ...totales,
       subTotal,
       mtoImpVenta,
       details: detallesNotaCredito, // solo los ítems devueltos
-      legends,
+      legends: generateLegends(mtoImpVenta),
       origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
     };
   }
@@ -1150,5 +1300,73 @@ export abstract class CreateNotaCreditoBaseUseCase {
       mensaje:
         'Comprobante de devolución por ítem calculado y validado correctamente contra el comprobante original',
     };
+  }
+
+  private generarDummyItems(descripcion: string): DetailDto[] {
+    return [
+      {
+        codProducto: 'ANUL',
+        unidad: 'NIU',
+        descripcion: descripcion,
+        cantidad: 1,
+        mtoValorUnitario: 0.0,
+        mtoValorVenta: 0.0,
+        mtoBaseIgv: 0.0,
+        porcentajeIgv: 0,
+        igv: 0.0,
+        tipAfeIgv: 10,
+        mtoDescuento: 0.0,
+        totalImpuestos: 0.0,
+        mtoPrecioUnitario: 0.0,
+        icbper: 0,
+      },
+    ];
+  }
+  async verificarAnulacionPrevia(
+    empresaId: number,
+    tipoComprobante: string,
+    serieRef: string,
+    correlativoRef: number,
+    motivosAnulacionTotal: string[],
+  ) {
+    await this.validarAnulacionComprobanteUseCase.execute(
+      empresaId,
+      tipoComprobante,
+      motivosAnulacionTotal,
+      EstadoEnumComprobante.ACEPTADO,
+      serieRef,
+      correlativoRef,
+    );
+  }
+
+  async obtenerComprobanteAceptado(
+    data: CreateNotaDto,
+    empresaId: number,
+  ): Promise<ComprobanteResponseDto> {
+    const numCorrelativoRelacionado = data?.documentoRelacionado?.correlativo;
+    const tipCompRelacionado = data?.documentoRelacionado?.tipoComprobante;
+    const serieRelacionado = data?.documentoRelacionado?.serie;
+    const serie = await this.findSerieUseCase.execute(
+      empresaId,
+      tipCompRelacionado,
+      serieRelacionado,
+    );
+    if (!serie) {
+      throw new BadRequestException(
+        `El tipo de comprobante ${data.tipoComprobante} no se encuentra registrado en el sistema`,
+      );
+    }
+    // 1. Buscar comprobante original
+    const comprobante = await this.findCorrelativoUseCase.execute(
+      empresaId,
+      numCorrelativoRelacionado,
+      serie?.serieId,
+    );
+    if (!comprobante) {
+      throw new NotFoundException(
+        `No se encontró un comprobante asociado al documento relacionado con la serie ${serieRelacionado} y correlativo ${numCorrelativoRelacionado}.`,
+      );
+    }
+    return comprobante;
   }
 }

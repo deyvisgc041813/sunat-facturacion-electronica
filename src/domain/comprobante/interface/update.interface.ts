@@ -5,6 +5,6 @@ export interface IUpdateComprobante {
   xmlFirmado?: string;
   hashCpe?: string | null
   cdr?: string | null
-  motivoEstado?:string
+  descripcionEstado?:string
   fechaUpdate?:any
 }

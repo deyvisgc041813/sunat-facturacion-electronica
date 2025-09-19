@@ -95,13 +95,13 @@ export interface ConprobanteRepository {
    */
   anularComprobante(
     empresaId: number,
-    id: number,
-    motivo: string,
-  ): Promise<{ status: boolean; message: string }>;
+    serieId: number,
+    numCorrelativo: number,
+    desAnulacion: string): Promise<boolean>;
   findComprobanteByReferencia(
     empresaId: number,
     tipoComprobante:string, 
-    motivo: string,
+    motivos: string[],
     estado: string,
     serieRef: string,
     correlativoRef: number,

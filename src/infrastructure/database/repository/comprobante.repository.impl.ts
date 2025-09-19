@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
-import { Between, Repository } from 'typeorm';
+import { Between, Not, Repository } from 'typeorm';
 import { ComprobanteOrmEntity } from '../entity/ComprobanteOrmEntity';
 
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
@@ -15,7 +15,7 @@ import { DataSource } from 'typeorm';
 import { ICreateComprobante } from 'src/domain/comprobante/interface/create.interface';
 import { IResponsePs } from 'src/domain/comprobante/interface/response.ps.interface';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
-
+import dayjs from 'dayjs';
 @Injectable()
 export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   constructor(
@@ -184,9 +184,9 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
         serieId,
         estado: EstadoEnumComprobante.ACEPTADO,
       },
-      relations: ['cliente'],
+      relations: ['cliente', 'serie'],
     });
-    if (!comprobante) return null
+    if (!comprobante) return null;
     return ComprobanteMapper.toDomain(comprobante);
   }
   async findByEmpresaAndFecha(
@@ -204,19 +204,29 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   }
   async anularComprobante(
     empresaId: number,
-    id: number,
-    motivo: string,
-  ): Promise<{ status: boolean; message: string }> {
-    await this.repo.update(
-      { comprobanteId: id, empresaId },
-      { estado: EstadoEnumComprobante.ANULADO, motivoEstado: motivo },
+    serieId: number,
+    numCorrelativo: number,
+    desAnulacion: string,
+  ): Promise<boolean> {
+    const result = await this.repo.update(
+      {
+        empresaId,
+        serieId,
+        numeroComprobante: numCorrelativo,
+        estado: Not(EstadoEnumComprobante.ANULADO),
+      },
+      { estado: EstadoEnumComprobante.ANULADO, descripcionEstado: desAnulacion,  fechaAnulacion: dayjs().toDate()},
     );
-    return { status: true, message: 'Comprobante anulado correctamente' };
+    if (result.affected && result.affected > 0) {
+      return true;
+    }
+    return false;
   }
+
   async findComprobanteByReferencia(
     empresaId: number,
     tipoComprobante: string,
-    motivo: string,
+    motivos: string[],
     estado: string,
     serieRef: string,
     correlativoRef: number,
@@ -252,9 +262,13 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
           "JSON_CONTAINS_PATH(c.payload_json, 'one', '$.motivo.codigo') = 1",
         )
         .andWhere(
-          "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.motivo.codigo')) = :motivo",
-          { motivo },
+          "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.motivo.codigo')) IN (:...motivos)",
+          { motivos },
         );
+      // .andWhere(
+      //   "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.motivo.codigo')) = :motivo",
+      //   { motivo },
+      // );
     }
     const comprobante = await qb.getOne();
     if (!comprobante) return null;

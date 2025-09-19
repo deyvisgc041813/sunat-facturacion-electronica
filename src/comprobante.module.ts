@@ -13,7 +13,7 @@ import { ComprobanteOrmEntity } from './infrastructure/database/entity/Comproban
 import { SunatService } from './infrastructure/sunat/send/sunat.service';
 import { CreateComprobanteUseCase } from './application/comprobante/base/CreateComprobanteUseCase';
 import { CatalogoModule } from './catalogo.module';
-import { UpdateComprobanteUseCase } from './application/comprobante/base/UpdateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from './application/comprobante/update/UpdateComprobanteUseCase';
 import { SunatLogOrmEntity } from './infrastructure/database/entity/SunatLogOrmEntity';
 import { SunatLogRepositoryImpl } from './infrastructure/database/repository/sunat-log.repository.impl';
 import { XmlBuilderInvoiceService } from './infrastructure/sunat/xml/xml-builder-invoice.service';
@@ -30,6 +30,7 @@ import { CreateNotaDebitoUseCase } from './application/comprobante/create/Create
 import { XmlBuilderNotaDebitoService } from './infrastructure/sunat/xml/xml-builder-nota-debito.service';
 import { CreateInvoiceUseCase } from './application/comprobante/create/CreateInvoiceUseCase';
 import { ValidarAnulacionComprobanteUseCase } from './application/comprobante/validate/ValidarAnulacionComprobanteUseCase';
+import { AnularComprobanteUseCase } from './application/comprobante/update/AnularComprobanteUseCase';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -65,6 +66,7 @@ import { ValidarAnulacionComprobanteUseCase } from './application/comprobante/va
     FindByEmpAndTipComAndSerieUseCase,
     GetByCorrelativoComprobantesUseCase,
     ValidarAnulacionComprobanteUseCase,
+    AnularComprobanteUseCase,
     FindTasaByCodeUseCase
   ],
   exports: [

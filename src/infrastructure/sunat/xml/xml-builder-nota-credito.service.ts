@@ -456,10 +456,10 @@ export class XmlBuilderNotaCreditoService {
   }
 
   private addDescuentoGlobal(root: any, dto: CreateNotaDto) {
-    if (!dto.descuentosGlobales || dto.descuentosGlobales.length === 0) {
+    if (!dto.descuentoGlobal || dto.descuentoGlobal.length === 0) {
       return; // nada que agregar
     }
-    for (const d of dto.descuentosGlobales) {
+    for (const d of dto.descuentoGlobal) {
       const allowanceCharge = root.ele('cac:AllowanceCharge');
       allowanceCharge
         .ele('cbc:ChargeIndicator')

@@ -29,6 +29,7 @@ export class ComprobanteResponseDto {
     // Datos adicionales
     public hashCpe?: string,     
     public payloadJson?: any,
-
+    public fechaAnulacion?: Date,
+    public descripcionEstado?: string,
   ) {}
 }

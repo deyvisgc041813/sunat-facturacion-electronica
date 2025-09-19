@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import {
   CodigoProductoNotaDebito,
+  LegendCodeEnum,
   TIPO_AFECTACION_EXONERADAS,
   TIPO_AFECTACION_GRAVADAS,
   TIPO_AFECTACION_INAFECTAS,
@@ -172,12 +173,12 @@ export function setobjectUpdateComprobante(
   cdr: string | null,
   hashCpe: string | null,
   estado: EstadoEnumComprobante,
-  motivoEstado: string,
+  descripcionEstado: string,
 ): IUpdateComprobante {
   const objectUpdate: IUpdateComprobante = {
     xmlFirmado,
     estado,
-    motivoEstado,
+    descripcionEstado,
   };
   // Solo comprobantes que sí necesitan CDR y Hash
   const tiposConCdrYHash: TipoComprobanteEnum[] = [
@@ -374,4 +375,12 @@ export function validarNumeroDocumentoCliente(
       `El RUC/DNI del cliente en la ${tipo} (${numDocNd}) no coincide con el de la factura original (${numDocOriginal}).`,
     );
   }
+}
+export function generateLegends(mtoImpVenta: number) {
+  return [
+    {
+      code: LegendCodeEnum.MONTO_EN_LETRAS,
+      value: convertirMontoEnLetras(mtoImpVenta),
+    },
+  ];
 }

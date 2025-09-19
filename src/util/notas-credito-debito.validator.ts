@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { NotaCreditoMotivo, TipoComprobanteEnum } from './catalogo.enum';
+import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 
 export function validarComprobante(comprobante: any): void {
   switch (comprobante.tipoComprobante) {
@@ -22,6 +23,30 @@ export function validarComprobante(comprobante: any): void {
       );
   }
 }
+
+export function validarProductoYTipoAfectacion(
+  detalle: DetailDto,
+  existComprobante: any,
+) {
+  console.log(existComprobante)
+  // Validar existencia
+  if (!existComprobante) {
+    throw new BadRequestException(
+      `El producto con código ${detalle.codProducto} no existe en el comprobante original. 
+       Debe enviar el mismo código del ítem al que se aplicará la operación.`,
+    );
+  }
+
+  // Validar tipo de afectación IGV
+  if (existComprobante.tipAfeIgv !== detalle.tipAfeIgv) {
+    throw new BadRequestException(
+      `El ítem ${detalle.codProducto} tiene un tipo de afectación IGV distinto al comprobante original. 
+       Enviado: ${detalle.tipAfeIgv}, Original: ${existComprobante.tipAfeIgv}`,
+    );
+  }
+  return true;
+}
+
 function validarNotaCredito(comprobante: any): void {
   // 1. Validar tipo de comprobante
   if (comprobante.tipoComprobante !== TipoComprobanteEnum.NOTA_CREDITO) {
@@ -45,7 +70,7 @@ function validarNotaCredito(comprobante: any): void {
     throw new BadRequestException('La fecha de emisión no puede ser futura.');
   }
   switch (comprobante.motivo.codigo) {
-    case NotaCreditoMotivo.ANULACION_OPERACION: // Anulación de la operación
+    case NotaCreditoMotivo.ANULACION_OPERACION: 
       if (
         comprobante.mtoOperGravadas !== 0 ||
         comprobante.mtoOperExoneradas !== 0 ||
@@ -61,26 +86,16 @@ function validarNotaCredito(comprobante: any): void {
       if (comprobante.details?.length > 0) {
         throw new BadRequestException('En motivo 01, no debe haber detalles.');
       }
-
-      const legendMonto = comprobante.legends?.find(
-        (l: any) => l.code === '1000',
-      );
-      if (!legendMonto) {
-        throw new BadRequestException(
-          'Debe incluir la leyenda con código 1000 (monto en letras).',
-        );
-      }
-      if (legendMonto.value !== 'CERO con 00/100') {
-        throw new BadRequestException(
-          "La leyenda 1000 debe ser 'CERO con 00/100'.",
-        );
-      }
       break;
 
-    case NotaCreditoMotivo.DESCUENTO_GLOBAL: // Descuento global
-      if (!comprobante.descuentoGlobal || comprobante.descuentoGlobal <= 0) {
+    case NotaCreditoMotivo.DESCUENTO_GLOBAL: 
+      // 1. Validar que exista al menos un descuento global
+      if (
+        !comprobante.descuentoGlobal ||
+        comprobante.descuentoGlobal.length === 0
+      ) {
         throw new BadRequestException(
-          'En una Nota de Crédito con motivo 04 (descuento global), el monto de descuento global debe ser mayor a cero.',
+          'Debe registrar al menos un descuento global en la nota de crédito con motivo 04.',
         );
       }
       // 2. Validar motivo
@@ -91,20 +106,47 @@ function validarNotaCredito(comprobante: any): void {
       }
       break;
 
-    case '05': // Descuento por ítem
+    case NotaCreditoMotivo.ANULACION_ERROR_RUC:
+      // 2. Validar motivo
+      if (
+        comprobante.motivo?.codigo !== NotaCreditoMotivo.ANULACION_ERROR_RUC
+      ) {
+        throw new BadRequestException(
+          'El motivo debe ser 02 (Anulación por error en el RUC).',
+        );
+      }
+      if (
+        comprobante.mtoOperGravadas !== 0 ||
+        comprobante.mtoOperExoneradas !== 0 ||
+        comprobante.mtoOperInafectas !== 0 ||
+        comprobante.mtoIGV !== 0 ||
+        comprobante.subTotal !== 0 ||
+        comprobante.mtoImpVenta !== 0
+      ) {
+        throw new BadRequestException(
+          'En una Nota de Crédito con motivo 02 (Anulación por error en el RUC), los montos gravados, exonerados, inafectos, IGV y total deben ser igual a 0.',
+        );
+      }
+      if (comprobante.details?.length > 0) {
+        throw new BadRequestException(
+          'En una Nota de Crédito con motivo 02 (Anulación por error en el RUC), no debe haber detalles.',
+        );
+      }
+      break;
+    case NotaCreditoMotivo.DESCUENTO_POR_ITEM:
       if (!comprobante.details || comprobante.details.length === 0) {
         throw new BadRequestException(
           "En motivo 05 (descuento por ítem) debe haber ítems en 'details'.",
         );
       }
       break;
-
-    // otros motivos de NC...
-    default:
-      throw new BadRequestException(
-        `Motivo de Nota de Crédito no soportado: ${comprobante.motivo.codigo}`,
-      );
-    // 8. Fecha
+    case NotaCreditoMotivo.DEVOLUCION_POR_ITEM:
+      if (!comprobante.details || comprobante.details.length === 0) {
+        throw new BadRequestException(
+          "En motivo 6 (devolución por ítem) debe haber ítems en 'details'.",
+        );
+      }
+      break;
   }
 }
 
@@ -150,3 +192,4 @@ function validarFacturaBoleta(comprobante: any): void {
     throw new BadRequestException('El importe total debe ser mayor a 0.');
   }
 }
+

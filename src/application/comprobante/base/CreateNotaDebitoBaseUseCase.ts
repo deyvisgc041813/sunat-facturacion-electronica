@@ -25,7 +25,7 @@ import {
   TipoDocumentoIdentidadEnum,
   TipoDocumentoLetras,
 } from 'src/util/catalogo.enum';
-import { UpdateComprobanteUseCase } from './UpdateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import {
