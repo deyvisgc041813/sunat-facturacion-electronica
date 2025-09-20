@@ -25,6 +25,7 @@ import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
+import { NotaDebitoHelper } from 'src/util/comprobante-helpers';
 
 export abstract class CreateInvoiceBaseUseCase {
   constructor(
@@ -53,16 +54,23 @@ export abstract class CreateInvoiceBaseUseCase {
     let comprobanteId = 0;
     let xmlFirmadoError = '';
     try {
-      // 1. Registrar comprobante en BD
+      // 1. validar item de la factura
+      NotaDebitoHelper.validarDetallesCliente(data)
+      
+      // 2. Recalcular montos
+      const invoice = NotaDebitoHelper.recalcularMontos(data)
+      // 3. Registrar comprobante en BD
       const comprobante = await this.registrarComprobante(
-        data,
+        invoice,
         empresa.empresaId,
       );
-      comprobanteId = comprobante.response?.comprobanteId ?? data.correlativo;
-      data.correlativo = comprobanteId;
+
+      comprobanteId = comprobante.response?.comprobanteId ?? 0;
+      invoice.correlativo = comprobante.response?.correlativo ?? 0;
+
       // 2. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
-        data,
+        invoice,
         empresa.certificadoDigital,
         empresa.claveCertificado,
       );
@@ -70,7 +78,7 @@ export abstract class CreateInvoiceBaseUseCase {
       // 3. Enviar a SUNAT
       const responseSunat = await this.enviarASunat(
         xmlFirmado,
-        data.tipoComprobante,
+        invoice?.tipoComprobante,
         fileName,
         zipBuffer,
       );
@@ -78,12 +86,11 @@ export abstract class CreateInvoiceBaseUseCase {
       // 4. Actualizar comprobante con CDR, Hash y estado
       await this.actualizarComprobante(
         comprobanteId,
-        empresa.empresaId,
-        data.tipoComprobante as TipoComprobanteEnum,
+        empresa?.empresaId,
+        invoice?.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado,
         responseSunat,
       );
-
       return responseSunat;
     } catch (error: any) {
       await this.procesarErrorSunat(
@@ -242,7 +249,7 @@ export abstract class CreateInvoiceBaseUseCase {
   /**
    * Decide si enviar con sendBill o sendSummary según tipo comprobante
    */
-  protected async enviarASunat(
+  private async enviarASunat(
     xmlFirmado: any,
     tipoComprobante: string,
     fileName: string,
@@ -274,4 +281,7 @@ export abstract class CreateInvoiceBaseUseCase {
       };
     }
   }
+
+
+
 }

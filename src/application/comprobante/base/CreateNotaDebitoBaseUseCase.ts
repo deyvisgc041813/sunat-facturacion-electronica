@@ -118,7 +118,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
         empresa.certificadoDigital,
         empresa.claveCertificado,
       );
-      //console.log(xmlFirmado);
       xmlFirmadoError = xmlFirmado;
       // 3. Enviar a SUNAT
       const responseSunat = await this.sunatService.sendBill(

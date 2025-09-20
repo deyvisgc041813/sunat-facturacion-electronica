@@ -20,7 +20,6 @@ import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.inte
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { convertirMontoEnLetras } from './conversion-numero-letra';
-import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 export type TipoNotaDebito = 'GLOBAL' | 'ITEM' | 'INVALIDO';
 
 export function validarSoloNumeros(

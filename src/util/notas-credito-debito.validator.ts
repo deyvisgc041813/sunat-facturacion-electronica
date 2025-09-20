@@ -28,7 +28,6 @@ export function validarProductoYTipoAfectacion(
   detalle: DetailDto,
   existComprobante: any,
 ) {
-  console.log(existComprobante)
   // Validar existencia
   if (!existComprobante) {
     throw new BadRequestException(

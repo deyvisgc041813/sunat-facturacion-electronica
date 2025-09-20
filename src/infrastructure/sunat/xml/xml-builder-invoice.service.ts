@@ -130,17 +130,10 @@ export class XmlBuilderInvoiceService {
       const taxTotalLine = line.ele('cac:TaxTotal');
 
       if (d.icbper && d.icbper > 0) {
-        // Calcular ICBPER
-        const montoIcbper = d.icbper ? d.icbper * d.cantidad : 0;
-
-        // Total impuestos de la línea
-        const totalLinea = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
-          ? d.igv + montoIcbper
-          : montoIcbper;
         // Este es obligatorio y va primero
         taxTotalLine
           .ele('cbc:TaxAmount', { currencyID: dto.tipoMoneda })
-          .txt(totalLinea.toFixed(2))
+          .txt(d.totalImpuestos.toFixed(2))
           .up();
 
         // // Genera el nodo TaxSubtotal con IGV (código 1000) solo para líneas con afectación gravada
@@ -173,11 +166,11 @@ export class XmlBuilderInvoiceService {
         }
         //// Agrega el TaxSubtotal correspondiente al ICBPER (impuesto por bolsa plástica),
         // indicando la cantidad de bolsas y el monto por unidad
-        if (montoIcbper > 0) {
+        if (d.icbper > 0) {
           this.agregarDetalleSubtotalIcbper(
             taxTotalLine,
             0,
-            montoIcbper,
+            d.icbper,
             0,
             String(d.tipAfeIgv),
             dto.tipoMoneda,
@@ -376,6 +369,42 @@ export class XmlBuilderInvoiceService {
     return root.end({ prettyPrint: true });
   }
 
+  // private agruparTotalesPorTipoAfetiGV(
+  //   dto: CreateInvoiceDto,
+  //   totalesPorTributo: any,
+  // ) {
+  //   for (const item of dto.details) {
+  //     // 1. Afectaciones IGV, EXO, INA, EXP
+  //     const tributo = MAP_TIPO_AFECTACION_TRIBUTO[item.tipAfeIgv];
+  //     if (tributo) {
+  //       const key = tributo.id;
+  //       if (!totalesPorTributo[key]) {
+  //         totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributo };
+  //       }
+  //       // Determinar taxable según tipo de afectación
+  //       let taxableAmount = 0;
+  //       if (TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)) {
+  //         taxableAmount = item.mtoBaseIgv ?? 0; // Gravadas usan base imponible
+  //       } else {
+  //         taxableAmount = item.mtoValorVenta ?? 0; // Exoneradas / Inafectas / Exportación usan valor de venta
+  //       }
+  //       totalesPorTributo[key].taxable += taxableAmount;
+  //       totalesPorTributo[key].tax += item.igv ?? 0;
+  //     }
+
+  //     // 2. ICBPER (no depende de tipAfeIgv)
+  //     if (item.icbper && item.icbper > 0) {
+  //       const montoIcbper = item.icbper * (item.cantidad ?? 1);
+  //       const tributoICBPER = MAP_TRIBUTOS.ICBPER; // se saca del mapa
+  //       const key = tributoICBPER.id;
+  //       if (!totalesPorTributo[key]) {
+  //         totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributoICBPER };
+  //       }
+  //       totalesPorTributo[key].tax += montoIcbper;
+  //     }
+  //   }
+  // }
+
   private agruparTotalesPorTipoAfetiGV(
     dto: CreateInvoiceDto,
     totalesPorTributo: any,
@@ -388,29 +417,28 @@ export class XmlBuilderInvoiceService {
         if (!totalesPorTributo[key]) {
           totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributo };
         }
-        // Determinar taxable según tipo de afectación
         let taxableAmount = 0;
         if (TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)) {
-          taxableAmount = item.mtoBaseIgv ?? 0; // Gravadas usan base imponible
+          taxableAmount = item.mtoBaseIgv ?? 0;
         } else {
-          taxableAmount = item.mtoValorVenta ?? 0; // Exoneradas / Inafectas / Exportación usan valor de venta
+          taxableAmount = item.mtoValorVenta ?? 0;
         }
         totalesPorTributo[key].taxable += taxableAmount;
         totalesPorTributo[key].tax += item.igv ?? 0;
       }
 
-      // 2. ICBPER (no depende de tipAfeIgv)
+      // 2. ICBPER (ya viene total en DTO)
       if (item.icbper && item.icbper > 0) {
-        const montoIcbper = item.icbper * (item.cantidad ?? 1);
-        const tributoICBPER = MAP_TRIBUTOS.ICBPER; // se saca del mapa
+        const tributoICBPER = MAP_TRIBUTOS.ICBPER;
         const key = tributoICBPER.id;
         if (!totalesPorTributo[key]) {
           totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributoICBPER };
         }
-        totalesPorTributo[key].tax += montoIcbper;
+        totalesPorTributo[key].tax += item.icbper; // ✅ usar total directo
       }
     }
   }
+
   private addTotalesImpuestos(
     root: any,
     totalesPorTributo: any,
@@ -431,7 +459,7 @@ export class XmlBuilderInvoiceService {
 
     // Ordenar para que primero vayan IGV/EXO/INA y luego ICBPER
     subtotales.sort((a, b) => {
-      const prioridad = (id: string) => (id === '7152' ? 2 : 1);
+      const prioridad = (id: string) => (id === MAP_TRIBUTOS.ICBPER.id ? 2 : 1);
       return prioridad(a.info.id) - prioridad(b.info.id);
     });
 
@@ -448,7 +476,7 @@ export class XmlBuilderInvoiceService {
 
       const taxCat = taxSub.ele('cac:TaxCategory');
       taxCat.ele('cbc:Percent').txt(mtoIgv.toFixed(2)).up();
-      taxCat.ele('cbc:TaxExemptionReasonCode').txt('20').up();
+      taxCat.ele('cbc:TaxExemptionReasonCode').txt(info.taxTypeCode).up();
       const taxScheme = taxCat.ele('cac:TaxScheme');
       taxScheme.ele('cbc:ID').txt(info.id).up();
       taxScheme.ele('cbc:Name').txt(info.name).up();

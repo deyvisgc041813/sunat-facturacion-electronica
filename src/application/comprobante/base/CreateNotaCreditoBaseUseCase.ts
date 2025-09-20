@@ -161,8 +161,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
       );
       xmlFirmadoError = xmlFirmado;
 
-      //console.log(xmlFirmado);
-
       // 3. Enviar a SUNAT
       const responseSunat = await this.sunatService.sendBill(
         `${fileName}.zip`,
