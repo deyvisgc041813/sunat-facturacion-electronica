@@ -3,10 +3,9 @@ import { BadRequestException } from "@nestjs/common";
 import { ClienteRepository } from "src/domain/cliente/Cliente.repository";
 import { ClienteResponseDto } from "src/domain/cliente/dto/ClienteResponseDto";
 import { CreateClienteDto } from "src/domain/cliente/dto/CreateRequestDto";
+import { CatalogoRepositoryImpl } from "src/infrastructure/persistence/catalogo/catalogo.repository.impl";
 import { TipoCatalogoEnum } from "src/util/catalogo.enum";
 import { validarDatosSegunTipoDocumento } from "src/util/Helpers";
-import { CatalogoRepositoryImpl } from "src/infrastructure/database/repository/catalogo.repository.impl";
-
 export class CreateClienteUseCase {
   constructor(private readonly clienteRepo: ClienteRepository, private readonly catalogoRepo: CatalogoRepositoryImpl) {}
   async execute(cliente: CreateClienteDto): Promise<{status: boolean, message: string, data?: ClienteResponseDto}> {

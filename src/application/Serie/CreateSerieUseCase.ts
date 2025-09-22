@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CreateSerieDto } from 'src/domain/series/dto/CreateSerieDto';
 import { SerieResponseDto } from 'src/domain/series/dto/SerieResponseDto';
 import { SerieRepository } from 'src/domain/series/Serie.repository';
-import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
+import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
 import { TipoCatalogoEnum } from 'src/util/catalogo.enum';
 export class CreateSerieUseCase {
   constructor(private readonly serieRepo: SerieRepository, private readonly catalogoRepo: CatalogoRepositoryImpl) {}

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { SerieResponseDto } from "src/domain/series/dto/SerieResponseDto";
-import { SerieRepositoryImpl } from "src/infrastructure/database/repository/serie.repository.impl";
+import { SerieRepositoryImpl } from "src/infrastructure/persistence/serie/serie.repository.impl";
 @Injectable()
 export class FindByEmpAndTipComAndSerieUseCase {
   constructor(private readonly serieRepo: SerieRepositoryImpl) {}

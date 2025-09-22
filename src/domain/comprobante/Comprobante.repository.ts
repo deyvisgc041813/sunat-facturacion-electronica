@@ -1,9 +1,6 @@
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { ComprobanteResponseDto } from './dto/ConprobanteResponseDto';
 import { IUpdateComprobante } from './interface/update.interface';
-import { ICreateComprobante } from './interface/create.interface';
-import { IResponsePs } from './interface/response.ps.interface';
-
 export interface ArchivoDescargable {
   fileName: string; // Nombre sugerido del archivo (ej: 20600887735-01-F001-123.xml)
   mimeType: string; // application/xml, application/zip, etc.
@@ -11,18 +8,6 @@ export interface ArchivoDescargable {
 }
 
 export interface ConprobanteRepository {
-  /**
-   * Crea un nuevo comprobante en estado PENDIENTE.
-   */
-  save(
-    data: ICreateComprobante,
-    payloadJson: any,
-  ): Promise<{
-    status: boolean;
-    message: string;
-    response?: IResponsePs;
-  }>;
-
   /**
    * Retorna todos los comprobantes registrados.
    */
@@ -91,19 +76,32 @@ export interface ConprobanteRepository {
     numCorrelativo: number,
   ): Promise<ComprobanteResponseDto | null>;
   /**
-   * Elimina lógicamente un comprobante (ej: comunicación de baja).
+   * Actualizar el estado de un comprobante (ej: comunicación de baja).
    */
-  anularComprobante(
+  updateComprobanteStatus(
     empresaId: number,
     serieId: number,
     numCorrelativo: number,
-    desAnulacion: string): Promise<boolean>;
+    desAnulacion: string,
+    estado: EstadoEnumComprobante,
+  ): Promise<boolean>;
+  actualizarEstadoBoletas(
+    boletaIds: number[],
+    nuevoEstado: EstadoEnumComprobante,
+    comunicadoSunat:boolean
+  );
   findComprobanteByReferencia(
     empresaId: number,
-    tipoComprobante:string, 
+    tipoComprobante: string,
     motivos: string[],
     estado: string,
     serieRef: string,
     correlativoRef: number,
   ): Promise<ComprobanteResponseDto | null>;
+  findBoletasForResumen(
+    empresaId: number,
+    serieId: number,
+    fechaResumen: string,
+    estados: EstadoEnumComprobante[]
+  ): Promise<ComprobanteResponseDto[]>;
 }

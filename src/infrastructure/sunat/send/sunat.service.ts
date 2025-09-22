@@ -101,59 +101,111 @@ export class SunatService {
         headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
         auth: { username: this.username, password: this.password },
       });
-
-      // Buscar si hay Fault en el response
-      const faultMatch = response.data.match(
-        /<soap-env:Fault[\s\S]*?<\/soap-env:Fault>/,
-      );
-      if (faultMatch) {
-        const faultCodeMatch = response.data.match(
-          /<faultcode>(.*?)<\/faultcode>/,
-        );
-        const faultStringMatch = response.data.match(
-          /<faultstring>(.*?)<\/faultstring>/,
-        );
-
-        const error = {
-          code: faultCodeMatch ? faultCodeMatch[1] : 'UNKNOWN',
-          message: faultStringMatch ? faultStringMatch[1] : 'Error desconocido',
-        };
-
-        // Aquí lo guardas en DB o lo retornas
-        throw new Error(JSON.stringify(error));
-      }
-
-      const match = response.data.match(/<ticket>(.*?)<\/ticket>/);
-
-      if (!match) throw new Error('SUNAT no devolvió ticket');
-      return match[1];
+      return this.parseSunatResponse(response.data);
     } catch (err) {
-      console.error('Error SUNAT:', err.message || err);
+      if (err.response && err.response.data) {
+        // Caso SUNAT devolvió SOAP Fault con 500
+        return this.parseSunatResponse(err.response.data);
+      }
+      console.error('Error inesperado:', err.message || err);
       throw err;
     }
   }
 
   /** Consultar estado de Resumen (con ticket) → devuelve CDR */
-  async getStatus(ticket: string): Promise<Buffer> {
-    const envelope = `
-    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                      xmlns:ser="http://service.sunat.gob.pe">
-       <soapenv:Header/>
-       <soapenv:Body>
-          <ser:getStatus>
-             <ticket>${ticket}</ticket>
-          </ser:getStatus>
-       </soapenv:Body>
-    </soapenv:Envelope>`;
 
-    const response = await axios.post(this.url, envelope, {
-      headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
-      auth: { username: this.username, password: this.password },
-    });
+  /** Consultar estado de Resumen (con ticket) → devuelve CDR */
+  async getStatus(ticket: string): Promise<{
+    statusCode: string;
+    statusMessage: string;
+    cdr?: Buffer;
+  }> {
+    try {
+      const envelope = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                  xmlns:ser="http://service.sunat.gob.pe"
+                  xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+   <soapenv:Header>
+      <wsse:Security>
+         <wsse:UsernameToken>
+            <wsse:Username>${this.username}</wsse:Username>
+            <wsse:Password>${this.password}</wsse:Password>
+         </wsse:UsernameToken>
+      </wsse:Security>
+   </soapenv:Header>
+   <soapenv:Body>
+      <ser:getStatus>
+         <ticket>${ticket}</ticket>
+      </ser:getStatus>
+   </soapenv:Body>
+</soapenv:Envelope>`;
 
-    const match = response.data.match(/<content>([\s\S]*?)<\/content>/);
-    if (!match) throw new Error('SUNAT no devolvió CDR en getStatus');
-    return Buffer.from(match[1], 'base64');
+      const response = await axios.post(this.url, envelope, {
+        headers: {
+          'Content-Type': 'text/xml; charset=utf-8',
+          SOAPAction: 'urn:getStatus',
+        },
+        timeout: 30000,
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
+        validateStatus: () => true,
+      });
+
+      const xml = response.data;
+      console.log('Respuesta SUNAT:', xml);
+
+      // Ver si SUNAT devolvió un Fault
+      const faultCode = xml.match(/<faultcode>(.*?)<\/faultcode>/)?.[1];
+      const faultString = xml.match(/<faultstring>(.*?)<\/faultstring>/)?.[1];
+      if (faultCode || faultString) {
+        throw new Error(
+          JSON.stringify({
+            code: faultCode || '99',
+            message: faultString || 'Error desconocido en SUNAT',
+          }),
+        );
+      }
+
+      // Extraer statusCode
+      const codeMatch = xml.match(/<statusCode>(.*?)<\/statusCode>/);
+      const statusCode = codeMatch ? codeMatch[1] : '99';
+
+      // Extraer contenido
+      const contentMatch = xml.match(/<content>([\s\S]*?)<\/content>/);
+      let statusMessage = 'SUNAT no devolvió mensaje';
+      let cdr: Buffer | undefined;
+
+      if (contentMatch) {
+        const content = contentMatch[1].trim();
+        const isBase64 = /^[A-Za-z0-9+/=]+$/.test(content);
+
+        if (isBase64) {
+          // Caso exitoso → CDR
+          cdr = Buffer.from(content, 'base64');
+          statusMessage = 'CDR recibido correctamente';
+        } else {
+          // Caso error → mensaje plano
+          throw new Error(
+            JSON.stringify({
+              code: statusCode,
+              message: content,
+            }),
+          );
+        }
+      }
+
+      // Si existe statusMessage explícito en XML, usarlo
+      const messageMatch = xml.match(/<statusMessage>(.*?)<\/statusMessage>/);
+      if (messageMatch) {
+        statusMessage = messageMatch[1];
+      }
+
+      return { statusCode, statusMessage, cdr };
+    } catch (error: any) {
+      console.error('Error en getStatus:', error.message || error);
+      // Propagar hacia arriba con formato uniforme
+      throw error;
+    }
   }
 
   async extraerEstadoCdr(cdrZip: any): Promise<IResponseSunat> {
@@ -187,7 +239,8 @@ export class SunatService {
       estadoSunat: estadoResult.estado,
       codigoResponse: estadoResult.codigo,
       mensaje: estadoResult.mensaje,
-      observaciones: estadoResult.observaciones   ? Array.isArray(estadoResult.observaciones)
+      observaciones: estadoResult.observaciones
+        ? Array.isArray(estadoResult.observaciones)
           ? estadoResult.observaciones
           : [estadoResult.observaciones]
         : [],
@@ -195,5 +248,26 @@ export class SunatService {
       cdr: cdrZip,
     };
     return rpta;
+  }
+  private parseSunatResponse(xml: string): string {
+    // Si hay Fault
+    const faultMatch = xml.match(/<soap-env:Fault[\s\S]*?<\/soap-env:Fault>/);
+    if (faultMatch) {
+      const faultCode =
+        xml.match(/<faultcode>(.*?)<\/faultcode>/)?.[1] ?? 'UNKNOWN';
+      const faultString =
+        xml.match(/<faultstring>(.*?)<\/faultstring>/)?.[1] ??
+        'Error desconocido';
+
+      throw new Error(
+        JSON.stringify({ code: faultCode, message: faultString }),
+      );
+    }
+
+    // Si hay ticket
+    const match = xml.match(/<ticket>(.*?)<\/ticket>/);
+    if (!match) throw new Error('SUNAT no devolvió ticket');
+
+    return match[1];
   }
 }

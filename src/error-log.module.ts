@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ErrorLogRepositoryImpl } from './infrastructure/database/repository/error-log.repository.impl';
+import { ErrorLogRepositoryImpl } from './infrastructure/persistence/error-log/error-log.repository.impl';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ErrorLogOrmEntity } from './infrastructure/database/entity/ErrorLogOrmEntity';
+import { ErrorLogOrmEntity } from './infrastructure/persistence/error-log/ErrorLogOrmEntity';
 
 @Module({
 imports: [TypeOrmModule.forFeature([ErrorLogOrmEntity])],

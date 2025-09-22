@@ -13,6 +13,11 @@ export enum TipoComprobanteEnum {
   NOTA_CREDITO = '07',
   NOTA_DEBITO = '08',
 }
+export enum OperacionResumenEnum {
+  ADICIONAR = "ADICIONAR",   // Alta de boleta
+  MODIFICAR = "MODIFICACION",   // Modificación de boleta ya informada
+  BAJA = "BAJA",      // Baja (anulación) de boleta
+}
 
 // Catálogo 06: Tipo de Documento de Identidad
 export enum TipoDocumentoIdentidadEnum {
@@ -188,7 +193,12 @@ export const MAP_TRIBUTOS: Record<string, { id: string; name: string; taxTypeCod
   EXO: { id: '9997', name: 'EXO', taxTypeCode: 'VAT' },
   INA: { id: '9998', name: 'INA', taxTypeCode: 'FRE' },
   MORA: { id: 'TIM2025', name: 'MOTA', taxTypeCode: 'MORA' },
-  
 };
 
+export const TRIBUTOS_RESUMEN = [
+  { key: "mtoOperGravadas", id: "1000", name: "IGV", taxTypeCode: "VAT", instructionID: "01", conIgv: true },
+  { key: "mtoOperExoneradas", id: "9997", name: "EXO", taxTypeCode: "VAT", instructionID: "02", conIgv: false },
+  { key: "mtoOperInafectas", id: "9998", name: "INA", taxTypeCode: "VAT", instructionID: "03", conIgv: false },
+  { key: "mtoOperExportacion", id: "9995", name: "EXP", taxTypeCode: "VAT", instructionID: "04", conIgv: false },
+];
 

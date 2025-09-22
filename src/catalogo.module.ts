@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CatalogoTipoOrmEnity } from './infrastructure/database/entity/CatalogoTipoOrmEnity';
-import { CatalogoDetalleOrmEnity } from './infrastructure/database/entity/CatalogoDetalleOrmEnity';
-import { CatalogoRepositoryImpl } from './infrastructure/database/repository/catalogo.repository.impl';
+import { CatalogoTipoOrmEnity } from './infrastructure/persistence/catalogo/CatalogoTipoOrmEnity';
+import { CatalogoDetalleOrmEnity } from './infrastructure/persistence/catalogo/CatalogoDetalleOrmEnity';
+import { CatalogoRepositoryImpl } from './infrastructure/persistence/catalogo/catalogo.repository.impl';
 
 @Module({
 imports: [TypeOrmModule.forFeature([CatalogoTipoOrmEnity, CatalogoDetalleOrmEnity])],

@@ -9,18 +9,31 @@ import {
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
   TipoDocumentoLetras,
+  TRIBUTOS_RESUMEN,
 } from './catalogo.enum';
 import { CreateClienteDto } from '../domain/cliente/dto/CreateRequestDto';
 import { UpdateClienteDto } from '../domain/cliente/dto/UpdateClienteDto';
 import { DOMParser } from '@xmldom/xmldom';
-import { EstadoEnumComprobante } from './estado.enum';
+import {
+  EstadoComprobanteEnumSunat,
+  EstadoEnumComprobante,
+  EstadoEnumResumen,
+  sunatEstadoMap,
+} from './estado.enum';
 import { EstadoCdrResult } from 'src/domain/comprobante/interface/estado.cdr.interface';
 import { parseStringPromise } from 'xml2js';
 import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { convertirMontoEnLetras } from './conversion-numero-letra';
+import { IDocumento } from 'src/domain/resumen/interface/sunat.summary.interface';
 export type TipoNotaDebito = 'GLOBAL' | 'ITEM' | 'INVALIDO';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 export function validarSoloNumeros(
   valor: string,
@@ -157,15 +170,26 @@ export async function extraerHashCpe(
   xmlFirmado: string,
 ): Promise<string | null> {
   if (!xmlFirmado) return null;
+
   const json = await parseStringPromise(xmlFirmado, { explicitArray: false });
+
+  // Detectar el nodo raíz posible
+  const root =
+    json['Invoice'] ??
+    json['CreditNote'] ??
+    json['DebitNote'] ??
+    json['SummaryDocuments'];
+
+  if (!root) return null;
+
   const digestValue =
-    json['Invoice']?.['ext:UBLExtensions']?.['ext:UBLExtension']?.[
-      'ext:ExtensionContent'
-    ]?.['ds:Signature']?.['ds:SignedInfo']?.['ds:Reference']?.[
-      'ds:DigestValue'
-    ];
+    root['ext:UBLExtensions']?.['ext:UBLExtension']?.['ext:ExtensionContent']?.[
+      'ds:Signature'
+    ]?.['ds:SignedInfo']?.['ds:Reference']?.['ds:DigestValue'];
+
   return digestValue || null;
 }
+
 export function setobjectUpdateComprobante(
   tipoComprobante: TipoComprobanteEnum,
   xmlFirmado: string,
@@ -382,4 +406,86 @@ export function generateLegends(mtoImpVenta: number) {
       value: convertirMontoEnLetras(mtoImpVenta),
     },
   ];
+}
+export function generarTributosRC(boleta: IDocumento) {
+  return TRIBUTOS_RESUMEN.filter((t) => (boleta as any)[t.key] > 0) // solo los montos > 0
+    .map((t) => ({
+      billingPayment: {
+        amount: (boleta as any)[t.key],
+        instructionID: t.instructionID,
+      },
+      taxSubtotal: {
+        id: t.id,
+        name: t.name,
+        taxTypeCode: t.taxTypeCode,
+        amount: t.conIgv ? boleta.igv : 0,
+      },
+    }));
+}
+// export function getFechaHoraActualLima(): string {
+//   const ahora = new Date();
+
+//   const opciones: Intl.DateTimeFormatOptions = {
+//     timeZone: 'America/Lima',
+//     year: 'numeric',
+//     month: '2-digit',
+//     day: '2-digit',
+//     hour: '2-digit',
+//     minute: '2-digit',
+//     second: '2-digit',
+//     hour12: false,
+//   };
+
+//   const formato = new Intl.DateTimeFormat('en-CA', opciones).formatToParts(
+//     ahora,
+//   );
+
+//   const get = (tipo: string) =>
+//     formato.find((p) => p.type === tipo)?.value || '00';
+
+//   let year = parseInt(get('year'));
+//   let month = parseInt(get('month'));
+//   let day = parseInt(get('day'));
+//   let hour = parseInt(get('hour'));
+//   const minute = get('minute');
+//   const second = get('second');
+
+//   // ⚡ Normalizamos la hora = 24 → 00 del día siguiente
+//   if (hour === 24) {
+//     hour = 0;
+//     const d = new Date(year, month - 1, day);
+//     d.setDate(d.getDate() + 1);
+//     year = d.getFullYear();
+//     month = d.getMonth() + 1;
+//     day = d.getDate();
+//   }
+
+//   const fecha = `${year.toString().padStart(4, '0')}-${month
+//     .toString()
+//     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+//   const hora = `${hour.toString().padStart(2, '0')}:${minute}:${second}`;
+
+//   return `${fecha}T${hora}-05:00`;
+// }
+// 🔹 Devuelve Date ajustado a Lima
+export function getFechaHoraActualLima(): Date {
+  return dayjs().tz('America/Lima').toDate();
+}
+
+export function mapEstadoRC(estado: string): string {
+  // Normalizamos el nombre a mayúsculas para evitar problemas
+  const key = estado.toUpperCase() as keyof typeof EstadoComprobanteEnumSunat;
+  return (
+    EstadoComprobanteEnumSunat[key] ?? EstadoComprobanteEnumSunat.PENDIENTE
+  );
+}
+// Para resumenId y nombre de archivo
+export function getFechaResumenId(): string {
+  return dayjs().tz('America/Lima').format('YYYYMMDD');
+}
+export function formatDateForSunat(date: Date): string {
+  return dayjs(date).format('YYYY-MM-DD'); // formato exacto que SUNAT requiere
+}
+export function mapSunatToEstado(codigo: string): EstadoEnumResumen {
+  return sunatEstadoMap[codigo] || EstadoEnumResumen.ERROR;
 }

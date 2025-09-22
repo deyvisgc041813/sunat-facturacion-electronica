@@ -160,13 +160,6 @@ CREATE TABLE comprobante_detalle (
 );
 
 
-
-
-
-
-
-
-
 -- Tabla de notas de crédito/débito
 CREATE TABLE notas (
   notas_id INT AUTO_INCREMENT PRIMARY KEY,

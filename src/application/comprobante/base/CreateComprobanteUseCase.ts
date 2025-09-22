@@ -1,7 +1,7 @@
 import { ICreateComprobante } from "src/domain/comprobante/interface/create.interface";
 import { IResponsePs } from "src/domain/comprobante/interface/response.ps.interface";
 import { Injectable } from "@nestjs/common";
-import { ComprobanteRepositoryImpl } from "src/infrastructure/database/repository/comprobante.repository.impl";
+import { ComprobanteRepositoryImpl } from "src/infrastructure/persistence/comprobante/comprobante.repository.impl";
 
 @Injectable()
 export class CreateComprobanteUseCase {

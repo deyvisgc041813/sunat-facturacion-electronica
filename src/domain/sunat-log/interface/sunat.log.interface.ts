@@ -1,8 +1,10 @@
 export interface CreateSunatLogDto {
-  comprobanteId: number;
+  comprobanteId?: number | null;
+  codigoResumenSunat?:string | null;
   request?: string | null;
   response?: string | null;
   estado?: string | null;
+  resumenId ?: number | null;
 }
 
 export interface UpdateSunatLogDto {
@@ -18,4 +20,5 @@ export interface SunatLogResponseDto {
   request?: string | null;
   response?: string | null;
   estado?: string | null;
+    resumenId ?: number | null;
 }

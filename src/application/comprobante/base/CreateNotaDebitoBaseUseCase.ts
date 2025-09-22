@@ -1,14 +1,13 @@
-import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
-import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
+import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
+import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { CreateComprobanteUseCase } from './CreateComprobanteUseCase';
 import { ICreateComprobante } from 'src/domain/comprobante/interface/create.interface';
 import { DateUtils } from 'src/util/date.util';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ZipUtil } from 'src/util/ZipUtil';
-import { ErrorMapper } from 'src/infrastructure/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
-import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   CodigoProductoNotaDebito,
@@ -41,7 +40,6 @@ import {
   validateLegends,
 } from 'src/util/Helpers';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
-import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
 import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
@@ -52,6 +50,8 @@ import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { XmlBuilderNotaDebitoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-debito.service';
+import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
+import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 
 export abstract class CreateNotaDebitoBaseUseCase {
   constructor(

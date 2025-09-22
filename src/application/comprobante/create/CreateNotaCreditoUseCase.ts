@@ -1,12 +1,10 @@
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
-import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
-import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
+import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
+import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
 import { Injectable } from '@nestjs/common';
-import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
 import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
-import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from '../../Serie/FindByEmpAndTipComAndSerieUseCase';
@@ -14,7 +12,9 @@ import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoCo
 import { FindTasaByCodeUseCase } from '../../Tasa/FindTasaByCodeUseCase';
 import { CreateNotaCreditoBaseUseCase } from '../base/CreateNotaCreditoBaseUseCase';
 import { ValidarAnulacionComprobanteUseCase } from '../validate/ValidarAnulacionComprobanteUseCase';
-import { AnularComprobanteUseCase } from '../update/AnularComprobanteUseCase';
+import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/comprobante/comprobante.repository.impl';
+import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
+import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 @Injectable()
 export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
   constructor(
@@ -31,7 +31,7 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
     findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     findTasaByCodeUseCase: FindTasaByCodeUseCase,
     validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
-    anularComprobanteUseCase: AnularComprobanteUseCase
+    repoComprobante : ComprobanteRepositoryImpl,
   ) {
     super(
       xmlNCBuilder,
@@ -47,7 +47,7 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
       findCorrelativoUseCase,
       findTasaByCodeUseCase,
       validarAnulacionComprobanteUseCase,
-      anularComprobanteUseCase
+      repoComprobante
     );
   }
   protected buildXml(data: CreateNotaDto): string {

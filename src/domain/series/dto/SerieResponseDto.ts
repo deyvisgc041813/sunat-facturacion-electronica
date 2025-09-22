@@ -7,6 +7,7 @@ export class SerieResponseDto {
     public tipoComprobante: string,
     public serie: string,
     public correlativoInicial: number,
+    public correlativoActual: number,
     public empresa?: EmpresaResponseDto
   ) {}
 

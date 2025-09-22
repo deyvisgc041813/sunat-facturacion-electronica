@@ -1,18 +1,15 @@
-import { EmpresaRepositoryImpl } from 'src/infrastructure/database/repository/empresa.repository.impl';
-import { ErrorLogRepositoryImpl } from 'src/infrastructure/database/repository/error-log.repository.impl';
+import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
+import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { CreateComprobanteUseCase } from './CreateComprobanteUseCase';
 import { ICreateComprobante } from 'src/domain/comprobante/interface/create.interface';
 import { DateUtils } from 'src/util/date.util';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ZipUtil } from 'src/util/ZipUtil';
-import { ErrorMapper } from 'src/infrastructure/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
-import { CatalogoRepositoryImpl } from 'src/infrastructure/database/repository/catalogo.repository.impl';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
-  Catalogo53DescuentoGlobal,
-  LegendCodeEnum,
   MAP_TRIBUTOS,
   NotaCreditoMotivo,
   ProcesoNotaCreditoEnum,
@@ -38,7 +35,6 @@ import {
   validateLegends,
 } from 'src/util/Helpers';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
-import { SunatLogRepositoryImpl } from 'src/infrastructure/database/repository/sunat-log.repository.impl';
 import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
@@ -55,11 +51,21 @@ import {
   validarProductoYTipoAfectacion,
 } from 'src/util/notas-credito-debito.validator';
 import { DescuentoGlobales } from 'src/domain/comprobante/dto/notasComprobante/DescuentoGlobales';
-import { AnularComprobanteUseCase } from '../update/AnularComprobanteUseCase';
+import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/comprobante/comprobante.repository.impl';
+import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
+import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 const motivosAnulacionTotal = [
   NotaCreditoMotivo.ANULACION_OPERACION,
   NotaCreditoMotivo.ANULACION_ERROR_RUC,
   NotaCreditoMotivo.DEVOLUCION_TOTAL,
+];
+const motivosActualizacionBP = [
+  NotaCreditoMotivo.CORRECCION_DESCRIPCION,
+  NotaCreditoMotivo.DESCUENTO_GLOBAL,
+  NotaCreditoMotivo.DESCUENTO_POR_ITEM,
+  NotaCreditoMotivo.DEVOLUCION_POR_ITEM,
+  NotaCreditoMotivo.BONIFICACION,
+  NotaCreditoMotivo.DISMINUCION_VALOR,
 ];
 export abstract class CreateNotaCreditoBaseUseCase {
   constructor(
@@ -76,7 +82,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     protected readonly findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
-    protected readonly anularComprobanteUseCase: AnularComprobanteUseCase,
+    protected readonly comprobanteRepo: ComprobanteRepositoryImpl,
   ) {}
 
   protected abstract buildXml(data: any): string;
@@ -175,13 +181,14 @@ export abstract class CreateNotaCreditoBaseUseCase {
         xmlFirmado,
         responseSunat,
       );
-      // 5 anular comprobante referencial
+      // 5 anular o modificar comprobante referencial
       if (motivosAnulacionTotal.includes(data.motivo.codigo)) {
-        await this.anularComprobanteUseCase.execute(
+        await this.comprobanteRepo.updateComprobanteStatus(
           empresa.empresaId,
           comprobanteOriginal.serie?.serieId ?? 0,
           data.documentoRelacionado?.correlativo,
           `${data.motivo.codigo} - ${data.motivo.descripcion}`,
+          EstadoEnumComprobante.ANULADO,
         );
       }
       return responseSunat;

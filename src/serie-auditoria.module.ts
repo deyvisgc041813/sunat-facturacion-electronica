@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { SerieAuditoriaOrmEntity } from './infrastructure/database/entity/SerieAuditoriaOrmEntity';
+import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SerieAuditoriaRepositoryImpl } from './infrastructure/database/repository/serie-auditoria.repository.impl';
-import { UsuariosOrmEntity } from './infrastructure/database/entity/UsuariosOrmEntity';
+import { SerieAuditoriaRepositoryImpl } from './infrastructure/persistence/serie-log/serie-auditoria.repository.impl';
+import { UsuariosOrmEntity } from './infrastructure/persistence/usuario/UsuariosOrmEntity';
 
 @Module({
 imports: [TypeOrmModule.forFeature([SerieAuditoriaOrmEntity, UsuariosOrmEntity])],

@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { ProductoResponseDto } from "src/domain/productos/dto/ProductoResponseDto";
 import { UpdateProductoDto } from "src/domain/productos/dto/UpdateProductoDto";
 import { ProductoRepository } from "src/domain/productos/Producto.repository";
-import { CatalogoRepositoryImpl } from "src/infrastructure/database/repository/catalogo.repository.impl";
+import { CatalogoRepositoryImpl } from "src/infrastructure/persistence/catalogo/catalogo.repository.impl";
 import { TipoCatalogoEnum } from "src/util/catalogo.enum";
 
 export class UpdateProductoUseCase {

@@ -20,7 +20,7 @@ export class ComprobanteResponseDto {
     public fechaUpdate: Date,
     // Estado
     public estado: string,  // PENDIENTE, ACEPTADO, etc.
-
+    public comunicadoSunat:string,
     // Relaciones
     public empresa?: EmpresaResponseDto | null,
     public cliente?: ClienteResponseDto | null,
@@ -31,5 +31,7 @@ export class ComprobanteResponseDto {
     public payloadJson?: any,
     public fechaAnulacion?: Date,
     public descripcionEstado?: string,
+    public icbper?: number,
+    
   ) {}
 }

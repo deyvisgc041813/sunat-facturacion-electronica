@@ -1,10 +1,10 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SerieOrmEntity } from './infrastructure/database/entity/SerieOrmEntity';
-import { SerieController } from './infrastructure/controllers/serie.controller';
-import { SerieRepositoryImpl } from './infrastructure/database/repository/serie.repository.impl';
+import { SerieController } from './adapter/web/controller/serie.controller';
+import { SerieRepositoryImpl } from './infrastructure/persistence/serie/serie.repository.impl';
 import { SerieAuditoriaModule } from './serie-auditoria.module';
 import { CatalogoModule } from './catalogo.module';
+import { SerieOrmEntity } from './infrastructure/persistence/serie/SerieOrmEntity';
 
 
 @Module({

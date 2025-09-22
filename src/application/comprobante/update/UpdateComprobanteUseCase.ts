@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import dayjs from 'dayjs';import { IUpdateComprobante } from "src/domain/comprobante/interface/update.interface";
-import { ComprobanteRepositoryImpl } from "src/infrastructure/database/repository/comprobante.repository.impl";
+import { ComprobanteRepositoryImpl } from "src/infrastructure/persistence/comprobante/comprobante.repository.impl";
 
 @Injectable()
 export class UpdateComprobanteUseCase {
