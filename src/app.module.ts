@@ -13,6 +13,7 @@ import { ComprobanteModule } from './comprobante.module';
 import { ErrorLogModule } from './error-log.module';
 import { TasaTributoModule } from './tasa-tributo.module';
 import { ResumenBoletasModule } from './resumen-boletas.module';
+import { ComunicacionBajaModule } from './comunicacion-baja.module';
 
 @Module({
   imports: [
@@ -36,7 +37,8 @@ import { ResumenBoletasModule } from './resumen-boletas.module';
    ComprobanteModule,
    ErrorLogModule,
    TasaTributoModule,
-   ResumenBoletasModule
+   ResumenBoletasModule,
+   ComunicacionBajaModule
   ],
   
   controllers: [AppController],

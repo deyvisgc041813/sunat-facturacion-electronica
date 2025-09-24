@@ -250,6 +250,8 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.comprobanteId = comprobanteId;
       obj.request = JSON.stringify(data);
+      obj.empresaId = empresaId;
+      obj.serie = `${data.serie}-${data.correlativo}`;
       await this.sunatLogRepo.save(obj);
       // 4. Actualizar comprobante con CDR, Hash y estado
       responseSunat = {
@@ -263,7 +265,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         xmlFirmado,
       };
     } else {
-      await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
+      //await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
       responseSunat = {
         mensaje: rspError.create.mensajeError || 'Error interno',
         estadoSunat: rspError.create.estado,
@@ -274,7 +276,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
         xmlFirmado,
       };
     }
-    // 🔹 Actualizar comprobante siempre, sin importar el origen del error
     if (comprobanteId > 0) {
       await this.actualizarComprobante(
         comprobanteId,
@@ -362,8 +363,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     );
     if (!comprobante) {
       throw new NotFoundException(
-       `No se encontró un comprobante asociado al documento relacionado con la serie ${serieRelacionado} y correlativo ${numCorrelativoRelacionado}.`
-
+        `No se encontró un comprobante asociado al documento relacionado con la serie ${serieRelacionado} y correlativo ${numCorrelativoRelacionado}.`,
       );
     }
     return comprobante;

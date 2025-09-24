@@ -1,11 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
+import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
+import { BajaComprobanteResponseDto } from 'src/domain/comunicacion-baja/ComunicacionBajaResponseDto';
+import { IComunicacionBajaRepository } from 'src/domain/comunicacion-baja/interface/baja.repository.interface';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
-import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
-import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/resumen/resumen.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import {
   codigoRespuestaSunatMap,
@@ -19,71 +20,67 @@ const estadosFinales = new Set([
   EstadoEnvioSunat.ACEPTADO,
   EstadoEnvioSunat.RECHAZADO,
   EstadoEnvioSunat.ERROR,
+  EstadoEnvioSunat.OBSERVADO,
 ]);
-export class GetStatusResumenUseCase {
+export class GetStatusBajaStatusUseCase {
   constructor(
     private readonly sunatService: SunatService,
-    private readonly resumenRepo: ResumenRepositoryImpl,
+    private readonly bajaRepo: IComunicacionBajaRepository,
     private readonly sunatLogRepo: SunatLogRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
   ) {}
 
-  async execute(empresaId: number, ticket: string): Promise<IResponseSunat> {
-    const resumen = await this.resumenRepo.findByEmpresaAndTicket(
-      empresaId,
-      ticket,
-    );
+  async execute(
+    empresaId: number,
+    ticket: string,
+  ): Promise<IResponseSunat> {
+    const baja = await this.bajaRepo.findByEmpresaAndTicket(empresaId, ticket);
     try {
-      if (!resumen) {
+      if (!baja) {
         throw new BadRequestException(
-          `No existe un resumen registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
+          `No existe una solicitud de comunicacion baja registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
         );
       }
-      await this.validarEstadoFinalResumen(resumen);
+      await this.validarEstadoFinalBaja(baja);
       const result = await this.sunatService.getStatus(ticket);
 
       // 2. Actualizar estado en la BD según respuesta
 
-      await this.resumenRepo.updateByEmpresaAndTicket(empresaId, ticket, {
+      await this.bajaRepo.updateByEmpresaAndTicket(empresaId, ticket, {
         estado: mapSunatToEstado(result.codigoResponse ?? ''),
-        codResPuestaSunat: result.codigoResponse ?? '',
-        cdr: result.cdr?.toString('base64') ?? null,
+        codResPuestaSunat: result.codigoResponse,
+        cdr: result.cdr,
         mensajeSunat: result.mensaje,
-        observacionSunat:
-          result.observaciones.length > 0
-            ? JSON.stringify(result.observaciones)
-            : null,
         fechaRespuestaSunat: new Date(),
+        observacionSunat: result.observaciones.length > 0 ? JSON.stringify(result.observaciones) : null
       });
-
-      // 3. Actualizar boletas
-      const boletasIds: number[] = (resumen?.detalles ?? [])
+      // 3. Actualizar comprobantes
+      const comprobantesIds: number[] = (baja?.detalles ?? [])
         .map((d) => d.comprobante?.comprobanteId)
         .filter((id): id is number => id !== undefined);
-      // esto se debe cambiar con el tocken
-      await this.comprobanteRepo.updateBoletaStatus(
+
+      await this.comprobanteRepo.updateComprobanteStatusMultiple(
         empresaId,
-        boletasIds,
-        EstadoEnumComprobante.ACEPTADO,
+        comprobantesIds,
+        EstadoEnumComprobante.ANULADO,
         EstadoComunicacionEnvioSunat.ACEPTADO_PROCESADO,
       );
       // 4. Retornar resultado
-      return result;
+      return result
     } catch (error: any) {
       // 9. Actualizar resumen con error
-      const resumenId = resumen?.resumenId ?? '';
-      if (resumen) {
-        if (!estadosFinales.has(resumen.estado as EstadoEnvioSunat)) {
-          await this.resumenRepo.update(resumenId, empresaId, {
+      if (baja) {
+        if (!estadosFinales.has(baja.estado as EstadoEnvioSunat)) {
+          await this.bajaRepo.update(baja?.serie, empresaId, {
             estado: EstadoEnvioSunat.ERROR,
           });
         }
         await this.procesarErrorResumen(
           error,
-          resumen?.resBolId ?? 0,
-          resumen?.empresa?.empresaId ?? 0,
-          resumenId,
-          resumen.xml ?? '',
+          0,
+          empresaId ?? 0,
+          baja?.serie,
+          baja.xml ?? '',
         );
       }
       throw error;
@@ -98,7 +95,7 @@ export class GetStatusResumenUseCase {
   ) {
     const rspError = ErrorMapper.mapError(error, {
       empresaId,
-      tipo: 'RC', // Resumen
+      tipo: 'RA', // Resumen
       serie,
     });
 
@@ -106,19 +103,18 @@ export class GetStatusResumenUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.codigoResSunat = JSON.parse(obj.response ?? '')?.code;
       obj.resumenId = resumendIdBd;
-      obj.empresaId = empresaId
-      obj.serie = serie
+      obj.empresaId = empresaId;
+      obj.serie = serie;
       obj.request = xmlFirmado;
       await this.sunatLogRepo.save(obj);
     }
   }
-  private async validarEstadoFinalResumen(resumen: ResumenResponseDto) {
-    const estado = codigoRespuestaSunatMap[resumen?.codigoRespuestaSunat ?? ''];
-
+  private async validarEstadoFinalBaja(baja: BajaComprobanteResponseDto) {
+    const estado = codigoRespuestaSunatMap[baja?.codigoRespuestaSunat ?? ''];
     if (estadosFinales.has(estado)) {
       throw new BadRequestException(
-        `El resumen ya fue procesado por SUNAT y se encuentra en estado definitivo (${estado}). ` +
-          `No es posible volver a enviarlo ni consultarlo nuevamente.`,
+        `La solicitud de baja ya fue procesada por SUNAT y se encuentra en estado definitivo (${estado}). ` +
+          `No es posible volver a enviarla ni consultarla nuevamente.`,
       );
     }
   }

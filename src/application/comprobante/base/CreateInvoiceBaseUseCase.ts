@@ -40,65 +40,68 @@ export abstract class CreateInvoiceBaseUseCase {
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
   ) {}
 
-  /**
-   * Métodos para gestionar el proceso de generación y envío de
-   * comprobantes electrónicos de venta (Facturas y Boletas).
-   *
-   * Incluye la construcción del XML (Invoice), la firma digital
-   * y el almacenamiento en base de datos antes del envío a SUNAT.
-   */
+  protected abstract buildXml(data: CreateInvoiceDto): string;
 
-  protected abstract buildXml(data: any): string;
   async execute(data: CreateInvoiceDto): Promise<IResponseSunat> {
     const empresa = await this.validarCatalogOyObtenerCertificado(data);
-    let comprobanteId = 0;
-    let xmlFirmadoError = '';
+
+    // Centralizamos las variables necesarias para manejar errores
+    const contextoError = {
+      comprobanteId: 0,
+      empresaId: empresa.empresaId,
+      xmlFirmado: '',
+      data,
+    };
+
     try {
-      // 1. validar item de la factura
-      NotaDebitoHelper.validarDetallesCliente(data)
-      
+      // 1. Validar item de la factura
+      NotaDebitoHelper.validarDetallesCliente(data);
+
       // 2. Recalcular montos
-      const invoice = NotaDebitoHelper.recalcularMontos(data)
+      const invoice = NotaDebitoHelper.recalcularMontos(data);
+
       // 3. Registrar comprobante en BD
       const comprobante = await this.registrarComprobante(
         invoice,
         empresa.empresaId,
       );
-
-      comprobanteId = comprobante.response?.comprobanteId ?? 0;
+      contextoError.comprobanteId = comprobante.response?.comprobanteId ?? 0;
       invoice.correlativo = comprobante.response?.correlativo ?? 0;
 
-      // 2. Construir, firmar y comprimir XML
+      // 4. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
         invoice,
         empresa.certificadoDigital,
         empresa.claveCertificado,
       );
-      xmlFirmadoError = xmlFirmado;
-      // 3. Enviar a SUNAT
+      contextoError.xmlFirmado = xmlFirmado;
+
+      // 5. Enviar a SUNAT
       const responseSunat = await this.enviarASunat(
         xmlFirmado,
-        invoice?.tipoComprobante,
+        invoice.tipoComprobante,
         fileName,
         zipBuffer,
       );
       responseSunat.xmlFirmado = xmlFirmado;
-      // 4. Actualizar comprobante con CDR, Hash y estado
+
+      // 6. Actualizar comprobante con CDR, Hash y estado
       await this.actualizarComprobante(
-        comprobanteId,
-        empresa?.empresaId,
-        invoice?.tipoComprobante as TipoComprobanteEnum,
+        contextoError.comprobanteId,
+        empresa.empresaId,
+        invoice.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado,
         responseSunat,
       );
+
       return responseSunat;
     } catch (error: any) {
       await this.procesarErrorSunat(
         error,
-        data,
-        comprobanteId,
-        empresa.empresaId,
-        xmlFirmadoError,
+        contextoError.data,
+        contextoError.comprobanteId,
+        contextoError.empresaId,
+        contextoError.xmlFirmado,
       );
       throw error;
     }
@@ -211,8 +214,9 @@ export abstract class CreateInvoiceBaseUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.comprobanteId = comprobanteId;
       obj.request = JSON.stringify(data);
+      obj.empresaId = empresaId;
+      obj.serie = `${data.serie}-${data.correlativo}`;
       await this.sunatLogRepo.save(obj);
-      // 4. Actualizar comprobante con CDR, Hash y estado
       responseSunat = {
         mensaje: obj.response || 'Error SUNAT',
         estadoSunat:
@@ -224,7 +228,6 @@ export abstract class CreateInvoiceBaseUseCase {
         xmlFirmado,
       };
     } else {
-      await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
       responseSunat = {
         mensaje: rspError.create.mensajeError || 'Error interno',
         estadoSunat: rspError.create.estado,
@@ -235,7 +238,7 @@ export abstract class CreateInvoiceBaseUseCase {
         xmlFirmado,
       };
     }
-    // 🔹 Actualizar comprobante siempre, sin importar el origen del error
+
     if (comprobanteId > 0) {
       await this.actualizarComprobante(
         comprobanteId,
@@ -245,10 +248,12 @@ export abstract class CreateInvoiceBaseUseCase {
         responseSunat,
       );
     }
+    // else {
+    //   await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
+    //   ...
+    // }
   }
-  /**
-   * Decide si enviar con sendBill o sendSummary según tipo comprobante
-   */
+
   private async enviarASunat(
     xmlFirmado: any,
     tipoComprobante: string,
@@ -256,9 +261,10 @@ export abstract class CreateInvoiceBaseUseCase {
     zipBuffer: Buffer,
   ): Promise<IResponseSunat> {
     switch (tipoComprobante) {
-      case TipoComprobanteEnum.FACTURA: // Factura
-          return await this.sunatService.sendBill(`${fileName}.zip`, zipBuffer);
-      case TipoComprobanteEnum.BOLETA: // Boleta
+      case TipoComprobanteEnum.FACTURA:
+        return await this.sunatService.sendBill(`${fileName}.zip`, zipBuffer);
+
+      case TipoComprobanteEnum.BOLETA:
         return {
           cdr: null,
           estadoSunat: EstadoEnumComprobante.PENDIENTE,
@@ -269,6 +275,7 @@ export abstract class CreateInvoiceBaseUseCase {
           codigoResponse: '',
           xmlFirmado,
         };
+
       default:
         return {
           cdr: null,
@@ -276,12 +283,9 @@ export abstract class CreateInvoiceBaseUseCase {
           mensaje: `Tipo de comprobante no soportado: ${tipoComprobante}`,
           observaciones: [],
           status: false,
-          codigoResponse: "",
+          codigoResponse: '',
           xmlFirmado,
-      };
+        };
     }
   }
-
-
-
 }

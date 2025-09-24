@@ -15,10 +15,10 @@ import { CreateClienteDto } from '../domain/cliente/dto/CreateRequestDto';
 import { UpdateClienteDto } from '../domain/cliente/dto/UpdateClienteDto';
 import { DOMParser } from '@xmldom/xmldom';
 import {
+  codigoRespuestaSunatMap,
   EstadoComprobanteEnumSunat,
   EstadoEnumComprobante,
-  EstadoEnumResumen,
-  sunatEstadoMap,
+  EstadoEnvioSunat
 } from './estado.enum';
 import { EstadoCdrResult } from 'src/domain/comprobante/interface/estado.cdr.interface';
 import { parseStringPromise } from 'xml2js';
@@ -178,7 +178,8 @@ export async function extraerHashCpe(
     json['Invoice'] ??
     json['CreditNote'] ??
     json['DebitNote'] ??
-    json['SummaryDocuments'];
+    json['SummaryDocuments'] ?? 
+    json['VoidedDocuments'];
 
   if (!root) return null;
 
@@ -480,12 +481,12 @@ export function mapEstadoRC(estado: string): string {
   );
 }
 // Para resumenId y nombre de archivo
-export function getFechaResumenId(): string {
+export function getFechaHoyYYYYMMDD(): string {
   return dayjs().tz('America/Lima').format('YYYYMMDD');
 }
 export function formatDateForSunat(date: Date): string {
   return dayjs(date).format('YYYY-MM-DD'); // formato exacto que SUNAT requiere
 }
-export function mapSunatToEstado(codigo: string): EstadoEnumResumen {
-  return sunatEstadoMap[codigo] || EstadoEnumResumen.ERROR;
+export function mapSunatToEstado(codigo: string): EstadoEnvioSunat {
+  return codigoRespuestaSunatMap[codigo] || EstadoEnvioSunat.ERROR;
 }

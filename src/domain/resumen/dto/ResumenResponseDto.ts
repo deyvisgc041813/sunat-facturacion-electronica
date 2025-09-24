@@ -1,5 +1,5 @@
-import { EmpresaResponseDto } from "src/domain/empresa/dto/EmpresaResponseDto";
-import { ResumenDetalleResponseDto } from "./ResumenDetalleResponseDto";
+import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
+import { ResumenDetalleResponseDto } from './ResumenDetalleResponseDto';
 
 export class ResumenResponseDto {
   constructor(
@@ -8,17 +8,17 @@ export class ResumenResponseDto {
     public fechaEmision: Date,
     public correlativo: number,
     public nombreArchivo: string,
-    public estado: string,  // PENDIENTE, ENVIADO, ACEPTADO, RECHAZADO
-    public ticket: string,  // PENDIENTE, ENVIADO, ACEPTADO, RECHAZADO
-    public resumenId:string,
-    public fechaRespuestaSunat?:Date,
-    public codigoRespuestaSunat?:string,
-    public mensajeRespuestaSunat?:string,
+    public estado: string, // PENDIENTE, ENVIADO, ACEPTADO, RECHAZADO
+    public ticket: string, // PENDIENTE, ENVIADO, ACEPTADO, RECHAZADO
+    public resumenId: string,
+    public fechaRespuestaSunat?: Date,
+    public codigoRespuestaSunat?: string,
+    public mensajeRespuestaSunat?: string,
     // Datos adicionales
     public xml?: string,
     public cdr?: string,
     public hashResumen?: string,
-
+    public observacionSunat?: string,
     // Relaciones
     public empresa?: EmpresaResponseDto | null,
     public detalles?: ResumenDetalleResponseDto[] | null,

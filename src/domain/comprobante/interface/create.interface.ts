@@ -9,7 +9,9 @@ export interface ICreateComprobante {
     | TipoComprobanteEnum.FACTURA
     | TipoComprobanteEnum.BOLETA
     | TipoComprobanteEnum.NOTA_CREDITO
-    | TipoComprobanteEnum.NOTA_DEBITO;
+    | TipoComprobanteEnum.NOTA_DEBITO
+    | TipoComprobanteEnum.RESUMEN_DIARIO
+    | TipoComprobanteEnum.COMUNICACION_BAJA;
   serie: string; // F001, B001, etc.
   numeroDocumento: string;
   tipoDocumento:

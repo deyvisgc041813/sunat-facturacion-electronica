@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Req,
   Res
 } from '@nestjs/common';
 import type { Response } from 'express'; // 
@@ -53,12 +54,7 @@ export class ComprobanteController {
   async createNd(@Body() body: CreateNotaDto) {
    return await this.createNdUseCase.execute(body);
   }
-  // Cancel Invoice → Voided Documents (RA)
-  // @Post('cancel/factura')
-  // async cancelInvoice(@Body() dto: CancelInvoiceDto) {
-  //   return this.invoicesService.cancelInvoice(dto);
-  // }
-  // Cancel Receipt → Daily Summary (RC)
+  
   @Post('cancel/boleta')
   async cancelBoleta(@Body() dto: CancelInvoiceDto) {
     return this.anularComprobante.execute(dto);

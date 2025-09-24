@@ -1,4 +1,10 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { Request, Response } from 'express';
 import { QueryFailedError } from 'typeorm';
 @Catch()
@@ -11,15 +17,15 @@ export class HttpErrorFilter implements ExceptionFilter {
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
     let message = 'Error interno del servidor';
 
-   if (exception instanceof HttpException) {
+    if (exception instanceof HttpException) {
       status = exception.getStatus();
       const errorResponse = exception.getResponse();
-      message =
-        (errorResponse as any).message || exception.message || message;
+      message = (errorResponse as any).message || exception.message || message;
     } else if (exception instanceof QueryFailedError) {
       // 🔹 Errores SQL de TypeORM
       const sqlError: any = exception;
       status = HttpStatus.BAD_REQUEST;
+      console.log(sqlError.message);
       if (sqlError.code === 'ER_DUP_ENTRY') {
         message = sqlError.message;
       } else if (sqlError.code === 'ER_NO_REFERENCED_ROW_2') {
@@ -27,10 +33,22 @@ export class HttpErrorFilter implements ExceptionFilter {
       } else {
         message = sqlError.message;
       }
+      switch (sqlError.code) {
+        case 'ER_DUP_ENTRY':
+          message =  buildDuplicateMessage(sqlError, request);
+          break;
+        case 'ER_NO_REFERENCED_ROW_2':
+          message = 'Violación de clave foránea';
+          break;
+        default:
+          message = sqlError?.message;
+          break;
+      }
     } else if (exception instanceof Error) {
       // Otros errores genéricos
       message = exception.message;
     }
+
     response.status(status).json({
       success: false,
       statusCode: status,
@@ -39,4 +57,21 @@ export class HttpErrorFilter implements ExceptionFilter {
       timestamp: new Date().toISOString(),
     });
   }
+}
+
+export function buildDuplicateMessage(sqlError: any, request: Request): string {
+  // Tomar el campo serie armada que setea tu aplicación
+  if (sqlError.message.includes('comprobantes')) {
+    return 'Ya existe un comprobante registrado en esta empresa con la misma serie. Por favor, comunícate con ssu proveedor para solucionarlo.';
+  }
+
+  if (sqlError.message.includes('resumen_boletas')) {
+    return 'Ya existe un resumen diario registrado en esta empresa con la misma fecha y número correlativo. Por favor, comunícate con su proveedor para solucionarlo.';
+  }
+
+  if (sqlError.message.includes('baja_comprobante')) {
+    return 'Ya existe una comunicación de baja registrada en esta empresa con la misma fecha y número correlativo. Por favor, comunícate con su proveedor para solucionarlo.';
+  }
+
+  return 'Ya existe un registro duplicado';
 }

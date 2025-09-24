@@ -23,16 +23,17 @@ export class ResumenBPMaper {
       orm.ticket,
       orm.resumenId,
       orm.fechaRespuestaSunat,
-      orm.codResuestSunat,
+      orm.codResPuestaSunat,
       orm.mensajeSunat,
       orm.xml,
       orm.cdr,
       orm.hashResumen,
+      orm.observacionSunat,
       empresa,
       resumenDetalle,
     );
   }
-private static assignCommon(
+  private static assignCommon(
     object: ResumenBoletasOrmEntity,
     data: any,
     isUpdate = false,
@@ -47,19 +48,22 @@ private static assignCommon(
     object.hashResumen = data.hashResumen;
 
     // mapear a entidades ORM reales
-    object.detalles = data.detalle?.map((d: any) => {
-      const detalle = new ResumenBoletasDetalleOrmEntity();
-      detalle.comprobante = { comprobanteId: d.comprobanteId } as ComprobanteOrmEntity;
-      detalle.operacion = d.operacion;
-      return detalle;
-    }) ?? [];
+    object.detalles =
+      data.detalle?.map((d: any) => {
+        const detalle = new ResumenBoletasDetalleOrmEntity();
+        detalle.comprobante = {
+          comprobanteId: d.comprobanteId,
+        } as ComprobanteOrmEntity;
+        detalle.operacion = d.operacion;
+        return detalle;
+      }) ?? [];
 
     if (data.empresaId) {
       object.empresa = { empresaId: data.empresaId } as any;
     }
 
     object.ticket = data.ticket;
-    object.resumenId = data.resumenId
+    object.resumenId = data.resumenId;
     return object;
   }
 

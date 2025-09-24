@@ -4,6 +4,8 @@ import { ComprobanteOrmEntity } from '../comprobante/ComprobanteOrmEntity';
 import { ResumenBoletasOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasOrmEntity';
 import { ProductoOrmEntity } from '../producto/ProductoOrmEntity';
 import { SerieOrmEntity } from '../serie/SerieOrmEntity';
+import { BajaComprobanteOrmEntity } from '../comunicacion-baja/BajaComprobanteOrmEntity';
+import { SunatLogOrmEntity } from '../sunat-log/SunatLogOrmEntity';
 
 @Entity('empresas')
 @Unique(['ruc', 'razonSocial'])
@@ -56,4 +58,8 @@ export class EmpresaOrmEntity {
     // 🔹 Relación con ResumenBoletas
   @OneToMany(() => ResumenBoletasOrmEntity, (resumen) => resumen.empresa)
   resumenes: ResumenBoletasOrmEntity[];
+  @OneToMany(() => BajaComprobanteOrmEntity, (baja) => baja.empresa)
+  comunicacionBaja: BajaComprobanteOrmEntity[];
+  @OneToMany(() => SunatLogOrmEntity, (logs) => logs.empresa)
+  sunatLog: SunatLogOrmEntity[];
 }

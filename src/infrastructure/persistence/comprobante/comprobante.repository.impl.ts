@@ -10,7 +10,10 @@ import {
   ArchivoDescargable,
   ConprobanteRepository,
 } from 'src/domain/comprobante/comprobante.repository';
-import { EstadoComunicacionEnvioSunat, EstadoEnumComprobante } from 'src/util/estado.enum';
+import {
+  EstadoComunicacionEnvioSunat,
+  EstadoEnumComprobante,
+} from 'src/util/estado.enum';
 import { DataSource } from 'typeorm';
 import { ICreateComprobante } from 'src/domain/comprobante/interface/create.interface';
 import { IResponsePs } from 'src/domain/comprobante/interface/response.ps.interface';
@@ -65,21 +68,15 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     });
     return result.map((c) => ComprobanteMapper.toDomain(c));
   }
-
-  async findById(
-    comprobanteId: number,
+  async findByEmpresaAndId(
     empresaId: number,
-  ): Promise<ComprobanteResponseDto | null> {
-    const comprobante = await this.repo.findOne({
-      where: { comprobanteId, empresaId },
+    comprobanteIds: number[],
+  ): Promise<ComprobanteResponseDto[] | null> {
+    const comprobantes = await this.repo.find({
+      where: { comprobanteId: In(comprobanteIds), empresaId },
       relations: ['empresa', 'cliente', 'serie'],
     });
-    if (!comprobante) {
-      throw new NotFoundException(
-        `Comprobante con id ${comprobanteId} no encontrado`,
-      );
-    }
-    return ComprobanteMapper.toDomain(comprobante);
+    return comprobantes.map((rsp) => ComprobanteMapper.toDomain(rsp));
   }
   async getXmlFirmado(
     comprobanteId: number,
@@ -202,19 +199,11 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     });
     return cpes.map((c) => ComprobanteMapper.toDomain(c));
   }
-  // async anularComprobante(
-  //   empresaId: number,
-  //   serieId: number,
-  //   numCorrelativo: number,
-  //   desAnulacion: string,
-  // ): Promise<boolean> {
-
-  // }
   async updateComprobanteStatus(
     empresaId: number,
     serieId: number,
     numCorrelativo: number,
-    desAnulacion: string,
+    desEstado: string,
     estado: EstadoEnumComprobante,
   ): Promise<boolean> {
     const result = await this.repo.update(
@@ -226,9 +215,8 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
       },
       {
         estado: estado,
-        descripcionEstado: desAnulacion,
-        fechaAnulacion:
-          estado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
+        descripcionEstado: desEstado,
+        fechaAnulacion: estado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
       },
     );
     if (result.affected && result.affected > 0) {
@@ -309,10 +297,11 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     });
     return rsp.map(ComprobanteMapper.toDomain);
   }
-  async actualizarEstadoBoletas(
-    boletaIds: number[],
+  async updateBoletaStatus(
+    empresaId: number,
+    boletasIds: number[],
     nuevoEstado: EstadoEnumComprobante,
-    comunicadoSunat: boolean,
+    comunicadoSunat: EstadoComunicacionEnvioSunat,
   ) {
     await this.repo
       .createQueryBuilder()
@@ -321,13 +310,40 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
         estado: () =>
           `CASE 
            WHEN estado = '${EstadoEnumComprobante.PENDIENTE}' 
-               OR estado = '${EstadoEnumComprobante.ENVIADO}' 
+            OR estado = '${EstadoEnumComprobante.ENVIADO}' 
+
            THEN '${nuevoEstado}' 
            ELSE estado 
          END`,
-        comunicadoSunat: () => `${comunicadoSunat ? EstadoComunicacionEnvioSunat.ENVIADO : EstadoComunicacionEnvioSunat.NO_ENVIADO}`,
+        comunicadoSunat: () => comunicadoSunat,
       })
-      .whereInIds(boletaIds)
+      .whereInIds(boletasIds)
+      .andWhere('empresa_id = :empresaId', { empresaId })
+      .execute();
+  }
+  async updateComprobanteStatusMultiple(
+    empresaId: number,
+    comprobanteIds: number[],
+    nuevoEstado: EstadoEnumComprobante,
+    comunicadoSunat: EstadoComunicacionEnvioSunat,
+  ) {
+    await this.repo
+      .createQueryBuilder()
+      .update()
+      .set({
+        estado: () =>
+          `CASE 
+         WHEN estado = '${EstadoEnumComprobante.PENDIENTE}' 
+            OR estado = '${EstadoEnumComprobante.ENVIADO}' 
+            OR estado = '${EstadoEnumComprobante.ACEPTADO}' 
+           THEN '${nuevoEstado}' 
+           ELSE estado 
+         END`,
+        comunicadoSunat: () => comunicadoSunat,
+        fechaAnulacion: nuevoEstado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
+      })
+      .whereInIds(comprobanteIds)
+      .andWhere('empresa_id = :empresaId', { empresaId })
       .execute();
   }
 }

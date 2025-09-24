@@ -1,5 +1,6 @@
 import { CreateInvoiceDto } from "src/domain/comprobante/dto/invoice/CreateInvoiceDto";
 import { CreateNotaDto } from "src/domain/comprobante/dto/notasComprobante/CreateNotaDto";
+import { ComunicacionBajaDto } from "src/domain/comunicacion-baja/ComunicacionBajaDto";
 import { ISummaryDocument } from "src/domain/resumen/interface/sunat.summary.interface";
 
 export class XmlCommonBuilder {
@@ -41,7 +42,7 @@ export class XmlCommonBuilder {
     return root;
   }
   // Firma digital base
-  static appendSignature(root: any, dto: CreateInvoiceDto | CreateNotaDto | ISummaryDocument) {
+  static appendSignature(root: any, dto: CreateInvoiceDto | CreateNotaDto | ISummaryDocument | ComunicacionBajaDto) {
     const signature = root.ele('cac:Signature');
     signature.ele('cbc:ID').txt('signatureFACTURALOPERU').up();
     signature.ele('cbc:Note').txt('FACTURALO').up();

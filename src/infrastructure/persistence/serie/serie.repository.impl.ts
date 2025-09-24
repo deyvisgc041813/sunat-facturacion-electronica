@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SerieRepository } from 'src/domain/series/Serie.repository';
@@ -72,7 +76,7 @@ export class SerieRepositoryImpl implements SerieRepository {
     return SerieMapper.toDomain(rsp);
   }
 
-  async actualizarCorrelativo(
+  async updateCorrelativoAndLog(
     serieId: number,
     usuarioId: number,
     newCorrelativo: number,
@@ -93,7 +97,6 @@ export class SerieRepositoryImpl implements SerieRepository {
       auditoria.correlativoNuevo = newCorrelativo;
       auditoria.motivo = motivo;
       serieOrm.correlativoInicial = newCorrelativo;
-
       const updatedSerie = await this.repo.save(serieOrm);
       await this.auditoriaRepo.save(auditoria);
       const serieDto = SerieMapper.toDomain(updatedSerie);
@@ -108,6 +111,39 @@ export class SerieRepositoryImpl implements SerieRepository {
         status: false,
         message: 'Ocurrió un error al actualizar el correlativo',
       };
+    }
+  }
+  async actualizarCorrelativo(
+    serieId: number,
+    newCorrelativo: number,
+  ): Promise<void> {
+    try {
+      await this.repo.update(
+        { serieId }, // condición de búsqueda
+        { correlativoActual: newCorrelativo, fechaActualizacion: new Date() }, // campos a actualizar
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getNextCorrelativo(
+    empresaId: number,
+    tipoComprobante: string,
+    serie: string,
+  ): Promise<{ correlativo: number; serieId: number }> {
+    try {
+      const rsp = await this.repo.findOne({
+        where: { empresaId, tipoComprobante, serie },
+      });
+      if (!rsp) {
+        throw new BadRequestException(`No se encontró la serie con ID ${rsp}`);
+      }
+      const newCorrelativo =
+        (rsp.correlativoActual ?? rsp.correlativoInicial ?? 0) + 1;
+      return { correlativo: newCorrelativo, serieId: rsp.serieId };
+    } catch (error) {
+      throw error;
     }
   }
 }

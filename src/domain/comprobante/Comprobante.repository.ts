@@ -1,4 +1,4 @@
-import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import { EstadoComunicacionEnvioSunat, EstadoEnumComprobante } from 'src/util/estado.enum';
 import { ComprobanteResponseDto } from './dto/ConprobanteResponseDto';
 import { IUpdateComprobante } from './interface/update.interface';
 export interface ArchivoDescargable {
@@ -16,10 +16,11 @@ export interface ConprobanteRepository {
   /**
    * Busca un comprobante por su ID.
    */
-  findById(
-    comprobanteId: number,
+
+  findByEmpresaAndId(
     empresaId: number,
-  ): Promise<ComprobanteResponseDto | null>;
+    comprobanteIds: number[],
+  ): Promise<ComprobanteResponseDto[] | null>;
 
   // 📄 XML firmado
   getXmlFirmado(
@@ -82,13 +83,20 @@ export interface ConprobanteRepository {
     empresaId: number,
     serieId: number,
     numCorrelativo: number,
-    desAnulacion: string,
+    desEstado: string,
     estado: EstadoEnumComprobante,
   ): Promise<boolean>;
-  actualizarEstadoBoletas(
-    boletaIds: number[],
+  updateComprobanteStatusMultiple(
+    empresaId: number,
+    comprobanteIds: number[],
     nuevoEstado: EstadoEnumComprobante,
-    comunicadoSunat:boolean
+    comunicadoSunat: EstadoComunicacionEnvioSunat
+  );
+  updateBoletaStatus(
+    empresaId: number,
+    boletasIds: number[],
+    nuevoEstado: EstadoEnumComprobante,
+    comunicadoSunat: EstadoComunicacionEnvioSunat,
   );
   findComprobanteByReferencia(
     empresaId: number,
@@ -102,6 +110,6 @@ export interface ConprobanteRepository {
     empresaId: number,
     serieId: number,
     fechaResumen: string,
-    estados: EstadoEnumComprobante[]
+    estados: EstadoEnumComprobante[],
   ): Promise<ComprobanteResponseDto[]>;
 }

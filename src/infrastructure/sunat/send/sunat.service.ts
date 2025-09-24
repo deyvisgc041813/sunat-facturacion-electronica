@@ -74,7 +74,7 @@ export class SunatService {
         throw new Error('SUNAT no devolvió CDR');
       }
       const cdrZip = Buffer.from(match[1], 'base64');
-      const rpta = await this.extraerEstadoCdr(cdrZip);
+      const rpta = await this.extraerDatosCdr(cdrZip);
       return rpta;
     } catch (err) {
       console.error('Error SUNAT:', err.message || err);
@@ -115,11 +115,7 @@ export class SunatService {
   /** Consultar estado de Resumen (con ticket) → devuelve CDR */
 
   /** Consultar estado de Resumen (con ticket) → devuelve CDR */
-  async getStatus(ticket: string): Promise<{
-    statusCode: string;
-    statusMessage: string;
-    cdr?: Buffer;
-  }> {
+  async getStatus(ticket: string): Promise<IResponseSunat> {
     try {
       const envelope = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -152,7 +148,6 @@ export class SunatService {
       });
 
       const xml = response.data;
-      console.log('Respuesta SUNAT:', xml);
 
       // Ver si SUNAT devolvió un Fault
       const faultCode = xml.match(/<faultcode>(.*?)<\/faultcode>/)?.[1];
@@ -199,8 +194,10 @@ export class SunatService {
       if (messageMatch) {
         statusMessage = messageMatch[1];
       }
+      const rpta = await this.extraerDatosCdr(cdr);
+      return rpta;
+      //return { statusCode, statusMessage, cdr };
 
-      return { statusCode, statusMessage, cdr };
     } catch (error: any) {
       console.error('Error en getStatus:', error.message || error);
       // Propagar hacia arriba con formato uniforme
@@ -208,7 +205,7 @@ export class SunatService {
     }
   }
 
-  async extraerEstadoCdr(cdrZip: any): Promise<IResponseSunat> {
+  async extraerDatosCdr(cdrZip: any): Promise<IResponseSunat> {
     // Descomprimir el ZIP y leer el estado del CDR
     const zip = new AdmZip(cdrZip);
     const entries = zip.getEntries();
@@ -245,7 +242,7 @@ export class SunatService {
           : [estadoResult.observaciones]
         : [],
       status: true,
-      cdr: cdrZip,
+      cdr: cdrZip?.toString('base64'),
     };
     return rpta;
   }

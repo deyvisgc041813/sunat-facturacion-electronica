@@ -15,6 +15,6 @@ export class UpdateCorrelativoSerieUseCase {
     if (!data.motivo) {
       throw new BadRequestException('El motivo es obligatorio');
     }
-    return this.serieRepo.actualizarCorrelativo(serieId, data.usuarioId, data.newCorrelativo, data.motivo);
+    return this.serieRepo.updateCorrelativoAndLog(serieId, data.usuarioId, data.newCorrelativo, data.motivo);
   }
 }

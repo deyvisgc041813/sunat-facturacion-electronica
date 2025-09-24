@@ -307,6 +307,8 @@ export abstract class CreateNotaCreditoBaseUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.comprobanteId = comprobanteId;
       obj.request = JSON.stringify(data);
+      obj.empresaId = empresaId;
+      obj.serie = `${data.serie}-${data.correlativo}`;
       await this.sunatLogRepo.save(obj);
       // 4. Actualizar comprobante con CDR, Hash y estado
       responseSunat = {
@@ -320,7 +322,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         xmlFirmado,
       };
     } else {
-      await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
+      //await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
       responseSunat = {
         mensaje: rspError.create.mensajeError || 'Error interno',
         estadoSunat: rspError.create.estado,
@@ -331,7 +333,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
         xmlFirmado,
       };
     }
-    // 🔹 Actualizar comprobante siempre, sin importar el origen del error
     if (comprobanteId > 0) {
       await this.actualizarComprobante(
         comprobanteId,

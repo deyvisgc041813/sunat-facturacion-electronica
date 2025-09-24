@@ -13,6 +13,7 @@ import { ClienteOrmEntity } from '../cliente/ClienteOrmEntity';
 import { SunatLogOrmEntity } from '../sunat-log/SunatLogOrmEntity';
 import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
 import { SerieOrmEntity } from '../serie/SerieOrmEntity';
+import { BajaComprobanteDetalleOrmEntity } from '../comunicacion-baja/BajaComprobanteDetalleOrmEntity';
 
 @Entity('comprobantes')
 export class ComprobanteOrmEntity {
@@ -163,15 +164,15 @@ export class ComprobanteOrmEntity {
   })
   serie: SerieOrmEntity;
 
-  // @OneToMany(
-  //   () => SunatLogOrmEntity,
-  //   (sunatLog: SunatLogOrmEntity) => sunatLog.comprobante,
-  // )
-  // sunatLogs: SunatLogOrmEntity[];
-  // 🔹 Relación con ResumenBoletasDetalle
   @OneToMany(
     () => ResumenBoletasDetalleOrmEntity,
     (detalle) => detalle.comprobante,
   )
   resumenesDetalle: ResumenBoletasDetalleOrmEntity[];
+  @OneToMany(
+    () => BajaComprobanteDetalleOrmEntity,
+    (detalle) => detalle.comprobante,
+  )
+  bajaDetalle: BajaComprobanteDetalleOrmEntity[];
+  
 }

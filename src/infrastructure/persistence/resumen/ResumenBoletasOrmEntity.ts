@@ -27,7 +27,7 @@ export class ResumenBoletasOrmEntity {
   @Column({ name: 'fecha_recepcion_sunat', type: 'date' })
   fechaRespuestaSunat: Date;
   @Column({ name: 'codigo_respuesta_sunat', type: 'varchar', length: 20 })
-  codResuestSunat: string;
+  codResPuestaSunat: string;
   @Column({ name: 'mensaje_sunat', type: 'varchar', length: 250 })
   mensajeSunat: string;
 
@@ -62,7 +62,8 @@ export class ResumenBoletasOrmEntity {
   ticket: string;
   @Column({ name: 'resumen_id', type: 'varchar', length: 50, nullable: true })
   resumenId: string;
-
+  @Column({ name: 'observaciones_sunat', type: 'longtext', nullable: true })
+  observacionSunat?: string;
   @OneToMany(
     () => ResumenBoletasDetalleOrmEntity,
     (detalle) => detalle.resumen,

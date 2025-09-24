@@ -12,13 +12,14 @@ export enum TipoComprobanteEnum {
   BOLETA = '03',
   NOTA_CREDITO = '07',
   NOTA_DEBITO = '08',
+  RESUMEN_DIARIO = '20',        // uso interno
+  COMUNICACION_BAJA = '21',     // uso interno
 }
 export enum OperacionResumenEnum {
   ADICIONAR = "ADICIONAR",   // Alta de boleta
   MODIFICAR = "MODIFICACION",   // Modificación de boleta ya informada
   BAJA = "BAJA",      // Baja (anulación) de boleta
 }
-
 // Catálogo 06: Tipo de Documento de Identidad
 export enum TipoDocumentoIdentidadEnum {
   DOC_TRIB_NO_DOM_SIN_RUC = '0',
@@ -28,7 +29,6 @@ export enum TipoDocumentoIdentidadEnum {
   PASAPORTE = '7',
   CEDULA_DIPLOMATICA = 'A',
 }
-
 // Catálogo 02: Moneda
 export enum MonedaEnum {
   PEN = 'PEN',
@@ -53,7 +53,6 @@ export enum ProcesoNotaCreditoEnum {
   GENERADA_DESDE_DATOS_SIMPLES = 'generadaDesdeDatosSimples',
   VALIDADA_DESDE_COMPROBANTE_CALCULADO = 'validadaDesdeComprobanteCalculado'
 }
-
 // Catálogo 09: Códigos de tipo de nota de crédito electrónica
 export enum NotaCreditoMotivo {
   ANULACION_OPERACION = '01',                // Anulación de la operación
@@ -91,8 +90,6 @@ export enum TipoDocumentoLetras {
   NOTA_DEBITO = 'Nota de Débito',
   NOTA_CREDITO = 'Nota de Crédito',
 }
-
-
 
 // 🔹 Operaciones Gravadas (con IGV, precio normal)
 export const TIPO_AFECTACION_GRAVADAS: number[] = [

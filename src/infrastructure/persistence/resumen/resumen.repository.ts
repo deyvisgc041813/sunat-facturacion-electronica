@@ -26,7 +26,7 @@ export class ResumenRepositoryImpl implements IResumenRepository {
       data: ResumenBPMaper.toDomain(newResumen).resBolId,
     };
   }
-  findById(id: number): Promise<ResumenResponseDto | null> {
+  findByEmpresaAndId(empresaId:number, id: number): Promise<ResumenResponseDto | null> {
     throw new Error('Method not implemented.');
   }
   findByFecha(empresaId: number, fecha: string): Promise<ResumenResponseDto[]> {
@@ -42,20 +42,22 @@ export class ResumenRepositoryImpl implements IResumenRepository {
   }
   async update(
     resumenId: string | '',
+    empresaId: number,
     data: Partial<CreateResumenBoletaDto>,
   ): Promise<void> {
-    await this.repo.update({ resumenId: resumenId }, data);
+    await this.repo.update({ resumenId: resumenId, empresa: {empresaId} }, data);
   }
-  async updateByTicket(ticket: string, data: any) {
+  async updateByEmpresaAndTicket(empresaId:number, ticket: string, data: any) {
     await this.repo
       .createQueryBuilder()
       .update()
       .set(data)
       .where('ticket = :ticket', { ticket })
+      .andWhere('empresa_id = :empresaId', { empresaId })
       .execute();
   }
-  async findByTicket(ticket: string): Promise<ResumenResponseDto | null> {
-    const resumen = await this.repo.findOne({ where: { ticket }, relations: ['empresa', 'detalles', 'detalles.comprobante']});
+  async findByEmpresaAndTicket(empresaId: number, ticket: string): Promise<ResumenResponseDto | null> {
+    const resumen = await this.repo.findOne({ where: { ticket, empresa: {empresaId} }, relations: ['empresa', 'detalles', 'detalles.comprobante']});
     return resumen ? ResumenBPMaper.toDomain(resumen) : null;
   }
 }
