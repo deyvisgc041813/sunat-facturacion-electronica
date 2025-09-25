@@ -18,14 +18,29 @@ export class HttpErrorFilter implements ExceptionFilter {
     let message = 'Error interno del servidor';
 
     if (exception instanceof HttpException) {
-      status = exception.getStatus();
-      const errorResponse = exception.getResponse();
-      message = (errorResponse as any).message || exception.message || message;
+      // status = exception.getStatus();
+      // const errorResponse = exception.getResponse();
+      // message = (errorResponse as any).message || exception.message || message;
+      if (exception instanceof HttpException) {
+        status = exception.getStatus();
+        const errorResponse = exception.getResponse();
+        if (typeof errorResponse === 'object') {
+          // si ya traes { code, message, detalle }
+          return response.status(status).json({
+            success: false,
+            statusCode: status,
+            path: request.url,
+            timestamp: new Date().toISOString(),
+            ...errorResponse, // 🔹 mezcla el payload completo
+          });
+        } else {
+          message = errorResponse as string;
+        }
+      }
     } else if (exception instanceof QueryFailedError) {
       // 🔹 Errores SQL de TypeORM
       const sqlError: any = exception;
       status = HttpStatus.BAD_REQUEST;
-      console.log(sqlError.message);
       if (sqlError.code === 'ER_DUP_ENTRY') {
         message = sqlError.message;
       } else if (sqlError.code === 'ER_NO_REFERENCED_ROW_2') {
@@ -35,7 +50,7 @@ export class HttpErrorFilter implements ExceptionFilter {
       }
       switch (sqlError.code) {
         case 'ER_DUP_ENTRY':
-          message =  buildDuplicateMessage(sqlError, request);
+          message = buildDuplicateMessage(sqlError);
           break;
         case 'ER_NO_REFERENCED_ROW_2':
           message = 'Violación de clave foránea';
@@ -59,7 +74,7 @@ export class HttpErrorFilter implements ExceptionFilter {
   }
 }
 
-export function buildDuplicateMessage(sqlError: any, request: Request): string {
+export function buildDuplicateMessage(sqlError: any): string {
   // Tomar el campo serie armada que setea tu aplicación
   if (sqlError.message.includes('comprobantes')) {
     return 'Ya existe un comprobante registrado en esta empresa con la misma serie. Por favor, comunícate con ssu proveedor para solucionarlo.';

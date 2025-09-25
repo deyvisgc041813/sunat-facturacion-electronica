@@ -134,9 +134,13 @@ export class CreateResumenUseCase {
     await this.serieRepo.actualizarCorrelativo(resumen?.serieId, resumen?.correlativo)
     try {
       // 6. Enviar a SUNAT
+      const usuarioSecundario = respCert?.usuarioSolSecundario ?? ""
+      const claveSecundaria = CryptoUtil.decrypt(respCert.claveSolSecundario ?? "");
       const ticket = await this.sunatService.sendSummary(
         `${fileName}.zip`,
         zipBuffer,
+        usuarioSecundario,
+        claveSecundaria
       );
 
       // 7. Actualizar resumen a ENVIADO
@@ -273,7 +277,7 @@ export class CreateResumenUseCase {
 
     if (rspError.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError.create as CreateSunatLogDto;
-      obj.resumenId = resumendIdBd;
+      //obj.resumenId = resumendIdBd;
       obj.request = xmlFirmado;
       obj.empresaId = empresaId;
       obj.serie = resumenId;

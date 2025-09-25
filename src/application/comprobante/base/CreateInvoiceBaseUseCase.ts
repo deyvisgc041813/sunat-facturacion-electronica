@@ -19,7 +19,6 @@ import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import { extraerHashCpe, setobjectUpdateComprobante } from 'src/util/Helpers';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
-import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
@@ -75,13 +74,16 @@ export abstract class CreateInvoiceBaseUseCase {
         empresa.claveCertificado,
       );
       contextoError.xmlFirmado = xmlFirmado;
-
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? ""
+      const claveSecundaria = CryptoUtil.decrypt(empresa.claveSolSecundario ?? "");
       // 5. Enviar a SUNAT
       const responseSunat = await this.enviarASunat(
         xmlFirmado,
         invoice.tipoComprobante,
         fileName,
         zipBuffer,
+        usuarioSecundario,
+        claveSecundaria
       );
       responseSunat.xmlFirmado = xmlFirmado;
 
@@ -219,9 +221,7 @@ export abstract class CreateInvoiceBaseUseCase {
       await this.sunatLogRepo.save(obj);
       responseSunat = {
         mensaje: obj.response || 'Error SUNAT',
-        estadoSunat:
-          (obj.estado as EstadoEnumComprobante) ||
-          EstadoEnumComprobante.RECHAZADO,
+        estadoSunat: (obj.estado as EstadoEnumComprobante) ||  EstadoEnumComprobante.RECHAZADO,
         status: false,
         observaciones: [obj.response ?? ''],
         cdr: null,
@@ -248,10 +248,6 @@ export abstract class CreateInvoiceBaseUseCase {
         responseSunat,
       );
     }
-    // else {
-    //   await this.errorLogRepo.save(rspError.create as CreateErrorLogDto);
-    //   ...
-    // }
   }
 
   private async enviarASunat(
@@ -259,10 +255,12 @@ export abstract class CreateInvoiceBaseUseCase {
     tipoComprobante: string,
     fileName: string,
     zipBuffer: Buffer,
+    usuarioSolSecundario: string,
+    claveSolSecundario: string
   ): Promise<IResponseSunat> {
     switch (tipoComprobante) {
       case TipoComprobanteEnum.FACTURA:
-        return await this.sunatService.sendBill(`${fileName}.zip`, zipBuffer);
+      return await this.sunatService.sendBill(`${fileName}.zip`, zipBuffer, usuarioSolSecundario, claveSolSecundario);
 
       case TipoComprobanteEnum.BOLETA:
         return {

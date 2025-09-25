@@ -1,29 +1,62 @@
-import { CreateEmpresaDto } from "src/domain/empresa/dto/CreateEmpresaDto";
-import { EmpresaOrmEntity } from "../../infrastructure/persistence/empresa/EmpresaOrmEntity";
-import { EmpresaResponseDto } from "src/domain/empresa/dto/EmpresaResponseDto";
-import { UpdateEmpresaDto } from "src/domain/empresa/dto/UpdateEmpresaDto";
-import { ClienteMapper } from "./ClienteMapper";
-import { ProductoMapper } from "./ProductoMapper";
+import { CreateEmpresaDto } from 'src/domain/empresa/dto/CreateEmpresaDto';
+import { EmpresaOrmEntity } from '../../infrastructure/persistence/empresa/EmpresaOrmEntity';
+import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
+import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
+import { ClienteMapper } from './ClienteMapper';
+import { ProductoMapper } from './ProductoMapper';
+import { EmpresaInternaResponseDto } from '../empresa/dto/EmpresaInternaResponseDto';
 
 export class EmpresaMapper {
-  static toDomain (orm: EmpresaOrmEntity): EmpresaResponseDto {
-    const clientes = orm.clientes ? orm.clientes?.map((c) => ClienteMapper.toDomain(c)) : [];
-    const productos = orm.productos ? orm.productos?.map((p) => ProductoMapper.ormToDTO(p)) : [];
+  static toDomain(orm: EmpresaOrmEntity): EmpresaResponseDto {
+    const clientes = orm.clientes
+      ? orm.clientes?.map((c) => ClienteMapper.toDomain(c))
+      : [];
+    const productos = orm.productos
+      ? orm.productos?.map((p) => ProductoMapper.ormToDTO(p))
+      : [];
     return new EmpresaResponseDto(
       orm.empresaId,
       orm.ruc,
       orm.razonSocial,
-      orm.nombreComercial ?? "",
+      orm.nombreComercial ?? '',
       orm.direccion,
       orm.usuarioSolSecundario,
       orm.modo,
       orm.estado,
       clientes,
-      productos
+      productos,
     );
   }
-
- private static assignCommon(object: EmpresaOrmEntity, data: any, isUpdate = false): EmpresaOrmEntity {
+  static toDomainInterno(orm: EmpresaOrmEntity): EmpresaInternaResponseDto {
+    const clientes = orm.clientes
+      ? orm.clientes?.map((c) => ClienteMapper.toDomain(c))
+      : [];
+    const productos = orm.productos
+      ? orm.productos?.map((p) => ProductoMapper.ormToDTO(p))
+      : [];
+    const base = new EmpresaResponseDto(
+      orm.empresaId,
+      orm.ruc,
+      orm.razonSocial,
+      orm.nombreComercial ?? '',
+      orm.direccion,
+      orm.usuarioSolSecundario,
+      orm.modo, 
+      orm.estado,
+      clientes,
+      productos,
+    );
+    return new EmpresaInternaResponseDto(
+      base,
+      orm.claveCertificado,
+      orm.claveSolSecundario
+    );
+  }
+  private static assignCommon(
+    object: EmpresaOrmEntity,
+    data: any,
+    isUpdate = false,
+  ): EmpresaOrmEntity {
     object.empresaId = data.empresaId ?? 0;
     object.ruc = data.ruc;
     object.razonSocial = data.razonSocial;
@@ -44,6 +77,4 @@ export class EmpresaMapper {
   static dtoToOrmUpdate(dto: UpdateEmpresaDto): EmpresaOrmEntity {
     return this.assignCommon(new EmpresaOrmEntity(), dto, true);
   }
-
 }
-

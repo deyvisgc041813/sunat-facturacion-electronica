@@ -136,9 +136,15 @@ export class CreateComunicacionBajaUseCase {
 
     try {
       // 9. Enviar a SUNAT
+      const usuarioSecundario = respCert?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(
+        respCert.claveSolSecundario ?? '',
+      );
       const ticket = await this.sunatService.sendSummary(
         `${fileName}.zip`,
         zipBuffer,
+        usuarioSecundario,
+        claveSecundaria
       );
 
       // 10. Actualizar baja a ENVIADO
@@ -166,7 +172,7 @@ export class CreateComunicacionBajaUseCase {
       await this.bajaRepo.update(comunicacion.serie, empresaId, {
         estado: EstadoEnvioSunat.ERROR,
       });
-      await this.procesarErrorResumen(
+      await this.procesarErrorBaja(
         error,
         newBaja.data ?? 0,
         empresaId,
@@ -204,7 +210,7 @@ export class CreateComunicacionBajaUseCase {
     };
   }
 
-  private async procesarErrorResumen(
+  private async procesarErrorBaja(
     error: any,
     resumendIdBd: number,
     empresaId: number,
@@ -221,7 +227,7 @@ export class CreateComunicacionBajaUseCase {
     if (rspError.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError.create as CreateSunatLogDto;
       //obj.codigoResSunat = serie;
-      obj.resumenId = resumendIdBd;
+      //obj.resumenId = resumendIdBd;
       obj.request = xmlFirmado;
       obj.empresaId = empresaId;
       obj.serie = serie;

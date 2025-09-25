@@ -42,8 +42,8 @@ export class ComunicacionBajaDto {
   @ValidateNested({ each: true })
   @Type(() => ComunicacionBajaDetalleDto)
   detalles: ComunicacionBajaDetalleDto[];
-  @IsOptional()
-  errorReference?: string;
+  // @IsOptional()
+  // errorReference?: string;
 }
 
 export class ComunicacionBajaDetalleDto {

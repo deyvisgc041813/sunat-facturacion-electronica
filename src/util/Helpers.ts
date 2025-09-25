@@ -18,7 +18,7 @@ import {
   codigoRespuestaSunatMap,
   EstadoComprobanteEnumSunat,
   EstadoEnumComprobante,
-  EstadoEnvioSunat
+  EstadoEnvioSunat,
 } from './estado.enum';
 import { EstadoCdrResult } from 'src/domain/comprobante/interface/estado.cdr.interface';
 import { parseStringPromise } from 'xml2js';
@@ -146,18 +146,41 @@ export function mapResponseCodeToEstado(
 ): EstadoCdrResult {
   let estado: EstadoEnumComprobante;
 
+  // if (responseCode === '0') {
+  //   estado = notes  ? EstadoEnumComprobante.OBSERVADO : EstadoEnumComprobante.ACEPTADO;
+  // } else if (Number(responseCode) >= 1000 && Number(responseCode) < 2000) {
+  //   estado = EstadoEnumComprobante.ERROR;
+  // } else if (Number(responseCode) >= 2000 && Number(responseCode) < 4000) {
+  //   estado = EstadoEnumComprobante.RECHAZADO;
+  // } else {
+  //   estado = EstadoEnumComprobante.PENDIENTE;
+  // }
   if (responseCode === '0') {
     estado = notes
-      ? EstadoEnumComprobante.OBSERVADO
-      : EstadoEnumComprobante.ACEPTADO;
-  } else if (Number(responseCode) >= 1000 && Number(responseCode) < 2000) {
+      ? EstadoEnumComprobante.OBSERVADO // aceptado con advertencias
+      : EstadoEnumComprobante.ACEPTADO; // aceptado sin observaciones
+  } else if (responseCode === '0001') {
+    estado = EstadoEnumComprobante.ACEPTADO;
+  } else if (responseCode === '0002') {
+    estado = EstadoEnumComprobante.RECHAZADO;
+  } else if (responseCode === '0003') {
+    estado = EstadoEnumComprobante.OBSERVADO;
+  } else if (responseCode === '0004') {
+    estado = EstadoEnumComprobante.NO_EXISTE;
+  } else if (Number(responseCode) >= 100 && Number(responseCode) < 2000) {
+    // 0100–0999 -> Excepciones SUNAT
+    // 1000–1999 -> Excepciones del contribuyente
     estado = EstadoEnumComprobante.ERROR;
   } else if (Number(responseCode) >= 2000 && Number(responseCode) < 4000) {
+    // Errores que generan rechazo
     estado = EstadoEnumComprobante.RECHAZADO;
+  } else if (Number(responseCode) >= 4000) {
+    // Observaciones (aceptado con advertencias)
+    estado = EstadoEnumComprobante.OBSERVADO;
   } else {
-    estado = EstadoEnumComprobante.PENDIENTE;
+    estado = EstadoEnumComprobante.PENDIENTE; // cualquier otro caso no mapeado
   }
-
+  
   return {
     estado,
     codigo: responseCode,
@@ -178,7 +201,7 @@ export async function extraerHashCpe(
     json['Invoice'] ??
     json['CreditNote'] ??
     json['DebitNote'] ??
-    json['SummaryDocuments'] ?? 
+    json['SummaryDocuments'] ??
     json['VoidedDocuments'];
 
   if (!root) return null;
@@ -489,4 +512,7 @@ export function formatDateForSunat(date: Date): string {
 }
 export function mapSunatToEstado(codigo: string): EstadoEnvioSunat {
   return codigoRespuestaSunatMap[codigo] || EstadoEnvioSunat.ERROR;
+}
+export function formatDateToDDMMYYYY(date: Date | string): string {
+  return dayjs(date).tz('America/Lima').format('DD/MM/YYYY');
 }

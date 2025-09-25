@@ -120,9 +120,15 @@ export abstract class CreateNotaDebitoBaseUseCase {
       );
       xmlFirmadoError = xmlFirmado;
       // 3. Enviar a SUNAT
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(
+        empresa.claveSolSecundario ?? '',
+      );
       const responseSunat = await this.sunatService.sendBill(
         `${fileName}.zip`,
         zipBuffer,
+        usuarioSecundario,
+        claveSecundaria
       );
       responseSunat.xmlFirmado = xmlFirmado;
       // 4. Actualizar comprobante con CDR, Hash y estado

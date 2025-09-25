@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://schemas.xmlsoap.org/wsdl/"
+             xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+             xmlns:tns="http://service.sunat.gob.pe"
+             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+             targetNamespace="http://service.sunat.gob.pe"
+             name="billValidService">
+
+  <types>
+    <xsd:schema targetNamespace="http://service.sunat.gob.pe">
+      <xsd:element name="validaCDPcriterios">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="rucComprobante" type="xsd:string"/>
+            <xsd:element name="tipoComprobante" type="xsd:string"/>
+            <xsd:element name="serieNumero" type="xsd:string"/>
+            <xsd:element name="fechaEmision" type="xsd:string"/>
+            <xsd:element name="monto" type="xsd:string"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+
+      <xsd:element name="validaCDPcriteriosResponse">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="estadoCpE" type="xsd:string" minOccurs="0"/>
+            <xsd:element name="descripcion" type="xsd:string" minOccurs="0"/>
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+    </xsd:schema>
+  </types>
+
+  <message name="validaCDPcriteriosRequest">
+    <part name="parameters" element="tns:validaCDPcriterios"/>
+  </message>
+  <message name="validaCDPcriteriosResponse">
+    <part name="parameters" element="tns:validaCDPcriteriosResponse"/>
+  </message>
+
+  <portType name="billValidServicePortType">
+    <operation name="validaCDPcriterios">
+      <input message="tns:validaCDPcriteriosRequest"/>
+      <output message="tns:validaCDPcriteriosResponse"/>
+    </operation>
+  </portType>
+
+  <binding name="billValidServiceBinding" type="tns:billValidServicePortType">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+    <operation name="validaCDPcriterios">
+      <soap:operation soapAction="urn:validaCDPcriterios"/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+    </operation>
+  </binding>
+
+  <service name="billValidService">
+    <port name="billValidServicePort" binding="tns:billValidServiceBinding">
+      <soap:address location="https://e-factura.sunat.gob.pe/ol-it-wsconsvalidcpe/billValidService"/>
+    </port>
+  </service>
+</definitions>

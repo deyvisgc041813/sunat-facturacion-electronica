@@ -28,6 +28,13 @@ import { CreateNotaDebitoUseCase } from 'src/application/comprobante/create/Crea
 import { CreateInvoiceUseCase } from 'src/application/comprobante/create/CreateInvoiceUseCase';
 import { CancelInvoiceDto } from 'src/domain/comprobante/dto/invoice/CancelInvoiceDto';
 import { AnularComprobanteUseCase } from 'src/application/comprobante/update/AnularComprobanteUseCase';
+import { ConsultarLoteCpeDto, CpeDto } from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
+import { GetValidatedCpeUseCase } from 'src/application/comprobante/query/GetValidatedCpeUseCase';
+import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
+import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
+import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
+import { GetValidatedCdrUseCase } from 'src/application/comprobante/query/GetValidatedCdrUseCase';
+import { GetStatusValidateCpeUseCase } from 'src/application/comprobante/query/GetStatusValidateCpeUseCase';
 
 @Controller('documents')
 export class ComprobanteController {
@@ -36,7 +43,11 @@ export class ComprobanteController {
     private readonly createInvoiceUseCase: CreateInvoiceUseCase,
     private readonly createNcUseCase: CreateNotaCreditoUseCase,
     private readonly createNdUseCase: CreateNotaDebitoUseCase,
-    private readonly anularComprobante: AnularComprobanteUseCase
+    private readonly anularComprobante: AnularComprobanteUseCase,
+    private readonly sunatService: SunatService,
+    private readonly empresaRepo: EmpresaRepositoryImpl,
+    private readonly sunatLogRep: SunatLogRepositoryImpl,
+    private readonly comprobanteRepo: ComprobanteRepositoryImpl
 
   ) {}
 
@@ -58,6 +69,25 @@ export class ComprobanteController {
   @Post('cancel/boleta')
   async cancelBoleta(@Body() dto: CancelInvoiceDto) {
     return this.anularComprobante.execute(dto);
+  }
+  @Post('/validate-cpe')
+  async validarCpe(@Body() body: ConsultarLoteCpeDto) {
+   const empresaId = 18
+   const useCase = new GetValidatedCpeUseCase(this.sunatService, this.comprobanteRepo)
+   return await useCase.execute(body, empresaId);
+  }
+    @Post('/validate-cdr')
+  async validarCdr(@Body() body: CpeDto) {
+   const empresaId = 18
+   const useCase = new GetValidatedCdrUseCase(this.sunatService, this.sunatLogRep, this.comprobanteRepo)
+   return await useCase.execute(body, empresaId);
+  }
+  
+  @Post('/validate-cpe-status')
+  async validarStatusComprobante(@Body() body: CpeDto) {
+   const empresaId = 18
+   const useCase = new GetStatusValidateCpeUseCase(this.sunatService, this.sunatLogRep, this.comprobanteRepo, this.empresaRepo)
+   return await useCase.execute(body, empresaId);
   }
   @Get('/generarcertificado')
   async generarCerticado() {

@@ -4,10 +4,13 @@ import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.reposi
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import { BajaComprobanteResponseDto } from 'src/domain/comunicacion-baja/ComunicacionBajaResponseDto';
 import { IComunicacionBajaRepository } from 'src/domain/comunicacion-baja/interface/baja.repository.interface';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
+import { CryptoUtil } from 'src/util/CryptoUtil';
 import {
   codigoRespuestaSunatMap,
   EstadoComunicacionEnvioSunat,
@@ -28,12 +31,10 @@ export class GetStatusBajaStatusUseCase {
     private readonly bajaRepo: IComunicacionBajaRepository,
     private readonly sunatLogRepo: SunatLogRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
+    private readonly empresaRepo: EmpresaRepository,
   ) {}
 
-  async execute(
-    empresaId: number,
-    ticket: string,
-  ): Promise<IResponseSunat> {
+  async execute(empresaId: number, ticket: string): Promise<IResponseSunat> {
     const baja = await this.bajaRepo.findByEmpresaAndTicket(empresaId, ticket);
     try {
       if (!baja) {
@@ -42,7 +43,24 @@ export class GetStatusBajaStatusUseCase {
         );
       }
       await this.validarEstadoFinalBaja(baja);
-      const result = await this.sunatService.getStatus(ticket);
+      const empresa = (await this.empresaRepo.findById(
+        empresaId,
+        true,
+      )) as EmpresaInternaResponseDto;
+      if (!empresa) {
+        throw new BadRequestException(
+          'No se ha encontrado una empresa asociada al identificador obtenido del token de autenticación.',
+        );
+      }
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(
+        empresa.claveUsuarioSecundario ?? '',
+      );
+      const result = await this.sunatService.getStatus(
+        ticket,
+        usuarioSecundario,
+        claveSecundaria,
+      );
 
       // 2. Actualizar estado en la BD según respuesta
 
@@ -52,7 +70,10 @@ export class GetStatusBajaStatusUseCase {
         cdr: result.cdr,
         mensajeSunat: result.mensaje,
         fechaRespuestaSunat: new Date(),
-        observacionSunat: result.observaciones.length > 0 ? JSON.stringify(result.observaciones) : null
+        observacionSunat:
+          result.observaciones.length > 0
+            ? JSON.stringify(result.observaciones)
+            : null,
       });
       // 3. Actualizar comprobantes
       const comprobantesIds: number[] = (baja?.detalles ?? [])
@@ -66,7 +87,7 @@ export class GetStatusBajaStatusUseCase {
         EstadoComunicacionEnvioSunat.ACEPTADO_PROCESADO,
       );
       // 4. Retornar resultado
-      return result
+      return result;
     } catch (error: any) {
       // 9. Actualizar resumen con error
       if (baja) {

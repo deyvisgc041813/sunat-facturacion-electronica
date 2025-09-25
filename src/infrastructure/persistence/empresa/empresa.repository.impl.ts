@@ -8,15 +8,22 @@ import { EmpresaOrmEntity } from './EmpresaOrmEntity';
 import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
+import { EstadoSystem } from 'src/util/estado.enum';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 
 @Injectable()
 export class EmpresaRepositoryImpl implements EmpresaRepository {
   constructor(
-    @InjectRepository(EmpresaOrmEntity) private readonly repo: Repository<EmpresaOrmEntity>,
+    @InjectRepository(EmpresaOrmEntity)
+    private readonly repo: Repository<EmpresaOrmEntity>,
   ) {}
-  
-  async save( empresa: CreateEmpresaDto): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
-    const newEmpresa = await this.repo.save(EmpresaMapper.dtoToOrmCreate(empresa));
+
+  async save(
+    empresa: CreateEmpresaDto,
+  ): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
+    const newEmpresa = await this.repo.save(
+      EmpresaMapper.dtoToOrmCreate(empresa),
+    );
     return {
       status: true,
       message: 'Cliente registrado correctamente',
@@ -26,20 +33,25 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
 
   async findAll(): Promise<EmpresaResponseDto[]> {
     const result = await this.repo.find({
-      relations: ['clientes', 'productos']
+      relations: ['clientes', 'productos'],
     });
     return result.map((empresa) => EmpresaMapper.toDomain(empresa));
   }
 
-  async findById(id: number): Promise<EmpresaResponseDto | null> {
+  async findById(
+    id: number,
+    interno: false,
+  ): Promise<EmpresaResponseDto | EmpresaInternaResponseDto | null> {
     const empresa = await this.repo.findOne({
-      where: { empresaId: id },
+      where: { empresaId: id, estado: EstadoSystem.ACTIVO },
       relations: ['clientes', 'productos'],
     });
     if (!empresa) {
       throw new NotFoundException(`Empresa con id ${id} no encontrado`);
     }
-    return EmpresaMapper.toDomain(empresa);
+    return !interno
+      ? EmpresaMapper.toDomain(empresa)
+      : EmpresaMapper.toDomainInterno(empresa);
   }
   async findCertificado(ruc: string): Promise<GetCertificadoDto | null> {
     const empresa = await this.repo.findOne({ where: { ruc } });
@@ -48,21 +60,31 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
       throw new NotFoundException(`No se encontró empresa con RUC ${ruc}`);
     }
     if (!empresa.certificadoDigital) {
-      throw new NotFoundException(`La empresa ${ruc} no tiene certificado digital registrado`);
+      throw new NotFoundException(
+        `La empresa ${ruc} no tiene certificado digital registrado`,
+      );
     }
-    const certificado = new GetCertificadoDto(empresa.empresaId, empresa.certificadoDigital, empresa.claveCertificado ?? "")
+    const certificado = new GetCertificadoDto(
+      empresa.empresaId,
+      empresa.certificadoDigital,
+      empresa.claveCertificado ?? '',
+      empresa.usuarioSolSecundario ?? '',
+      empresa.claveSolSecundario ?? '',
+    );
     return certificado;
   }
 
-
-  async update(empresa: UpdateEmpresaDto, empresaId:number): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
+  async update(
+    empresa: UpdateEmpresaDto,
+    empresaId: number,
+  ): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
     const empresaUpdate = EmpresaMapper.dtoToOrmUpdate(empresa);
-    empresaUpdate.empresaId = empresaId
+    empresaUpdate.empresaId = empresaId;
     const clientUpdate = await this.repo.save(empresaUpdate);
     return {
       status: true,
       message: 'Actualizado correctamente',
-      data:  EmpresaMapper.toDomain(clientUpdate)
+      data: EmpresaMapper.toDomain(clientUpdate),
     };
   }
 }

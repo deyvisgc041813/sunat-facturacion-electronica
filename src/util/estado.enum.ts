@@ -10,6 +10,7 @@ export enum EstadoEnumComprobante {
   CONTINGENCIA = 'CONTINGENCIA',
   MODIFICADO = 'MODIFICADO',
   ERROR = 'ERROR',
+  NO_EXISTE = 'NO EXISTE'
 }
 export enum EstadoComprobanteEnumSunat {
   PENDIENTE = '1',
@@ -40,4 +41,18 @@ export enum EstadoComunicacionEnvioSunat {
   NO_ENVIADO = "0",
   ENVIADO = "1",
   ACEPTADO_PROCESADO = "2"
+}
+
+export enum EstadoCpeSunat {
+  ACEPTADO = "0",          // Comprobante aceptado
+  RECHAZADO = "1",         // Comprobante rechazado
+  OBSERVADO = "2",         // Comprobante aceptado con observaciones
+  ANULADO = "3",           // Comprobante dado de baja
+  NO_ENCONTRADO = "4",     // Comprobante no encontrado en SUNAT
+  ERROR = "9",             // Error en consulta o estado inconsistente
+}
+
+export enum EstadoSystem {
+  ACTIVO= 1,
+  INACTIVO = 0
 }

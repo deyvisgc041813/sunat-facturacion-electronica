@@ -39,7 +39,6 @@ export class CreateInvoiceDto extends ComprobanteBaseDto {
   @ValidateNested({ each: true, message: 'Las leyendas no son válidas' })
   @Type(() => LegendDto)
   legends: LegendDto[];
-  errorReference:string
     // @IsString({ message: 'La versión UBL debe ser un texto' })
   // @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   // ublVersion: string;

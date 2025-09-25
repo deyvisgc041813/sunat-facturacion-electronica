@@ -48,7 +48,8 @@ export class ComunicaciomBajaController {
       this.sunatService,
       this.bajaRepo,
       this.sunatLogRep,
-      this.comprobanteRepo
+      this.comprobanteRepo,
+      this.empresaRepo
     );
     return useCase.execute(empresaId, ticket);
   }

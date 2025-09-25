@@ -216,7 +216,8 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
       {
         estado: estado,
         descripcionEstado: desEstado,
-        fechaAnulacion: estado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
+        fechaAnulacion:
+          estado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
       },
     );
     if (result.affected && result.affected > 0) {
@@ -340,10 +341,22 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
            ELSE estado 
          END`,
         comunicadoSunat: () => comunicadoSunat,
-        fechaAnulacion: nuevoEstado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
+        fechaAnulacion:
+          nuevoEstado === EstadoEnumComprobante.ANULADO
+            ? dayjs().toDate()
+            : null,
       })
       .whereInIds(comprobanteIds)
       .andWhere('empresa_id = :empresaId', { empresaId })
       .execute();
+  }
+  async findByEmpresaAndSerieCorrelativos(empresaId: number, serieCorrelativo: string[]): Promise<ComprobanteResponseDto[]> {
+    const data = await this.repo.find({
+      where: {
+        empresaId,
+        serieCorrelativo: In(serieCorrelativo),
+      },
+    });
+    return data.map(dt => ComprobanteMapper.toDomain(dt))
   }
 }

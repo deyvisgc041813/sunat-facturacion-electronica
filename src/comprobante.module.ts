@@ -31,6 +31,8 @@ import { ValidarAnulacionComprobanteUseCase } from './application/comprobante/va
 import { AnularComprobanteUseCase } from './application/comprobante/update/AnularComprobanteUseCase';
 import { SunatLogRepositoryImpl } from './infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 import { SerieOrmEntity } from './infrastructure/persistence/serie/SerieOrmEntity';
+import { GetValidatedCpeUseCase } from './application/comprobante/query/GetValidatedCpeUseCase';
+import { GetStatusValidateCpeUseCase } from './application/comprobante/query/GetStatusValidateCpeUseCase';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -67,7 +69,9 @@ import { SerieOrmEntity } from './infrastructure/persistence/serie/SerieOrmEntit
     GetByCorrelativoComprobantesUseCase,
     ValidarAnulacionComprobanteUseCase,
     AnularComprobanteUseCase,
-    FindTasaByCodeUseCase
+    FindTasaByCodeUseCase,
+    GetValidatedCpeUseCase,
+    GetStatusValidateCpeUseCase
   ],
   exports: [
     ErrorLogRepositoryImpl,
@@ -79,7 +83,8 @@ import { SerieOrmEntity } from './infrastructure/persistence/serie/SerieOrmEntit
     EmpresaRepositoryImpl,
     ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
-    SerieRepositoryImpl
+    SerieRepositoryImpl,
+    GetValidatedCpeUseCase
   ],
 })
 export class ComprobanteModule {}

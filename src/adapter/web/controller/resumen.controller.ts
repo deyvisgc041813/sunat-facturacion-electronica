@@ -1,4 +1,11 @@
-import { BadRequestException, Body, Controller, Get, Param, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { SummaryDocumentDto } from 'src/domain/resumen/dto/SummaryDocumentDto';
 import { CreateResumenUseCase } from 'src/application/resumen/create/CreateResumenUseCase';
 import { FirmaService } from '../../../infrastructure/sunat/firma/firma.service';
@@ -45,12 +52,13 @@ export class ResumenController {
     if (!ticket || ticket.trim().length === 0) {
       throw new BadRequestException('El ticket es obligatorio');
     }
-    const empresaId = 18
+    const empresaId = 18;
     const useCase = new GetStatusResumenUseCase(
       this.sunatService,
       this.reposiResumen,
       this.sunatLogRep,
-      this.comprobanteRepo
+      this.comprobanteRepo,
+      this.empresaRepo,
     );
     return useCase.execute(empresaId, ticket);
   }

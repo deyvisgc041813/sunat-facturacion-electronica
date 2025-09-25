@@ -21,6 +21,7 @@ export class ComprobanteResponseDto {
     // Estado
     public estado: string,  // PENDIENTE, ACEPTADO, etc.
     public comunicadoSunat:string,
+    public serieCorrelativo:string,
     // Relaciones
     public empresa?: EmpresaResponseDto | null,
     public cliente?: ClienteResponseDto | null,

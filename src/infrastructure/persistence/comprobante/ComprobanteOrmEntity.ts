@@ -117,7 +117,8 @@ export class ComprobanteOrmEntity {
   descripcionEstado?: string;
   @Column({ name: 'comunicado_sunat', type: 'tinyint', nullable: true, default: false })
   comunicadoSunat?: EstadoComunicacionEnvioSunat;
-
+  @Column({ name: 'serie_correlativo', type: 'varchar', length: 20, nullable: true, default: false })
+  serieCorrelativo?: string;
   @Column({
     name: 'fecha_creacion',
     type: 'datetime',

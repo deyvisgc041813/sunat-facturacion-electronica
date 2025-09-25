@@ -5,7 +5,7 @@
   "compilerOptions": {
    "assets": [
       {
-        "include": "**/*.wsdl",
+        "include": "resources/**/*",
         "outDir": "dist"
       }
     ],

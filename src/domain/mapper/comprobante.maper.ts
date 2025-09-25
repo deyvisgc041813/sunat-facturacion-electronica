@@ -25,6 +25,7 @@ export class ComprobanteMapper {
       orm.fechaUpdate,
       orm.estado,
       orm.comunicadoSunat ?? EstadoComunicacionEnvioSunat.NO_ENVIADO,
+      orm.serieCorrelativo ?? "",
       empresa,
       cliente,
       serie,

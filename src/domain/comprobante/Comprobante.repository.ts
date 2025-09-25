@@ -112,4 +112,8 @@ export interface ConprobanteRepository {
     fechaResumen: string,
     estados: EstadoEnumComprobante[],
   ): Promise<ComprobanteResponseDto[]>;
+  findByEmpresaAndSerieCorrelativos(
+    empresaId: number,
+    serieCorrelativos: string[],
+  ): Promise<ComprobanteResponseDto[]>
 }

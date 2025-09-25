@@ -1,12 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/resumen/resumen.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
+import { CryptoUtil } from 'src/util/CryptoUtil';
 import {
   codigoRespuestaSunatMap,
   EstadoComunicacionEnvioSunat,
@@ -26,6 +29,7 @@ export class GetStatusResumenUseCase {
     private readonly resumenRepo: ResumenRepositoryImpl,
     private readonly sunatLogRepo: SunatLogRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
+    private readonly empresaRepo: EmpresaRepository
   ) {}
 
   async execute(empresaId: number, ticket: string): Promise<IResponseSunat> {
@@ -39,8 +43,19 @@ export class GetStatusResumenUseCase {
           `No existe un resumen registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
         );
       }
+      const empresa = (await this.empresaRepo.findById(
+        empresaId,
+        true,
+      )) as EmpresaInternaResponseDto;
+      if (!empresa) {
+        throw new BadRequestException(
+          'No se ha encontrado una empresa asociada al identificador obtenido del token de autenticación.',
+        );
+      }
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? ""
+      const claveSecundaria = CryptoUtil.decrypt(empresa.claveUsuarioSecundario ?? "");
       await this.validarEstadoFinalResumen(resumen);
-      const result = await this.sunatService.getStatus(ticket);
+      const result = await this.sunatService.getStatus(ticket, usuarioSecundario, claveSecundaria);
 
       // 2. Actualizar estado en la BD según respuesta
 
@@ -106,8 +121,8 @@ export class GetStatusResumenUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.codigoResSunat = JSON.parse(obj.response ?? '')?.code;
       obj.resumenId = resumendIdBd;
-      obj.empresaId = empresaId
-      obj.serie = serie
+      obj.empresaId = empresaId;
+      obj.serie = serie;
       obj.request = xmlFirmado;
       await this.sunatLogRepo.save(obj);
     }
