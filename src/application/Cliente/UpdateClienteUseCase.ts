@@ -9,8 +9,8 @@ import { validarDatosSegunTipoDocumento } from "src/util/Helpers";
 export class UpdateClienteUseCase {
   constructor(private readonly clienteRepo: ClienteRepository, private readonly catalogoRepo: CatalogoRepositoryImpl) {}
 
-  async execute(data: UpdateClienteDto, clienteId: number): Promise<{status: boolean, message: string, data?: ClienteResponseDto}> {
-    const cliente = await this.clienteRepo.findById(clienteId);
+  async execute(data: UpdateClienteDto, clienteId: number, empresaId: number): Promise<{status: boolean, message: string, data?: ClienteResponseDto}> {
+    const cliente = await this.clienteRepo.findById(clienteId, empresaId);
     if (!cliente) throw new NotFoundException('Cliente no encontrado');
    // 1. Validar tipo de documento contra catálogo SUNAT
     const existCatalogo = await this.catalogoRepo.obtenerDetallePorCatalogo(TipoCatalogoEnum.DOCUMENTO_IDENTIDAD, cliente.tipoDocumento);
@@ -20,7 +20,6 @@ export class UpdateClienteUseCase {
       );
     }
     // 2. Validar que no haya otro cliente con el mismo documento en la misma empresa
-    const empresaId = cliente.empresa?.empresaId ?? 0
     const existe = await this.clienteRepo.findByDocumento(empresaId, cliente.numeroDocumento);
     if (existe && existe.clienteId !== clienteId) {
       throw new BadRequestException(`El cliente con documento ${cliente.numeroDocumento} ya está registrado para esta empresa`);

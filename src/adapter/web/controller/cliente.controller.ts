@@ -25,12 +25,14 @@ export class ClienteController {
   }
   @Get(":id")
   async findById(@Param("id", ParseIntPipe) id:number) {
+    const empresaId = 18
     const useCase = new FindByIdClienteUseCase(this.clienteRepo)
-    return useCase.execute(id);
+    return useCase.execute(id, empresaId);
   }
   @Put(":id")
   async update(@Param("id", ParseIntPipe) clienteId:number, @Body() body: UpdateClienteDto) {
     const useCase = new UpdateClienteUseCase(this.clienteRepo, this.catalogoRepository)
-    return useCase.execute(body, clienteId);
+    const empresaId = 18
+    return useCase.execute(body, clienteId, empresaId);
   }
 }

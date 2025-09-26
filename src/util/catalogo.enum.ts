@@ -102,6 +102,25 @@ export const TIPO_AFECTACION_GRAVADAS: number[] = [
   16, // Gravado - Retiro por entrega a trabajadores
   17, // Gravado - IVAP
 ];
+// 🔹 Operaciones Exoneradas
+export const TIPO_AFECTACION_EXONERADAS: number[] = [
+  20, // Exonerado - Onerosa,
+  21, // Exonerado - Transferencia gratuita
+];
+
+// 🔹 Operaciones Inafectas
+export const TIPO_AFECTACION_INAFECTAS: number[] = [
+  30, // Inafecto - Onerosa
+  31, // Inafecto – Retiro por Bonificación
+  32, // Inafecto - Retiro
+  33, // Inafecto – Retiro por Muestras Médicas
+  34, // Inafecto - Inafecto - Retiro por Convenio Colectivo
+  35, // Inafecto – Retiro por premio
+  36, // Inafecto - Retiro por publicidad
+  37, // Inafecto - Transferencia gratuita
+  40, // Inafecto - Exportación de Bienes o Servicios
+];
+
 export enum Catalogo53DescuentoGlobal {
   DESCUENTO_AFECTA_IGV = "00",
 }
@@ -122,24 +141,7 @@ export enum LegendCodeEnum {
   EXPORTACION_SERVICIOS = '2011', // Exportación de servicios - Decreto Legislativo 919
 }
 
-// 🔹 Operaciones Exoneradas
-export const TIPO_AFECTACION_EXONERADAS: number[] = [
-  20, // Exonerado - Onerosa,
-  21, // Exonerado - Transferencia gratuita
-];
 
-// 🔹 Operaciones Inafectas
-export const TIPO_AFECTACION_INAFECTAS: number[] = [
-  30, // Inafecto - Onerosa
-  31, // Inafecto – Retiro por Bonificación
-  32, // Inafecto - Retiro
-  33, // Inafecto – Retiro por Muestras Médicas
-  34, // Inafecto - Inafecto - Retiro por Convenio Colectivo
-  35, // Inafecto – Retiro por premio
-  36, // Inafecto - Retiro por publicidad
-  37, // Inafecto - Transferencia gratuita
-  40, // Inafecto - Exportación de Bienes o Servicios
-];
 
 // 🔹 Operaciones de Exportación
 export const TIPO_AFECTACION_EXPORTACION: number[] = [

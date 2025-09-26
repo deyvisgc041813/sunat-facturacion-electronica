@@ -42,7 +42,12 @@ export class EmpresaOrmEntity {
 
   @Column({ name: "estado", type: 'tinyint', default: 1 })
   estado: number;
-
+  @Column({ type: 'varchar', length: 255})
+  logo: string;
+  @Column({ type: 'varchar', length: 45})
+  email: string;
+  @Column({ type: 'varchar', length: 20})
+  telefono:string
   // Relaciones
   @OneToMany(() => ClienteOrmEntity, (cliente: ClienteOrmEntity) => cliente.empresa)
   clientes: ClienteOrmEntity[];

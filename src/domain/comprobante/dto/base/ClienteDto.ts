@@ -6,6 +6,7 @@ import {
   IsString,
   Length,
   Matches,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { AddressDto } from './AddressDto';
@@ -26,10 +27,25 @@ export class ClienteDto {
   })
   numDoc: string;
 
-@IsNotEmpty({ message: 'La razón social o el nombre del cliente es obligatoria' })
-@IsString({ message: 'La razón social o el nombre del cliente debe ser un texto' })
-@Length(2, 250, { message: 'La razón social o el nombre debe tener entre 2 y 250 caracteres' })
+  @IsNotEmpty({
+    message: 'La razón social o el nombre del cliente es obligatoria',
+  })
+  @IsString({
+    message: 'La razón social o el nombre del cliente debe ser un texto',
+  })
+  @Length(2, 250, {
+    message: 'La razón social o el nombre debe tener entre 2 y 250 caracteres',
+  })
   rznSocial: string;
+
+  @IsOptional()
+  @MaxLength(9, {
+    message: 'El teléfono no puede tener más de 9 dígitos',
+  })
+  @Matches(/^[0-9]*$/, {
+    message: 'El teléfono solo debe contener números',
+  })
+  telefono: string;
 
   @IsOptional() // en boleta puede faltar
   @ValidateNested()

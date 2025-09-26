@@ -38,6 +38,13 @@ export class ComprobanteOrmEntity {
     nullable: false,
   })
   fechaEmision: Date;
+    @Column({
+    name: 'fecha_vencimiento',
+    default: () => 'CURRENT_TIMESTAMP',
+    type: 'datetime',
+    nullable: false,
+  })
+  fechaVencimiento: Date;
 
   @Column({ name: 'moneda', type: 'varchar', length: 3, nullable: true })
   moneda?: string;
@@ -145,6 +152,7 @@ export class ComprobanteOrmEntity {
     nullable: false,
   })
   fechaAnulacion: Date | null;
+
 
   // Relación con Empresa
   @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.comprobantes, {

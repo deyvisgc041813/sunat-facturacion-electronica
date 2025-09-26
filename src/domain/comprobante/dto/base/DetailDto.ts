@@ -8,7 +8,10 @@ import {
   Length,
   IsIn,
 } from 'class-validator';
+import { IsAfectacionIgvValida } from 'src/common/validator/validate.porcentaje.igv';
+import { buildCatalogValidator, TIPO_AFECTACION_IGV_VALIDATOR,  } from 'src/common/validator/validator.generico';
 
+const AfectacionValidator = buildCatalogValidator(TIPO_AFECTACION_IGV_VALIDATOR);
 export class DetailDto {
   @IsString({ message: 'El código del producto debe ser un texto' })
   @IsNotEmpty({ message: 'El código del producto es obligatorio' })
@@ -20,7 +23,9 @@ export class DetailDto {
 
   @IsString({ message: 'La descripción debe ser un texto' })
   @IsNotEmpty({ message: 'La descripción es obligatoria' })
-  @Length(2, 250, { message: 'La descripción debe tener entre 2 y 250 caracteres' })
+  @Length(2, 250, {
+    message: 'La descripción debe tener entre 2 y 250 caracteres',
+  })
   descripcion: string;
 
   @IsNumber({}, { message: 'La cantidad debe ser un número' })
@@ -28,13 +33,11 @@ export class DetailDto {
   cantidad: number;
 
   @IsNumber({}, { message: 'El valor unitario debe ser numérico' })
-      @Min(0, {
-    message: 'El valor unitario no puede ser negativo',
-  })
+  @IsPositive({ message: 'El valor unitario debe ser mayor a 0' })
   mtoValorUnitario: number;
 
   @IsNumber({}, { message: 'El valor de venta debe ser numérico' })
-    @Min(0, {
+  @Min(0, {
     message: 'El valor de venta no puede ser negativo',
   })
   mtoValorVenta: number;
@@ -49,9 +52,10 @@ export class DetailDto {
   @Min(0, {
     message: 'El porcentaje de IGV no puede ser negativo',
   })
-  @IsIn([0, 10, 18], { message: 'El porcentaje de IGV debe ser 0, 10 o 18 según SUNAT' })
+  @IsIn([0, 10, 18], {
+    message: 'El porcentaje de IGV debe ser 0, 10 o 18 según SUNAT',
+  })
   porcentajeIgv: number;
-
   @IsNumber({}, { message: 'El IGV debe ser numérico' })
   @Min(0, {
     message: 'El IGV no puede ser negativo',
@@ -61,6 +65,11 @@ export class DetailDto {
   @IsNumber({}, { message: 'El tipo de afectación de IGV debe ser numérico' })
   @Min(0, {
     message: 'El tipo de afectación de IGV no puede ser negativo',
+  })
+
+  @IsNumber({}, { message: 'El tipo de afectación de IGV debe ser numérico' })
+  @IsIn(AfectacionValidator.values, {
+    message: AfectacionValidator.message,
   })
   tipAfeIgv: number;
 

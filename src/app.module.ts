@@ -14,6 +14,7 @@ import { ErrorLogModule } from './error-log.module';
 import { TasaTributoModule } from './tasa-tributo.module';
 import { ResumenBoletasModule } from './resumen-boletas.module';
 import { ComunicacionBajaModule } from './comunicacion-baja.module';
+import { ExportarModule } from './exportar.module';
 
 @Module({
   imports: [
@@ -38,7 +39,8 @@ import { ComunicacionBajaModule } from './comunicacion-baja.module';
    ErrorLogModule,
    TasaTributoModule,
    ResumenBoletasModule,
-   ComunicacionBajaModule
+   ComunicacionBajaModule,
+   ExportarModule
   ],
   
   controllers: [AppController],

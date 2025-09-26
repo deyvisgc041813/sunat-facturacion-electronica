@@ -58,6 +58,7 @@ export abstract class CreateInvoiceBaseUseCase {
 
       // 2. Recalcular montos
       const invoice = NotaDebitoHelper.recalcularMontos(data);
+      console.log(invoice)
 
       // 3. Registrar comprobante en BD
       const comprobante = await this.registrarComprobante(
@@ -182,7 +183,6 @@ export abstract class CreateInvoiceBaseUseCase {
     const motivo = responseSunat?.observaciones
       ? JSON.stringify(responseSunat.observaciones)
       : null;
-
     const objectUpdate = setobjectUpdateComprobante(
       tipoComprobante,
       xmlFirmado,

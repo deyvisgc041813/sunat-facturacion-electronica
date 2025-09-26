@@ -235,8 +235,8 @@ export function setobjectUpdateComprobante(
   ];
   if (tiposConCdrYHash.includes(tipoComprobante)) {
     objectUpdate.cdr = cdr;
-    objectUpdate.hashCpe = hashCpe;
   }
+  objectUpdate.hashCpe = hashCpe;
   return objectUpdate;
 }
 

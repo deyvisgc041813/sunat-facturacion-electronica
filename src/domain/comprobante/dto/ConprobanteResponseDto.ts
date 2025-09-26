@@ -7,6 +7,7 @@ export class ComprobanteResponseDto {
     public comprobanteId: number,
     public numeroComprobante: number, // correlativo
     public fechaEmision: Date,
+    public fechaVencimiento: Date,
     public moneda: string,
     
     // Totales

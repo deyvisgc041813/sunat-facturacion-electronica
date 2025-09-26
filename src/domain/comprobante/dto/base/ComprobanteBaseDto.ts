@@ -1,12 +1,13 @@
 import {
   IsString,
   IsNotEmpty,
-  Length,
   IsNumber,
   IsISO8601,
   Min,
   IsIn,
+  IsOptional,
 } from 'class-validator';
+import { IsSerieValida } from 'src/common/validator/validate.series';
 
 export class ComprobanteBaseDto {
   @IsString({ message: 'La versión UBL debe ser un texto' })
@@ -23,15 +24,16 @@ export class ComprobanteBaseDto {
 
   @IsString({ message: 'El tipo comprobante debe ser un texto' })
   @IsNotEmpty({ message: 'El tipo comprobante es obligatorio' })
+  @IsIn(['01', '03', '07', '08'], {
+    message: 'Tipo comprobante no válido (Catálogo 01)',
+  })
   tipoComprobante: string;
 
   @IsString({ message: 'La serie debe ser un texto' })
   @IsNotEmpty({ message: 'La serie es obligatoria' })
+  @IsSerieValida('tipoComprobante')
   serie: string;
 
-  @IsNumber({}, { message: 'El correlativo debe ser numérico' })
-  @IsNotEmpty({ message: 'El correlativo es obligatorio' })
-  correlativo: number;
 
   @IsISO8601(
     {},
@@ -85,4 +87,7 @@ export class ComprobanteBaseDto {
     message: 'El monto de importe de venta no puede ser negativo',
   })
   mtoImpVenta: number;
+  @IsOptional()
+  @IsNumber({}, { message: 'El correlativo debe ser numérico' })
+  correlativo: number;
 }

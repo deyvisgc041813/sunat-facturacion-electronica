@@ -15,6 +15,7 @@ export class ComprobanteMapper {
       orm.comprobanteId,
       orm.numeroComprobante,
       orm.fechaEmision,
+      orm.fechaVencimiento,
       orm.moneda ?? '',
       orm.totalGravado ?? 0,
       orm.totalExonerado ?? 0,

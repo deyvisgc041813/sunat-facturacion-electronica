@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { 
+      font-family: 'Roboto', Arial, sans-serif; 
+      font-size: 11px; 
+      margin: 40px; 
+    }
+    .header { display: flex; justify-content: space-between; align-items: center; }
+    .header-left { width: 65%; display: flex; align-items: center; }
+    .header-left img { width: 110px; margin-right: 15px; } /* logo más grande */
+    .header-left .info b { font-size: 17px;   text-transform: uppercase; }
+    .header-left .info {
+      font-size: 12px;
+      line-height: 1.1;   /* 👈 junta las líneas (menos espacio arriba-abajo) */
+    }
+
+    .header-left .info p {
+      margin: 2px 0;      /* 👈 antes los <p> tienen ~10px, aquí casi nada */
+    }
+    .header-right {
+      width: 30%;
+      border: 1px solid black;
+      padding: 10px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: bold;
+    }
+    .header-right p { margin: 5px 0; }
+    .header-right .serie { font-size: 16px; font-weight: bold; } /* 👈 más visible */
+    
+    .section { margin-top: 10px; font-size: 11px; }
+
+    /* --- TABLA PRODUCTOS --- */
+    table.items {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      font-size: 11px;
+    }
+    table.items thead tr {
+      border-top: 1px solid black;
+      border-bottom: 1px solid black;
+      background: #f2f2f2; /* sombreado leve */
+    }
+    table.items th {
+      font-weight: bold;
+      text-align: left;
+      padding: 5px;
+      border: none;
+      font-size: 12px; /* cabeceras más visibles */
+    }
+    table.items td {
+      padding: 5px;
+      border: none;
+    }
+    table.items tbody tr:last-child {
+      border-bottom: 1px solid black;
+    }
+
+    /* --- SECCIONES --- */
+    .summary { 
+      margin-top: 10px; 
+      text-align: right; 
+      font-size: 12px; 
+    }
+    .summary p { margin: 3px 0; font-weight: bold; } /* 👈 totales más fuertes */
+
+    .qr { margin-top: 10px; text-align: right; }
+    .qr p { font-size: 9px; }
+    .condiciones { margin-top: 15px; font-size: 13px; }
+    .footer { font-size: 11px; text-align: center; margin-top: 50%; font-weight: bolder; }
+    .footer a { color: black; font-weight: bolder; text-decoration: none; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <img src="{{logo}}" alt="logo"/>
+      <div class="info">
+        <p><b>{{empresa}}</b></p>
+        <p>RUC: {{rucEmpresa}}</p>
+        <p>{{direccionEmpresa}}</p>
+        <p>Central telefónica: {{telefonoEmpresa}}</p>
+        <p>Email: {{emailEmpresa}}</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <p>{{titleComprobante}}</p>
+      <p>ELECTRÓNICA</p>
+      <p class="serie">{{serie}}</p>
+    </div>
+  </div>
+
+  <!-- Datos cliente -->
+  <div class="section">
+    <p><b>FECHA DE EMISIÓN:</b> {{fechaEmision}}</p>
+    <p><b>FECHA DE VENCIMIENTO:</b> {{fechaVencimiento}}</p>
+    <p><b>CLIENTE:</b> {{cliente}}</p>
+    <p><b>{{tipoDocLabel}}:</b> {{numeroDocumento}}</p>
+    <p><b>DIRECCIÓN:</b> {{direccionCliente}}</p>
+    {{#if telefonoCliente}}
+      <p><b>TELÉFONO:</b> {{telefonoCliente}}</p>
+    {{/if}}
+  </div>
+
+  <!-- Productos -->
+  <table class="items">
+    <thead>
+      <tr>
+        <th>CANT.</th><th>UNIDAD</th><th>DESCRIPCIÓN</th>
+        <th>P.UNIT</th><th>DTO.</th><th>TOTAL</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each items}}
+      <tr>
+        <td>{{cantidad}}</td>
+        <td>{{unidad}}</td>
+        <td>{{descripcion}}</td>
+        <td>{{pUnit}}</td>
+        <td>{{descuento}}</td>
+        <td>{{total}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+
+  <!-- Totales -->
+  <div class="summary">
+    {{#gt opGravadas 0}}
+      <p>OP. GRAVADAS: S/ {{opGravadas}}</p>
+    {{/gt}}
+    {{#gt opExoneradas 0}}
+      <p>OP. EXONERADAS: S/ {{opExoneradas}}</p>
+    {{/gt}}
+    {{#gt opInafectas 0}}
+      <p>OP. INAFECTAS: S/ {{opInafectas}}</p>
+    {{/gt}}
+
+    <p>IGV: S/ {{igv}}</p>
+    <p style="font-size: 12px;">TOTAL A PAGAR: S/ {{total}}</p> <!-- 👈 más grande -->
+  </div>
+
+  <!-- Monto en letras -->
+  <p><b>SON:</b> {{montoLetras}}</p>
+
+  <!-- QR -->
+  <div class="qr">
+    <img src="{{qrPath}}" width="120" />
+    <p>Código Hash: {{hash}}</p>
+  </div>
+
+  <!-- Condición de pago -->
+  <div class="condiciones">
+    <p><b>CONDICIÓN DE PAGO:</b> {{condicionPago}}</p>
+    <p><b>PAGOS:</b></p>
+    <p>• {{medioPago}} - S/ {{total}}</p>
+    <p><b>Vendedor:</b> {{vendedor}}</p>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <u h></u>
+    <p ></p>
+    <a href="{{urlConsulta}}" target="_blank">Para consultar el comprobante ingresar a {{urlConsulta}}</a>
+
+  </div>
+</body>
+</html>

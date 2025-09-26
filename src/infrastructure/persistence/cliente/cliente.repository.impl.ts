@@ -34,13 +34,13 @@ export class ClienteRepositoryImpl implements ClienteRepository {
     return result.map((c) => ClienteMapper.toDomain(c));
   }
 
-  async findById(id: number): Promise<ClienteResponseDto | null> {
+  async findById(empresaId: number, clienteId: number): Promise<ClienteResponseDto | null> {
     const cliente = await this.repo.findOne({
-      where: { clienteId: id },
+      where: { clienteId: clienteId, empresa: {empresaId} },
       relations: ['empresa'],
     });
     if (!cliente) {
-      throw new NotFoundException(`Cliente con id ${id} no encontrado`);
+      throw new NotFoundException(`Cliente con id ${clienteId} no encontrado`);
     }
     return ClienteMapper.toDomain(cliente)
   }
