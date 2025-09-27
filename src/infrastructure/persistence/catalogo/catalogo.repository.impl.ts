@@ -1,28 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CatalogoDetalleOrmEnity } from './CatalogoDetalleOrmEnity';
+import { CatalogoDetalleMapper } from 'src/domain/mapper/CatalogoDetalleMapper';
+import { ICatalogoRepository } from 'src/domain/catalogo/interface/catalogo.repository';
+import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
+import { CatalogoTipoOrmEnity } from './CatalogoTipoOrmEnity';
+import { CatalogoMapper } from 'src/domain/mapper/CatalogoMapper';
 @Injectable()
-export class CatalogoRepositoryImpl {
+export class CatalogoRepositoryImpl implements ICatalogoRepository {
   constructor(
+    @InjectRepository(CatalogoTipoOrmEnity)
+    private readonly catalogoRepo: Repository<CatalogoTipoOrmEnity>,
     @InjectRepository(CatalogoDetalleOrmEnity)
-    private readonly detalleRepo: Repository<CatalogoDetalleOrmEnity>
+    private readonly detalleRepo: Repository<CatalogoDetalleOrmEnity>,
   ) {}
+  save(
+    empresa: any,
+  ): Promise<{ status: boolean; message: string; data?: any }> {
+    throw new Error('Method not implemented.');
+  }
 
-  // async obtenerCatalogoPorTipo(codigoCatalogo: string): Promise<CatalogoTipoOrmEnity| null> {
-  //   const tipo = await this.tipoRepo.findOne({ where: { codigoCatalogo } });
-  //   if (!tipo) return null;
-  //   return tipo;
-  // }
-async obtenerDetallePorCatalogo(codigoCatalogo: string, codigoDetalle: string) {
-  return this.detalleRepo.findOne({
-    where: {
-      codigo: codigoDetalle, // campo del detalle
-      catalogo: { codigoCatalogo }, // nested relation hacia CatalogoTipo
-    },
-    relations: ['catalogo'], // para traer el join
-  });
-}
+  async obtenerDetallePorCatalogo(
+    codigoCatalogo: string,
+    codigoDetalle: string,
+  ): Promise<CatalogoDetalleMapper | null> {
+    const detalle = await this.detalleRepo.findOne({
+      where: {
+        codigo: codigoDetalle,
+        catalogo: { codigoCatalogo },
+      },
+      relations: ['catalogo'],
+    });
 
+    if (!detalle) return null;
 
+    return CatalogoDetalleMapper.toDomain(detalle);
+  }
+
+  async obtenertipoCatalogo(
+    codCatalogos: string[],
+  ): Promise<ResponseCatalogoTipoDTO[] | null> {
+    const catalogo = await this.catalogoRepo.find({
+      where: {
+        codigoCatalogo: In(codCatalogos),
+      },
+      relations: ['detalles'], // para traer el join
+    });
+
+    if (!catalogo) return null;
+    return catalogo.map((catalogo) => CatalogoMapper.toDomain(catalogo));
+  }
 }

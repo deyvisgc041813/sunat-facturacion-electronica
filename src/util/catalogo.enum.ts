@@ -2,10 +2,17 @@ export enum TipoCatalogoEnum {
   TIPO_COMPROBANTE = '01',
   MONEDA = '02',
   UNIDAD_MEDIDA = '03',
+  TIPO_TRIBUTOS = '05',
   DOCUMENTO_IDENTIDAD = '06',
-  TIPO_NOTA_CREDITO = '07',
-  TIPO_NOTA_DEBITO = '08',
+  TIPO_AFECTACION = '07',
+  MOTIVO_NOTA_CREDITO = '09',
+  MOTIVO_NOTA_DEBITO = '10',
+  TIPO_OPERACION = '17',
+  TIPO_OPERACION_GUIA_REMISION = '51',
+  LEYENDAS = '52'
 }
+
+
 
 export enum TipoComprobanteEnum {
   FACTURA = '01',

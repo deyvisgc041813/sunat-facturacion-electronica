@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { TributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.repository';
+import { In, Repository } from 'typeorm';
+import { ITributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.repository';
 import { CreateTributoTasaDto } from 'src/domain/tributo-tasa/dto/CreateTributoTasaDto';
 import { TributoTasaResponseDto } from 'src/domain/tributo-tasa/dto/TributoTasaResponseDto';
 import { TributoTasaOrmEntity } from './TributoTasaOrmEntity';
 import { TributoTasaMapper } from 'src/domain/mapper/TributoTasaMapper';
 
 @Injectable()
-export class TributoTasaRepositoryImpl  implements TributoTasaRepository {
+export class TributoTasaRepositoryImpl  implements ITributoTasaRepository {
   constructor(
     @InjectRepository(TributoTasaOrmEntity)
     private readonly repo: Repository<TributoTasaOrmEntity>
@@ -26,7 +26,14 @@ export class TributoTasaRepositoryImpl  implements TributoTasaRepository {
     });
     return entity ? TributoTasaMapper.toDomain(entity) : null;
   }
-
+  async findByCodigosSunat( codigosSunat: string[] ): Promise<TributoTasaResponseDto[] | null> {
+    const entity = await this.repo.find({
+      where: {
+        codigoSunat: In(codigosSunat)
+      },
+    });
+    return entity ? entity.map(tasa => TributoTasaMapper.toDomain(tasa)) : null;
+  }
   async save(
     tasa: CreateTributoTasaDto,
   ): Promise<{ status: boolean; message: string; data?: TributoTasaResponseDto }> {

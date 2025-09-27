@@ -4,7 +4,7 @@ import { CatalogoDetalleOrmEnity } from './CatalogoDetalleOrmEnity';
 @Entity('catalogo_tipo')
 export class CatalogoTipoOrmEnity {
   @PrimaryGeneratedColumn({ name: 'catalogo_tipo_id' })
-  id: number;
+  catalogoTipoId: number;
 
   @Column({ name: 'codigo_catalogo', type: 'varchar', length: 5, unique: true })
   codigoCatalogo: string;

@@ -10,6 +10,7 @@ import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException } from '@nestjs/common';
 import {
+  MAP_TRIBUTOS,
   TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
@@ -22,9 +23,10 @@ import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
-import { NotaDebitoHelper } from 'src/util/comprobante-helpers';
-import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
+import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
+import { ICatalogoRepository } from 'src/domain/catalogo/interface/catalogo.repository';
+import { ITributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.repository';
 
 export abstract class CreateInvoiceBaseUseCase {
   constructor(
@@ -34,9 +36,10 @@ export abstract class CreateInvoiceBaseUseCase {
     protected readonly empresaRepo: EmpresaRepositoryImpl,
     protected readonly errorLogRepo: ErrorLogRepositoryImpl,
     protected readonly useCreateComprobanteCase: CreateComprobanteUseCase,
-    protected readonly catalogoRepo: CatalogoRepositoryImpl,
+    protected readonly catalogoRepo: ICatalogoRepository,
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
+    protected readonly tributoRepo: ITributoTasaRepository
   ) {}
 
   protected abstract buildXml(data: CreateInvoiceDto): string;
@@ -53,12 +56,26 @@ export abstract class CreateInvoiceBaseUseCase {
     };
 
     try {
+      const tiposCatalogos = [TipoCatalogoEnum.UNIDAD_MEDIDA, TipoCatalogoEnum.TIPO_AFECTACION,]
+      const tasasTributos = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.ICBPER.id]
+      const catologo =  (await this.catalogoRepo.obtenertipoCatalogo(tiposCatalogos)) ?? [];
+      const tasas = await this.tributoRepo.findByCodigosSunat(tasasTributos) ?? [] 
       // 1. Validar item de la factura
-      NotaDebitoHelper.validarDetallesCliente(data);
-
+      ComprobantesHelper.validarDetallesCliente(data);
+      const errores = ComprobantesHelper.validarDetalleInvoice(
+        data.details,
+        catologo,
+        tasas
+      );
+      if (errores.length > 0) {
+        throw new BadRequestException({
+          statusCode: 400,
+          message: 'Error de validación en los detalles del comprobante',
+          errors: errores,
+        });
+      }
       // 2. Recalcular montos
-      const invoice = NotaDebitoHelper.recalcularMontos(data);
-      console.log(invoice)
+      const invoice = ComprobantesHelper.recalcularMontos(data);
 
       // 3. Registrar comprobante en BD
       const comprobante = await this.registrarComprobante(
@@ -75,8 +92,10 @@ export abstract class CreateInvoiceBaseUseCase {
         empresa.claveCertificado,
       );
       contextoError.xmlFirmado = xmlFirmado;
-      const usuarioSecundario = empresa?.usuarioSolSecundario ?? ""
-      const claveSecundaria = CryptoUtil.decrypt(empresa.claveSolSecundario ?? "");
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(
+        empresa.claveSolSecundario ?? '',
+      );
       // 5. Enviar a SUNAT
       const responseSunat = await this.enviarASunat(
         xmlFirmado,
@@ -84,10 +103,9 @@ export abstract class CreateInvoiceBaseUseCase {
         fileName,
         zipBuffer,
         usuarioSecundario,
-        claveSecundaria
+        claveSecundaria,
       );
       responseSunat.xmlFirmado = xmlFirmado;
-
       // 6. Actualizar comprobante con CDR, Hash y estado
       await this.actualizarComprobante(
         contextoError.comprobanteId,
@@ -221,7 +239,9 @@ export abstract class CreateInvoiceBaseUseCase {
       await this.sunatLogRepo.save(obj);
       responseSunat = {
         mensaje: obj.response || 'Error SUNAT',
-        estadoSunat: (obj.estado as EstadoEnumComprobante) ||  EstadoEnumComprobante.RECHAZADO,
+        estadoSunat:
+          (obj.estado as EstadoEnumComprobante) ||
+          EstadoEnumComprobante.RECHAZADO,
         status: false,
         observaciones: [obj.response ?? ''],
         cdr: null,
@@ -256,11 +276,16 @@ export abstract class CreateInvoiceBaseUseCase {
     fileName: string,
     zipBuffer: Buffer,
     usuarioSolSecundario: string,
-    claveSolSecundario: string
+    claveSolSecundario: string,
   ): Promise<IResponseSunat> {
     switch (tipoComprobante) {
       case TipoComprobanteEnum.FACTURA:
-      return await this.sunatService.sendBill(`${fileName}.zip`, zipBuffer, usuarioSolSecundario, claveSolSecundario);
+        return await this.sunatService.sendBill(
+          `${fileName}.zip`,
+          zipBuffer,
+          usuarioSolSecundario,
+          claveSolSecundario,
+        );
 
       case TipoComprobanteEnum.BOLETA:
         return {

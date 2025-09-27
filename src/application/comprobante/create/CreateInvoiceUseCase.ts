@@ -11,6 +11,8 @@ import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
 import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
+import { ITributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.repository';
+import { TributoTasaRepositoryImpl } from 'src/infrastructure/persistence/tasa-tributo/tasa-tributo.repository.impl';
 @Injectable()
 export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
   constructor(
@@ -23,9 +25,10 @@ export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
     catalogoRepo: CatalogoRepositoryImpl,
     useUpdateCaseComprobante: UpdateComprobanteUseCase,
     sunatLogRepo: SunatLogRepositoryImpl,
+    tributoRepo: TributoTasaRepositoryImpl
     
   ) {
-    super(xmlInvoiceBuilder, firmaService, sunatService, empresaRepo, errorLogRepo, useCreateCaseComprobante, catalogoRepo, useUpdateCaseComprobante, sunatLogRepo);
+    super(xmlInvoiceBuilder, firmaService, sunatService, empresaRepo, errorLogRepo, useCreateCaseComprobante, catalogoRepo, useUpdateCaseComprobante, sunatLogRepo, tributoRepo);
   }
   protected buildXml(data: CreateInvoiceDto): string {
     return this.xmlInvoiceBuilder.buildXml(data);

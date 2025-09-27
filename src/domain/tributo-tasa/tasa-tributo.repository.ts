@@ -1,7 +1,7 @@
 import { TributoTasaResponseDto } from './dto/TributoTasaResponseDto';
 import { CreateTributoTasaDto } from './dto/CreateTributoTasaDto';
 
-export interface TributoTasaRepository {
+export interface ITributoTasaRepository {
   /**
    * Crea un nuevo comprobante en estado PENDIENTE.
    */
@@ -14,4 +14,7 @@ export interface TributoTasaRepository {
   findByCodigoSunat(
     codigoSunat: string
   ): Promise<TributoTasaResponseDto | null>;
+  findByCodigosSunat(
+    codigosSunat: string[]
+  ): Promise<TributoTasaResponseDto[] | null>
 }

@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
-import { SummaryDocumentDto } from 'src/domain/resumen/dto/SummaryDocumentDto';
 import {
   MAP_TIPO_AFECTACION_TRIBUTO,
   MAP_TRIBUTOS,
@@ -245,7 +244,7 @@ export class XmlBuilderInvoiceService {
         if (!totalesPorTributo[key]) {
           totalesPorTributo[key] = { taxable: 0, tax: 0, info: tributoICBPER };
         }
-        totalesPorTributo[key].tax += item.icbper; // ✅ usar total directo
+        totalesPorTributo[key].tax += item.icbper; // usar total directo
       }
     }
   }

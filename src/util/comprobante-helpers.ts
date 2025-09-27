@@ -2,12 +2,21 @@ import { BadRequestException } from '@nestjs/common';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { generateLegends } from './Helpers';
 import {
+  MAP_TRIBUTOS,
   TIPO_AFECTACION_EXONERADAS,
   TIPO_AFECTACION_GRAVADAS,
   TIPO_AFECTACION_INAFECTAS,
+  TipoCatalogoEnum,
 } from './catalogo.enum';
-
-export class NotaDebitoHelper {
+import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
+import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
+import { TributoTasaResponseDto } from 'src/domain/tributo-tasa/dto/TributoTasaResponseDto';
+interface ValidationError {
+  index: number; // índice del detalle
+  field: string; // campo validado
+  message: string; // descripción del error
+}
+export class ComprobantesHelper {
   static recalcularMontos(data: CreateInvoiceDto): CreateInvoiceDto {
     let totalGravadas = 0;
     let totalExoneradas = 0;
@@ -98,5 +107,132 @@ export class NotaDebitoHelper {
   private static round(num: number, places: number = 2): number {
     const factor = 10 ** places;
     return Math.round((num + Number.EPSILON) * factor) / factor;
+  }
+  static validarDetalleInvoice(
+    details: DetailDto[],
+    catalogos: ResponseCatalogoTipoDTO[],
+    tasasVigentes: TributoTasaResponseDto[],
+  ): ValidationError[] {
+    const errores: ValidationError[] = [];
+    // buscamos el catálogo de unidades de medida (catalogo_tipo_id = 3)
+
+    const catalogoUnidades = catalogos.filter(
+      (c) => c.codigoCatalogo === TipoCatalogoEnum.UNIDAD_MEDIDA,
+    );
+    const catalogoTipoAfectacion = catalogos.filter(
+      (c) => c.codigoCatalogo === TipoCatalogoEnum.TIPO_AFECTACION,
+    );
+    // Convertirlos en una lista plana de códigos permitidos
+    const codigosUnidades = catalogoUnidades.flatMap((c) =>
+      c.catalogoDetalle.map((d) => d.codigo),
+    );
+    const afectacionGravada = catalogoTipoAfectacion
+      .flatMap((c) => c.catalogoDetalle) // sacar todos los detalles
+      .filter((d) => d.tipoAfectacion?.toUpperCase() === 'GRAVADA') // quedarnos solo con GRAVADA
+      .map((d) => parseInt(d.codigo)); // sacar solo los códigos
+    const afectacionExoneradas = catalogoTipoAfectacion
+      .flatMap((c) => c.catalogoDetalle) // sacar todos los detalles
+      .filter((d) => d.tipoAfectacion?.toUpperCase() === 'EXONERADA') // quedarnos solo con EXONERADA
+      .map((d) => parseInt(d.codigo)); // sacar solo los códigos
+    const afectacionInafectas = catalogoTipoAfectacion
+      .flatMap((c) => c.catalogoDetalle) // sacar todos los detalles
+      .filter((d) => d.tipoAfectacion?.toUpperCase() === 'INAFECTA') // quedarnos solo con INAFECTA
+      .map((d) => parseInt(d.codigo)); // sacar solo los códigos
+    const tasaIgv = tasasVigentes.find(
+      (ta) => ta.codigoSunat === MAP_TRIBUTOS.IGV.id,
+    );
+    details.forEach((item, index) => {
+      const row = index + 1;
+      // 1. Validar unidad de medida
+      if (!codigosUnidades.includes(item.unidad)) {
+        errores.push({
+          index: row,
+          field: 'Unidad',
+          message: `La unidad '${item.unidad}' no existe en el catálogo.`,
+        });
+      }
+
+      // 2. Validar cantidad > 0
+      if (item.cantidad <= 0) {
+        errores.push({
+          index: row,
+          field: 'Cantidad',
+          message: 'La cantidad debe ser mayor a 0.',
+        });
+      }
+
+      // 3. Validar afectación IGV
+      //    tipAfeIgv -> 10 (gravada), 20 (exonerada), 30 (inafecta), etc.
+      if (afectacionGravada.includes(item.tipAfeIgv)) {
+        // Gravada
+        if (item.porcentajeIgv <= 0) {
+          errores.push({
+            index: row,
+            field: 'porcentajeIgv',
+            message: `La afectación '${item.tipAfeIgv}' es gravada, el porcentaje IGV debe ser > 0.`,
+          });
+        }
+        // validar impusto igv
+        if (Number(item.porcentajeIgv) !== Number(tasaIgv?.tasa)) {
+          errores.push({
+            index: row,
+            field: 'porcentajeIgv',
+            message: `El porcentaje IGV (${item.porcentajeIgv}) no coincide con el catálogo (${tasaIgv?.tasa}).`,
+          });
+        }
+      } else if (
+        afectacionExoneradas.includes(item.tipAfeIgv) ||
+        afectacionInafectas.includes(item.tipAfeIgv)
+      ) {
+        // Exonerada / Inafecta
+        if (item.porcentajeIgv !== 0) {
+          errores.push({
+            index: row,
+            field: 'porcentajeIgv',
+            message: `La afectación '${item.tipAfeIgv}' no debe tener IGV, el porcentaje debe ser 0.`,
+          });
+        }
+      }
+      // 4. Validar coherencia entre valor unitario y precio con IGV
+      const esperado = +(
+        item.mtoPrecioUnitario > 0
+          ? item.mtoPrecioUnitario / (1 + item.porcentajeIgv / 100) // si viene precio, se puede verificar
+          : item.mtoValorUnitario
+      ) // si viene 0, confiar en valor unitario
+        .toFixed(2);
+
+      if (
+        item.mtoPrecioUnitario > 0 &&
+        Math.abs(item.mtoValorUnitario - esperado) > 0.01
+      ) {
+        errores.push({
+          index: row,
+          field: 'mtoValorUnitario',
+          message: `El valor unitario (${item.mtoValorUnitario}) no coincide con el precio unitario (${item.mtoPrecioUnitario}) sin IGV (${esperado}).`,
+        });
+      }
+      // 6. Validar bolsas plásticas (ICBP)
+      if (item.icbper) {
+        const tasaIcbperActual = tasasVigentes.find(
+          (ta) => ta.codigoSunat === MAP_TRIBUTOS.ICBPER.id,
+        );
+        if (Number(item.icbper) !== Number(tasaIcbperActual?.tasa)) {
+          errores.push({
+            index: row,
+            field: 'icbper',
+            message: `La tasa ICBPER enviada (${item.icbper}) no coincide con la vigente (${tasaIcbperActual?.tasa}).`,
+          });
+        }
+        if (!item.cantidad || item.cantidad <= 0) {
+          errores.push({
+            index: row,
+            field: 'cantidad',
+            message: 'La cantidad de bolsas plásticas debe ser mayor a 0.',
+          });
+        }
+      }
+    });
+
+    return errores;
   }
 }
