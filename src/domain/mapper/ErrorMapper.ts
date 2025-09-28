@@ -6,85 +6,10 @@ import { QueryFailedError } from 'typeorm';
 import { buildDuplicateMessage } from '../exceptions/http-error.filter';
 
 export class ErrorMapper {
-  // static mapError(
-  //   error: any,
-  //   data: {
-  //     empresaId: number;
-  //     tipo: string;
-  //     serie: string;
-  //     correlativo?: number;
-  //   },
-  // ) {
-  //   // Caso 2: Error lanzado como JSON.stringify({ code, message })
-  //   let origen: OrigenErrorEnum;
-  //   let codigoError: string;
-  //   let mensajeError: string;
-  //   let detalleError: any;
-  //   // Caso 1: Fault XML parseado
-  //   const fault = error?.root?.Envelope?.Body?.Fault;
-  //   // Caso 2: Error lanzado como JSON.stringify({ code, message })
-  //   const sunatJson = this.parseJsonIfPossible(error.message);
-  //   if (fault || sunatJson?.code || error?.response?.origen === OrigenErrorEnum.SUNAT) {
-  //     // 🔹 Error SUNAT
-  //     origen = OrigenErrorEnum.SUNAT;
-  //     codigoError = fault?.faultcode || sunatJson?.code || error?.response?.code  || 'ERR_SUNAT';
-  //     mensajeError = fault?.faultstring || sunatJson?.message || 'Error SUNAT';
-  //     detalleError = fault || sunatJson || error?.response?.message;
-  //     const create: CreateSunatLogDto = {
-  //       comprobanteId: 0,
-  //       estado: this.mapSunatFaultToEstado(mensajeError),
-  //       response: JSON.stringify(detalleError),
-  //       codigoResSunat: codigoError
-  //     };
-  //     return {
-  //       tipoError: origen,
-  //       create,
-  //     };
-  //   } else {
-  //     if (error instanceof QueryFailedError) {
-  //       // 🔹 Error de BD
-  //       origen = OrigenErrorEnum.DB;
-  //       codigoError = (error as any).code;
-  //       mensajeError = error.message;
-  //       detalleError = error;
-  //     } else if (
-  //       error.code &&
-  //       ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET'].includes(
-  //         error.code,
-  //       )
-  //     ) {
-  //       // 🔹 Error de red
-  //       origen = OrigenErrorEnum.NETWORK;
-  //       codigoError = error.code;
-  //       mensajeError = 'Error de red al comunicarse con servicio externo';
-  //       detalleError = error;
-  //     } else {
-  //       // 🔹 Error interno del sistema
-  //       origen = OrigenErrorEnum.SYSTEM;
-  //       codigoError = error.code || 'ERR_SYSTEM';
-  //       mensajeError = error.message || 'Error interno inesperado';
-  //       detalleError = error;
-  //     }
-  //     const create = new CreateErrorLogDto();
-  //     ((create.empresaId = data.empresaId ?? 0),
-  //       (create.tipoComprobante = data.tipo));
-  //     create.serie = data.serie;
-  //     create.correlativo = String(data.correlativo);
-  //     create.origen = origen;
-  //     create.codigoError = codigoError;
-  //     create.mensajeError = mensajeError;
-  //     create.detalleError = JSON.stringify(detalleError);
-  //     create.estado = EstadoEnumComprobante.ERROR
-  //     return {
-  //       tipoError: origen,
-  //       create,
-  //     };
-  //   }
-  // }
   static mapError(
     error: any,
     data: {
-      empresaId: number;
+      sucursalId: number;
       tipo: string;
       serie: string;
       correlativo?: number;
@@ -95,7 +20,7 @@ export class ErrorMapper {
     let mensajeError = 'Error interno inesperado';
     let detalleError: any = error;
 
-    // 🔎 1. Caso: HttpException con response (ej. SUNAT)
+    // 1. Caso: HttpException con response (ej. SUNAT)
     if (error?.response?.origen === OrigenErrorEnum.SUNAT) {
       origen = OrigenErrorEnum.SUNAT;
       codigoError = error.response.code || 'ERR_SUNAT';
@@ -112,7 +37,7 @@ export class ErrorMapper {
       return { tipoError: origen, create };
     }
 
-    // 🔎 2. Caso: Fault XML (cuando aún no lo envuelves en HttpException)
+    // 2. Caso: Fault XML (cuando aún no lo envuelves en HttpException)
     const fault = error?.root?.Envelope?.Body?.Fault;
     const sunatJson = this.parseJsonIfPossible(error.message);
     if (fault || sunatJson?.code) {
@@ -131,7 +56,7 @@ export class ErrorMapper {
       return { tipoError: origen, create };
     }
 
-    // 🔎 3. Caso: error BD
+    // 3. Caso: error BD
     if (error instanceof QueryFailedError) {
       origen = OrigenErrorEnum.DB;
       codigoError = (error as any).code;
@@ -139,7 +64,7 @@ export class ErrorMapper {
       detalleError = error;
     }
 
-    // 🔎 4. Caso: error de red
+    // 4. Caso: error de red
     else if (
       error.code &&
       ['ECONNREFUSED', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET'].includes(
@@ -152,7 +77,7 @@ export class ErrorMapper {
       detalleError = error;
     }
 
-    // 🔎 5. Caso: error genérico
+    // 5. Caso: error genérico
     else {
       origen = OrigenErrorEnum.SYSTEM;
       codigoError = error.code || 'ERR_SYSTEM';
@@ -162,7 +87,7 @@ export class ErrorMapper {
 
     // 📌 Creación del log genérico
     const create = new CreateErrorLogDto();
-    create.empresaId = data.empresaId ?? 0;
+    create.sucursalId = data.sucursalId ?? 0;
     create.tipoComprobante = data.tipo;
     create.serie = data.serie;
     create.correlativo = String(data.correlativo);

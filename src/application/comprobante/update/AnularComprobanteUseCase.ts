@@ -14,20 +14,20 @@ export class AnularComprobanteUseCase {
   async execute(
     cancel: CancelInvoiceDto,
   ): Promise<{ status: boolean; message: string }> {
-    const empresaId = cancel.empresaId;
+    const surcursalId = cancel.sucursalId;
     const numCorrelativo = cancel.correlativo;
     const motivo = cancel.motivo ?? '';
     let serieId = cancel.serieId;
     if (serieId == 0) {
-      const rpa = await this.repoSerie.findByEmpresaAndTipCompAndSerie(
-        empresaId,
+      const rpa = await this.repoSerie.findBySucursalTipCompSerie(
+        surcursalId,
         cancel.tipoComprobante,
         cancel.serie,
       );
       serieId = rpa?.serieId ?? 0;
     }
     const status = await this.comprobanteRepo.updateComprobanteStatus(
-      empresaId,
+      surcursalId,
       serieId,
       numCorrelativo,
       motivo,

@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { ISummaryDocument } from 'src/domain/resumen/interface/sunat.summary.interface';
 import {
   formatDateForSunat,
-  generarTributosRC,
-  mapEstadoRC,
 } from 'src/util/Helpers';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
@@ -33,7 +30,6 @@ export class XmlBuilderComunicacionBajaService {
         'xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
       },
     );
-    // 👉 Bloque UBLExtensions (necesario para la firma digital SUNAT)
     // Bloque UBLExtensions (necesario para la firma digital SUNAT)
     XmlCommonBuilder.addUBLExtensions(root);
 

@@ -13,7 +13,7 @@ export class TributoTasaRepositoryImpl  implements ITributoTasaRepository {
     @InjectRepository(TributoTasaOrmEntity)
     private readonly repo: Repository<TributoTasaOrmEntity>
   ) {}
-  findAll(empresaId: number): Promise<TributoTasaResponseDto[]> {
+  findAll(tasaId: number): Promise<TributoTasaResponseDto[]> {
     throw new Error('Method not implemented.');
   }
   async findByCodigoSunat(

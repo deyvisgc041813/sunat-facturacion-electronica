@@ -5,7 +5,7 @@ import { ComprobanteResponseDto } from "src/domain/comprobante/dto/ConprobanteRe
 export class GetAllComprobantesUseCase {
   constructor(private readonly comprobante: ConprobanteRepository) {}
 
-  async execute(empresaId: number): Promise<ComprobanteResponseDto[]> {
-    return this.comprobante.findAll(empresaId);
+  async execute(sucursalId: number): Promise<ComprobanteResponseDto[]> {
+    return this.comprobante.findAll(sucursalId);
   }
 }

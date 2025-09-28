@@ -70,6 +70,8 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
       empresa.claveCertificado ?? '',
       empresa.usuarioSolSecundario ?? '',
       empresa.claveSolSecundario ?? '',
+      empresa.email,
+      empresa.telefono
     );
     return certificado;
   }

@@ -9,23 +9,32 @@ export enum TipoCatalogoEnum {
   MOTIVO_NOTA_DEBITO = '10',
   TIPO_OPERACION = '17',
   TIPO_OPERACION_GUIA_REMISION = '51',
-  LEYENDAS = '52'
+  LEYENDAS = '52',
 }
-
-
-
 export enum TipoComprobanteEnum {
   FACTURA = '01',
   BOLETA = '03',
   NOTA_CREDITO = '07',
   NOTA_DEBITO = '08',
-  RESUMEN_DIARIO = '20',        // uso interno
-  COMUNICACION_BAJA = '21',     // uso interno
+  RESUMEN_DIARIO = '20', // uso interno
+  COMUNICACION_BAJA = '21', // uso interno
+}
+export enum CodigoSunatTasasEnum {
+  IGV = '1000', // IGV Impuesto General a las Ventas
+  IMPUESTO_ARROZ_PILADO = '1016', // Impuesto a la Venta Arroz Pilado
+  ISC = '2000', // ISC Impuesto Selectivo al Consumo
+  IMP_BOLSA_PLASTICA = '7152', // Impuesto a la bolsa plástica
+  EXPORTACION = '9995', // Exportación
+  GRATUITO = '9996', // Gratuito
+  EXONERADO = '9997', // Exonerado
+  INAFECTO = '9998', // Inafecto
+  OTROS_TRIBUTOS = '9999', // Otros tributos
+  TASA_ANUAL_MORA = 'TIM', // Tasa anual Mora 2025
 }
 export enum OperacionResumenEnum {
-  ADICIONAR = "ADICIONAR",   // Alta de boleta
-  MODIFICAR = "MODIFICACION",   // Modificación de boleta ya informada
-  BAJA = "BAJA",      // Baja (anulación) de boleta
+  ADICIONAR = 'ADICIONAR', // Alta de boleta
+  MODIFICAR = 'MODIFICACION', // Modificación de boleta ya informada
+  BAJA = 'BAJA', // Baja (anulación) de boleta
 }
 // Catálogo 06: Tipo de Documento de Identidad
 export enum TipoDocumentoIdentidadEnum {
@@ -53,37 +62,37 @@ export enum UnidadMedidaEnum {
 // Catálogo 03: Unidad de Medida
 export enum ChargeIndicatorEnum {
   DESCUENTO = 'false',
-  RECARGO = 'true'
+  RECARGO = 'true',
 }
 // Catálogo 03: Unidad de Medida
 export enum ProcesoNotaCreditoEnum {
   GENERADA_DESDE_DATOS_SIMPLES = 'generadaDesdeDatosSimples',
-  VALIDADA_DESDE_COMPROBANTE_CALCULADO = 'validadaDesdeComprobanteCalculado'
+  VALIDADA_DESDE_COMPROBANTE_CALCULADO = 'validadaDesdeComprobanteCalculado',
 }
 // Catálogo 09: Códigos de tipo de nota de crédito electrónica
 export enum NotaCreditoMotivo {
-  ANULACION_OPERACION = '01',                // Anulación de la operación
-  ANULACION_ERROR_RUC = '02',                // Anulación por error en el RUC
-  CORRECCION_DESCRIPCION = '03',             // Corrección por error en la descripción
-  DESCUENTO_GLOBAL = '04',                   // Descuento global
-  DESCUENTO_POR_ITEM = '05',                 // Descuento por ítem
-  DEVOLUCION_TOTAL = '06',                   // Devolución total
-  DEVOLUCION_POR_ITEM = '07',                // Devolución por ítem
-  BONIFICACION = '08',                       // Bonificación
-  DISMINUCION_VALOR = '09'                   // Disminución en el valor
+  ANULACION_OPERACION = '01', // Anulación de la operación
+  ANULACION_ERROR_RUC = '02', // Anulación por error en el RUC
+  CORRECCION_DESCRIPCION = '03', // Corrección por error en la descripción
+  DESCUENTO_GLOBAL = '04', // Descuento global
+  DESCUENTO_POR_ITEM = '05', // Descuento por ítem
+  DEVOLUCION_TOTAL = '06', // Devolución total
+  DEVOLUCION_POR_ITEM = '07', // Devolución por ítem
+  BONIFICACION = '08', // Bonificación
+  DISMINUCION_VALOR = '09', // Disminución en el valor
 }
 
 // Catálogo 09: Códigos de tipo de nota de crédito electrónica
 export enum NotaDebitoMotivo {
-  INTERECES_MORA = '01',  // Cuando se cobra un interés adicional por pago tardío.
-  AUMENTO_VALOR = '02',   // Cuando se incrementa el importe del comprobante (ejemplo: se olvidó facturar un servicio o se corrige un precio).
-  PENALIDADES = '03',     // Cuando se cobra un monto por incumplimiento (ejemplo: devolver un equipo dañado o entregar fuera de plazo).
+  INTERECES_MORA = '01', // Cuando se cobra un interés adicional por pago tardío.
+  AUMENTO_VALOR = '02', // Cuando se incrementa el importe del comprobante (ejemplo: se olvidó facturar un servicio o se corrige un precio).
+  PENALIDADES = '03', // Cuando se cobra un monto por incumplimiento (ejemplo: devolver un equipo dañado o entregar fuera de plazo).
 }
 
 export enum CodigoProductoNotaDebito {
   AJUSTE_GLOBAL_OPERACION = 'AU001', // Ajuste por aumento global de la operación
-  INTERES_POR_MORA = 'INT001',       // Ajuste por intereses de mora
-  PENALIDAD_CONTRATO = 'PEN001',     // Ajuste por penalidad
+  INTERES_POR_MORA = 'INT001', // Ajuste por intereses de mora
+  PENALIDAD_CONTRATO = 'PEN001', // Ajuste por penalidad
 }
 // nota-debito.enum.ts
 export enum TipoAumentoNotaDebito {
@@ -129,7 +138,7 @@ export const TIPO_AFECTACION_INAFECTAS: number[] = [
 ];
 
 export enum Catalogo53DescuentoGlobal {
-  DESCUENTO_AFECTA_IGV = "00",
+  DESCUENTO_AFECTA_IGV = '00',
 }
 export enum LegendCodeEnum {
   MONTO_EN_LETRAS = '1000', // Monto en Letras : Todas las facturas, boletas, notas de crédito y débito deben llevar esta leyenda.
@@ -148,8 +157,6 @@ export enum LegendCodeEnum {
   EXPORTACION_SERVICIOS = '2011', // Exportación de servicios - Decreto Legislativo 919
 }
 
-
-
 // 🔹 Operaciones de Exportación
 export const TIPO_AFECTACION_EXPORTACION: number[] = [
   40, // Exportación
@@ -163,37 +170,43 @@ export const TIPO_AFECTACION_GRATUITAS: number[] = [
 ];
 
 // 📌 Catálogo de Tipos de Afectación del IGV → Tributos
-export const MAP_TIPO_AFECTACION_TRIBUTO: Record<number, { id: string; name: string; taxTypeCode: string }> = {
+export const MAP_TIPO_AFECTACION_TRIBUTO: Record<
+  number,
+  { id: string; name: string; taxTypeCode: string }
+> = {
   // Gravadas
-  10: { id: "1000", name: "IGV", taxTypeCode: "VAT" },   // Operación Onerosa
-  11: { id: "9996", name: "IGV", taxTypeCode: "VAT" },   // Retiro por premio
-  12: { id: "9996", name: "IGV", taxTypeCode: "VAT" },   // Retiro por donación
-  13: { id: "9996", name: "IGV", taxTypeCode: "VAT" },   // Retiro
-  14: { id: "9996", name: "IGV", taxTypeCode: "VAT" },   // Retiro por publicidad
-  15: { id: "9996", name: "IGV", taxTypeCode: "VAT" },   // Bonificaciones
-  16: { id: "9996", name: "IGV", taxTypeCode: "VAT" },   // Retiro a trabajadores
-  17: { id: "1016", name: "IVAP", taxTypeCode: "VAT" },  // IVAP
+  10: { id: '1000', name: 'IGV', taxTypeCode: 'VAT' }, // Operación Onerosa
+  11: { id: '9996', name: 'IGV', taxTypeCode: 'VAT' }, // Retiro por premio
+  12: { id: '9996', name: 'IGV', taxTypeCode: 'VAT' }, // Retiro por donación
+  13: { id: '9996', name: 'IGV', taxTypeCode: 'VAT' }, // Retiro
+  14: { id: '9996', name: 'IGV', taxTypeCode: 'VAT' }, // Retiro por publicidad
+  15: { id: '9996', name: 'IGV', taxTypeCode: 'VAT' }, // Bonificaciones
+  16: { id: '9996', name: 'IGV', taxTypeCode: 'VAT' }, // Retiro a trabajadores
+  17: { id: '1016', name: 'IVAP', taxTypeCode: 'VAT' }, // IVAP
 
   // Exoneradas
-  20: { id: "9997", name: "EXO", taxTypeCode: "VAT" },   // Operación Onerosa
-  21: { id: "1000", name: "IGV", taxTypeCode: "VAT" },   // Transferencia gratuita
+  20: { id: '9997', name: 'EXO', taxTypeCode: 'VAT' }, // Operación Onerosa
+  21: { id: '1000', name: 'IGV', taxTypeCode: 'VAT' }, // Transferencia gratuita
 
   // Inafectas
-  30: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Operación Onerosa
-  31: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Retiro por bonificación
-  32: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Retiro
-  33: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Muestras Médicas
-  34: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Convenio Colectivo
-  35: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Retiro por premio
-  36: { id: "9998", name: "INA", taxTypeCode: "FRE" },   // Retiro por publicidad
-  37: { id: "1000", name: "IGV", taxTypeCode: "FRE" },   // Transferencia gratuita
+  30: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }, // Operación Onerosa
+  31: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }, // Retiro por bonificación
+  32: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }, // Retiro
+  33: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }, // Muestras Médicas
+  34: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }, // Convenio Colectivo
+  35: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }, // Retiro por premio
+  36: { id: '9998', name: 'INA', taxTypeCode: 'FRE' }, // Retiro por publicidad
+  37: { id: '1000', name: 'IGV', taxTypeCode: 'FRE' }, // Transferencia gratuita
 
   // Exportación
-  40: { id: "9995", name: "EXP", taxTypeCode: "FRE" },   // Exportación de Bienes o Servicios
+  40: { id: '9995', name: 'EXP', taxTypeCode: 'FRE' }, // Exportación de Bienes o Servicios
 };
 
 // Catálogo de tributos SUNAT
-export const MAP_TRIBUTOS: Record<string, { id: string; name: string; taxTypeCode: string }> = {
+export const MAP_TRIBUTOS: Record<
+  string,
+  { id: string; name: string; taxTypeCode: string }
+> = {
   IGV: { id: '1000', name: 'IGV', taxTypeCode: 'VAT' },
   ICBPER: { id: '7152', name: 'ICBPER', taxTypeCode: 'OTH' },
   EXO: { id: '9997', name: 'EXO', taxTypeCode: 'VAT' },
@@ -202,9 +215,36 @@ export const MAP_TRIBUTOS: Record<string, { id: string; name: string; taxTypeCod
 };
 
 export const TRIBUTOS_RESUMEN = [
-  { key: "mtoOperGravadas", id: "1000", name: "IGV", taxTypeCode: "VAT", instructionID: "01", conIgv: true },
-  { key: "mtoOperExoneradas", id: "9997", name: "EXO", taxTypeCode: "VAT", instructionID: "02", conIgv: false },
-  { key: "mtoOperInafectas", id: "9998", name: "INA", taxTypeCode: "VAT", instructionID: "03", conIgv: false },
-  { key: "mtoOperExportacion", id: "9995", name: "EXP", taxTypeCode: "VAT", instructionID: "04", conIgv: false },
+  {
+    key: 'mtoOperGravadas',
+    id: '1000',
+    name: 'IGV',
+    taxTypeCode: 'VAT',
+    instructionID: '01',
+    conIgv: true,
+  },
+  {
+    key: 'mtoOperExoneradas',
+    id: '9997',
+    name: 'EXO',
+    taxTypeCode: 'VAT',
+    instructionID: '02',
+    conIgv: false,
+  },
+  {
+    key: 'mtoOperInafectas',
+    id: '9998',
+    name: 'INA',
+    taxTypeCode: 'VAT',
+    instructionID: '03',
+    conIgv: false,
+  },
+  {
+    key: 'mtoOperExportacion',
+    id: '9995',
+    name: 'EXP',
+    taxTypeCode: 'VAT',
+    instructionID: '04',
+    conIgv: false,
+  },
 ];
-

@@ -7,9 +7,9 @@ import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import pLimit from 'p-limit';
-import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
 export class CpeValidadoDto extends CpeDto {
   existe: boolean;
   mensaje: string;
@@ -22,27 +22,35 @@ export class GetStatusValidateCpeUseCase {
     private readonly sunatService: SunatService,
     private readonly sunatLogRepo: SunatLogRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
-    private readonly empresaRepo: EmpresaRepository,
+    private readonly sucursalRepo: ISucursalRepository,
   ) {
     this.username = process.env.SUNAT_USER || '20000000001MODDATOS'; // pruebas
     this.password = process.env.SUNAT_PASSWORD || 'moddatos'; // pruebas
   }
 
-  async execute(data: CpeDto, empresaId: number): Promise<any> {
+  async execute(data: CpeDto, empresaId: number, sucursalId: number): Promise<any> {
     //IResponseSunat
     try {
       // 1 validacion de comprobantes
       // const usuario = '20600887735SOROVECA'
       // const passwrod = 'ambitinbe'
-      const empresa = await this.empresaRepo.findById(empresaId, true) as EmpresaInternaResponseDto;
-      if (!empresa) {
+      const sucursal = (await this.sucursalRepo.findSucursalInterna( empresaId, sucursalId));
+
+      if (!sucursal) {
         throw new BadRequestException(
-          'No se ha encontrado una empresa asociada al identificador obtenido del token de autenticación.',
+          'No se ha encontrado una sucursal asociada al identificador obtenido del token de autenticación.',
         );
       }
-      const usuarioSecundario = empresa?.usuarioSolSecundario ?? ""
-      const claveSecundaria = CryptoUtil.decrypt(empresa.claveUsuarioSecundario ?? "");
-      const resultado = await this.sunatService.getStatusCpe(data, usuarioSecundario, claveSecundaria);
+      const empresa = sucursal.empresa as EmpresaInternaResponseDto
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(
+        empresa.claveSolSecundario ?? '',
+      );
+      const resultado = await this.sunatService.getStatusCpe(
+        data,
+        usuarioSecundario,
+        claveSecundaria,
+      );
       return resultado;
       //const rspValidateComp = await this.validarYConsultar(data, empresaId);
       ///const limit = pLimit(5); // máximo 5 consultas en paralelo
@@ -62,7 +70,6 @@ export class GetStatusValidateCpeUseCase {
       // );
       //const resultados = await Promise.all(tareas);
       //return resultados;
-
       return '';
     } catch (error: any) {
       throw error;
@@ -71,12 +78,12 @@ export class GetStatusValidateCpeUseCase {
   private async procesarErrorResumen(
     error: any,
     resumendIdBd: number,
-    empresaId: number,
+    sucursalId: number,
     serie: string,
     xmlFirmado: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
+      sucursalId,
       tipo: 'RC', // Resumen
       serie,
     });
@@ -85,9 +92,12 @@ export class GetStatusValidateCpeUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.codigoResSunat = JSON.parse(obj.response ?? '')?.code;
       obj.resumenId = resumendIdBd;
-      obj.empresaId = empresaId;
       obj.serie = serie;
       obj.request = xmlFirmado;
+      obj.sucursalId = sucursalId;
+      ((obj.intentos = 0), // esto cambiar cuando este ok
+        (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
+      obj.fechaRespuesta = new Date();
       await this.sunatLogRepo.save(obj);
     }
   }

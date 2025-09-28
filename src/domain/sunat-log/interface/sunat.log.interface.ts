@@ -1,4 +1,4 @@
-import { EmpresaResponseDto } from "src/domain/empresa/dto/EmpresaResponseDto";
+import { SucursalResponseDto } from "src/domain/sucursal/dto/SucursalResponseDto";
 
 export interface CreateSunatLogDto {
   comprobanteId?: number | null;
@@ -7,8 +7,13 @@ export interface CreateSunatLogDto {
   response?: string | null;
   estado?: string | null;
   resumenId ?: number | null;
-  empresaId?: number | null
+  bajaId?:number | null;
+  sucursalId?: number | null
   serie?: string
+  intentos?:number
+  fechaRespuesta?:Date
+  fechaEnvio?:Date
+  usuarioEnvio?:string
 }
 
 export interface UpdateSunatLogDto {
@@ -25,6 +30,6 @@ export interface SunatLogResponseDto {
   response?: string | null;
   estado?: string | null;
   resumenId ?: number | null;
-  empresa?: EmpresaResponseDto | null
+  sucursal?: SucursalResponseDto | null
   serie?: string
 }

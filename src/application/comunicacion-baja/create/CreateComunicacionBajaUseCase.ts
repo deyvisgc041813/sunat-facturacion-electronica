@@ -2,7 +2,6 @@ import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { ZipUtil } from 'src/util/ZipUtil';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
-import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { SerieRepository } from 'src/domain/series/Serie.repository';
@@ -27,37 +26,48 @@ import {
 import { IComunicacionBajaRepository } from 'src/domain/comunicacion-baja/interface/baja.repository.interface';
 import { CreateComunicacionBajaDto } from 'src/domain/comunicacion-baja/interface/create.comunicacion.interface';
 import { IComunicacionBajaDetalle } from 'src/domain/comunicacion-baja/interface/baja.detalle.interface';
-import { BadRequestException, Inject } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
+import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 
 export class CreateComunicacionBajaUseCase {
   constructor(
     private readonly xmlBuilderComunicacionBajaService: XmlBuilderComunicacionBajaService,
     private readonly firmaService: FirmaService,
     private readonly sunatService: SunatService,
-    private readonly empresaRepo: EmpresaRepository,
     protected readonly sunatLogRepo: SunatLogRepository,
     private readonly bajaRepo: IComunicacionBajaRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
     private readonly serieRepo: SerieRepository,
+    private readonly sucurSalRepo: ISucursalRepository,
   ) {}
 
-  async execute(data: ComunicacionBajaDto): Promise<{
+  async execute(
+    data: ComunicacionBajaDto,
+    empresaId: number,
+    sucursalId: number,
+  ): Promise<{
     status: boolean;
     message: string;
     xmlFirmado: string;
     ticket: string;
   }> {
-    // 1. Obtener el certificado digital y clave
-    const respCert = await this.empresaRepo.findCertificado(
-      data?.company?.ruc.trim(),
-    );
-    if (!respCert?.certificadoDigital || !respCert?.claveCertificado) {
-      throw new Error(
-        `No se encontró certificado o clave para la empresa con RUC ${data.company.ruc}`,
+    const sucursal = await this.sucurSalRepo.findSucursalInterna(empresaId, sucursalId);
+    if (!sucursal) {
+      throw new BadRequestException(
+        `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
       );
     }
+    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
+    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
+      throw new Error(
+        `No se encontró certificado digital para la sucursal con RUC ${data.company.ruc}`,
+      );
+    }
+
+
     // 2. mapear el detalle de los comprobantes a anular
     const detalles: IComunicacionBajaDetalle[] = data.detalles.map(
       ({ motivo, comprobanteId }: ComunicacionBajaDetalleDto) => ({
@@ -68,10 +78,7 @@ export class CreateComunicacionBajaUseCase {
     // 3. mapear los id de los comprobantes
     const comprobanteIds = detalles.map((d) => d.comprobanteId) ?? [];
     const comprobantesBaja =
-      (await this.comprobanteRepo.findByEmpresaAndId(
-        respCert.empresaId,
-        comprobanteIds,
-      )) ?? [];
+      (await this.comprobanteRepo.findById(sucursalId, comprobanteIds)) ?? [];
     // 4. validar que estos comprobantes ya esten como anulados o enviados
     const errores = this.validarComprobantesParaBaja(data, comprobantesBaja);
     if (errores.length > 0) {
@@ -81,25 +88,26 @@ export class CreateComunicacionBajaUseCase {
         message: errores, //
       });
     }
-    const empresaId = respCert.empresaId ?? 0;
     const fechaEnvio: Date = getFechaHoraActualLima();
     const fechaEnvioBaja = getFechaHoyYYYYMMDD();
     // 5. Obtener serie y correlativo
     const comunicacion = await this.obtenerSerie(
-      empresaId,
+      sucursalId,
       fechaEnvioBaja,
       data?.tipoDocumento,
     );
+    data.signatureId = sucursal?.signatureId ?? '';
+    data.signatureNote = sucursal?.signatureNote ?? '';
     // 6. Firmar XML
     const xml = this.xmlBuilderComunicacionBajaService.buildComunicacionBaja(
       data,
       comunicacion.serie,
       fechaEnvio,
     );
-    const passwordDecript = CryptoUtil.decrypt(respCert.claveCertificado);
+    const passwordDecript = CryptoUtil.decrypt(empresa.claveCertificado);
     const xmlFirmado = await this.firmaService.firmarXml(
       xml,
-      respCert.certificadoDigital,
+      empresa.certificadoDigital,
       passwordDecript,
     );
 
@@ -116,7 +124,7 @@ export class CreateComunicacionBajaUseCase {
     const hash = (await extraerHashCpe(xmlFirmado)) ?? '';
 
     const objectBaja: CreateComunicacionBajaDto = {
-      empresaId,
+      sucursalId,
       correlativo: comunicacion.correlativo,
       estado: EstadoEnvioSunat.ENVIADO,
       fechaGeneracion: new Date(fechaEnvio),
@@ -130,32 +138,33 @@ export class CreateComunicacionBajaUseCase {
     };
     const newBaja = await this.bajaRepo.save(objectBaja);
     await this.serieRepo.actualizarCorrelativo(
+      sucursalId,
       comunicacion?.serieId,
       comunicacion?.correlativo,
     );
 
     try {
       // 9. Enviar a SUNAT
-      const usuarioSecundario = respCert?.usuarioSolSecundario ?? '';
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt(
-        respCert.claveSolSecundario ?? '',
+        empresa.claveSolSecundario ?? '',
       );
       const ticket = await this.sunatService.sendSummary(
         `${fileName}.zip`,
         zipBuffer,
         usuarioSecundario,
-        claveSecundaria
+        claveSecundaria,
       );
 
       // 10. Actualizar baja a ENVIADO
-      await this.bajaRepo.update(comunicacion.serie, empresaId, {
+      await this.bajaRepo.update(comunicacion.serie, sucursalId, {
         estado: EstadoEnvioSunat.ENVIADO,
         ticket,
       });
 
       // esto se debe cambiar con el tocken
       await this.comprobanteRepo.updateComprobanteStatusMultiple(
-        empresaId,
+        sucursalId,
         comprobanteIds,
         EstadoEnumComprobante.ENVIADO,
         EstadoComunicacionEnvioSunat.ENVIADO,
@@ -169,13 +178,13 @@ export class CreateComunicacionBajaUseCase {
       };
     } catch (error: any) {
       // 9. Actualizar baja con error
-      await this.bajaRepo.update(comunicacion.serie, empresaId, {
+      await this.bajaRepo.update(comunicacion.serie, sucursalId, {
         estado: EstadoEnvioSunat.ERROR,
       });
       await this.procesarErrorBaja(
         error,
         newBaja.data ?? 0,
-        empresaId,
+        sucursalId,
         comunicacion.serie,
         xmlFirmado,
         data.tipoDocumento,
@@ -194,12 +203,12 @@ export class CreateComunicacionBajaUseCase {
   }
 
   private async obtenerSerie(
-    empresaId: number,
+    sucursalId: number,
     fecBaja: string,
     tipoDocumento: string,
   ): Promise<{ serie: string; correlativo: number; serieId: number }> {
     const rsp = await this.serieRepo.getNextCorrelativo(
-      empresaId,
+      sucursalId,
       TipoComprobanteEnum.COMUNICACION_BAJA,
       tipoDocumento,
     );
@@ -212,25 +221,28 @@ export class CreateComunicacionBajaUseCase {
 
   private async procesarErrorBaja(
     error: any,
-    resumendIdBd: number,
-    empresaId: number,
+    bajaId: number,
+    sucursalId: number,
     serie: string,
     xmlFirmado: string,
     tipoDocumento: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
+      sucursalId,
       tipo: tipoDocumento,
       serie,
     });
 
     if (rspError.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError.create as CreateSunatLogDto;
-      //obj.codigoResSunat = serie;
-      //obj.resumenId = resumendIdBd;
+      obj.bajaId = bajaId;
       obj.request = xmlFirmado;
-      obj.empresaId = empresaId;
       obj.serie = serie;
+      obj.sucursalId = sucursalId;
+      ((obj.intentos = 0), // esto cambiar cuando este ok
+      (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
+      obj.fechaRespuesta = new Date();
+      obj.fechaEnvio = new Date()
       await this.sunatLogRepo.save(obj);
     }
   }

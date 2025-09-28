@@ -2,8 +2,7 @@ import { TipoComprobanteEnum, TipoDocumentoIdentidadEnum } from "src/util/catalo
 
 
 export interface ICreateComprobante {
-  // Relación con empresa y cliente
-  empresaId: number;
+  sucursalId: number;
   // Datos de cabecera del comprobante
   tipoComprobante:
     | TipoComprobanteEnum.FACTURA
@@ -29,6 +28,7 @@ export interface ICreateComprobante {
   totalInafecto?: number;
   totalIgv: number;
   mtoImpVenta: number;
+  mtoIcbper?: number,
   // Respaldo del JSON original
   payloadJson: any;
 }

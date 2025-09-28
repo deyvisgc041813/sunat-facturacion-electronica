@@ -2,9 +2,9 @@ import { BadRequestException } from '@nestjs/common';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
-import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
+import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/resumen/resumen.repository';
@@ -29,12 +29,32 @@ export class GetStatusResumenUseCase {
     private readonly resumenRepo: ResumenRepositoryImpl,
     private readonly sunatLogRepo: SunatLogRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
-    private readonly empresaRepo: EmpresaRepository
+    private readonly sucurSalRepo: ISucursalRepository,
   ) {}
 
-  async execute(empresaId: number, ticket: string): Promise<IResponseSunat> {
-    const resumen = await this.resumenRepo.findByEmpresaAndTicket(
+  async execute(
+    empresaId: number,
+    sucursalId: number,
+    ticket: string,
+  ): Promise<IResponseSunat> {
+    const sucursal = await this.sucurSalRepo.findSucursalInterna(
       empresaId,
+      sucursalId,
+    );
+    if (!sucursal) {
+      throw new BadRequestException(
+        `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
+      );
+    }
+    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
+    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
+      throw new Error(
+        `No se encontró certificado digital para la sucursal con RUC ${empresa?.ruc}`,
+      );
+    }
+
+    const resumen = await this.resumenRepo.findBySucursalAndTicket(
+      sucursalId,
       ticket,
     );
     try {
@@ -43,23 +63,18 @@ export class GetStatusResumenUseCase {
           `No existe un resumen registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
         );
       }
-      const empresa = (await this.empresaRepo.findById(
-        empresaId,
-        true,
-      )) as EmpresaInternaResponseDto;
-      if (!empresa) {
-        throw new BadRequestException(
-          'No se ha encontrado una empresa asociada al identificador obtenido del token de autenticación.',
-        );
-      }
-      const usuarioSecundario = empresa?.usuarioSolSecundario ?? ""
-      const claveSecundaria = CryptoUtil.decrypt(empresa.claveUsuarioSecundario ?? "");
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(empresa.claveSolSecundario ?? '');
       await this.validarEstadoFinalResumen(resumen);
-      const result = await this.sunatService.getStatus(ticket, usuarioSecundario, claveSecundaria);
+      const result = await this.sunatService.getStatus(
+        ticket,
+        usuarioSecundario,
+        claveSecundaria,
+      );
 
       // 2. Actualizar estado en la BD según respuesta
 
-      await this.resumenRepo.updateByEmpresaAndTicket(empresaId, ticket, {
+      await this.resumenRepo.updateBySucursalAndTicket(sucursalId, ticket, {
         estado: mapSunatToEstado(result.codigoResponse ?? ''),
         codResPuestaSunat: result.codigoResponse ?? '',
         cdr: result.cdr?.toString('base64') ?? null,
@@ -77,7 +92,7 @@ export class GetStatusResumenUseCase {
         .filter((id): id is number => id !== undefined);
       // esto se debe cambiar con el tocken
       await this.comprobanteRepo.updateBoletaStatus(
-        empresaId,
+        sucursalId,
         boletasIds,
         EstadoEnumComprobante.ACEPTADO,
         EstadoComunicacionEnvioSunat.ACEPTADO_PROCESADO,
@@ -89,14 +104,14 @@ export class GetStatusResumenUseCase {
       const resumenId = resumen?.resumenId ?? '';
       if (resumen) {
         if (!estadosFinales.has(resumen.estado as EstadoEnvioSunat)) {
-          await this.resumenRepo.update(resumenId, empresaId, {
+          await this.resumenRepo.update(resumenId, sucursalId, {
             estado: EstadoEnvioSunat.ERROR,
           });
         }
         await this.procesarErrorResumen(
           error,
           resumen?.resBolId ?? 0,
-          resumen?.empresa?.empresaId ?? 0,
+          resumen?.sucursal?.sucursalId ?? 0,
           resumenId,
           resumen.xml ?? '',
         );
@@ -107,12 +122,12 @@ export class GetStatusResumenUseCase {
   private async procesarErrorResumen(
     error: any,
     resumendIdBd: number,
-    empresaId: number,
+    sucursalId: number,
     serie: string,
     xmlFirmado: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
+      sucursalId,
       tipo: 'RC', // Resumen
       serie,
     });
@@ -121,9 +136,13 @@ export class GetStatusResumenUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.codigoResSunat = JSON.parse(obj.response ?? '')?.code;
       obj.resumenId = resumendIdBd;
-      obj.empresaId = empresaId;
       obj.serie = serie;
       obj.request = xmlFirmado;
+      obj.sucursalId = sucursalId;
+      ((obj.intentos = 0), // esto cambiar cuando este ok
+        (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
+      obj.fechaRespuesta = new Date();
+      obj.fechaEnvio = new Date()
       await this.sunatLogRepo.save(obj);
     }
   }

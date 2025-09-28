@@ -5,40 +5,32 @@ import {
   ManyToOne,
   JoinColumn,
   OneToMany,
-  UpdateDateColumn,
+  OneToOne,
 } from 'typeorm';
-import { EmpresaOrmEntity } from '../empresa/EmpresaOrmEntity';
-import { EstadoComunicacionEnvioSunat, EstadoEnumComprobante } from 'src/util/estado.enum';
+import {
+  EstadoComunicacionEnvioSunat,
+  EstadoEnumComprobante,
+} from 'src/util/estado.enum';
 import { ClienteOrmEntity } from '../cliente/ClienteOrmEntity';
-import { SunatLogOrmEntity } from '../sunat-log/SunatLogOrmEntity';
 import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
 import { SerieOrmEntity } from '../serie/SerieOrmEntity';
 import { BajaComprobanteDetalleOrmEntity } from '../comunicacion-baja/BajaComprobanteDetalleOrmEntity';
+import { ComprobanteRespuestaSunatOrmEntity } from './ComprobanteRespuestaSunatOrmEntity';
+import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
 
 @Entity('comprobantes')
 export class ComprobanteOrmEntity {
   @PrimaryGeneratedColumn({ name: 'comprobante_id' })
   comprobanteId: number;
-
-  @Column({ name: 'empresa_id' })
-  empresaId: number;
-
-  @Column({ name: 'cliente_id' })
-  clienteId: number;
-
-  @Column({ name: 'serie_id' })
-  serieId: number;
-
   @Column({ name: 'numero_comprobante' })
   numeroComprobante: number;
-
   @Column({
     name: 'fecha_emision',
     type: 'datetime',
     nullable: false,
   })
   fechaEmision: Date;
-    @Column({
+  @Column({
     name: 'fecha_vencimiento',
     default: () => 'CURRENT_TIMESTAMP',
     type: 'datetime',
@@ -109,22 +101,25 @@ export class ComprobanteOrmEntity {
     default: EstadoEnumComprobante.PENDIENTE,
   })
   estado: EstadoEnumComprobante;
-
-  @Column({ name: 'xml', type: 'longtext', nullable: true })
-  xmlFirmado?: string;
-  @Column({ name: 'cdr', type: 'longtext', nullable: true })
-  cdr?: string | null;
-
-  @Column({ name: 'hash_cpe', type: 'varchar', length: 100 })
-  hashCpe: string;
-
+  
   @Column({ name: 'payload_json', type: 'longtext', nullable: true }) // aquí se guarda todo el JSON del comprobante (incluye detalles, leyendas, etc.)
   payloadJson?: string;
   @Column({ name: 'descripcion_estado', type: 'text', nullable: true })
   descripcionEstado?: string;
-  @Column({ name: 'comunicado_sunat', type: 'tinyint', nullable: true, default: false })
+  @Column({
+    name: 'comunicado_sunat',
+    type: 'tinyint',
+    nullable: true,
+    default: false,
+  })
   comunicadoSunat?: EstadoComunicacionEnvioSunat;
-  @Column({ name: 'serie_correlativo', type: 'varchar', length: 20, nullable: true, default: false })
+  @Column({
+    name: 'serie_correlativo',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+    default: false,
+  })
   serieCorrelativo?: string;
   @Column({
     name: 'fecha_creacion',
@@ -153,21 +148,19 @@ export class ComprobanteOrmEntity {
   })
   fechaAnulacion: Date | null;
 
-
-  // Relación con Empresa
-  @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.comprobantes, {
+  @ManyToOne(() => SucursalOrmEntity, (sucursal) => sucursal.comprobantes, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: EmpresaOrmEntity;
-  // Relación con Cliente
+  @JoinColumn({ name: 'sucursal_id' })
+  sucursal:SucursalOrmEntity;
+  
   @ManyToOne(() => ClienteOrmEntity, (cliente) => cliente.comprobantes, {
     onDelete: 'CASCADE',
   })
   @JoinColumn({ name: 'cliente_id' })
   cliente: ClienteOrmEntity;
 
-  @JoinColumn({ name: 'serie_id' })
+  @JoinColumn({ name: 'serie_comprobante_id' })
   @ManyToOne(() => SerieOrmEntity, (serie) => serie.comprobantes, {
     onDelete: 'CASCADE',
   })
@@ -183,5 +176,10 @@ export class ComprobanteOrmEntity {
     (detalle) => detalle.comprobante,
   )
   bajaDetalle: BajaComprobanteDetalleOrmEntity[];
-  
+
+  @OneToOne(
+    () => ComprobanteRespuestaSunatOrmEntity,
+    (respuestaSunat) => respuestaSunat.comprobante,
+  )
+  respuestaSunat: ComprobanteRespuestaSunatOrmEntity;
 }

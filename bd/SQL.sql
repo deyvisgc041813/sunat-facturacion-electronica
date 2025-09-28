@@ -1,9 +1,36 @@
-SELECT * FROM facturacion_electronica_pe.catalogo_detalle where catalogo_tipo_id = 11;
+SELECT * FROM facturacion_electronica_pe.catalogo_detalle where catalogo_tipo_id = 9;
 SELECT * FROM facturacion_electronica_pe.catalogo_tipo;
 
 
 ALTER TABLE catalogo_detalle 
 ADD COLUMN tipo_comprobante_asociado VARCHAR(100) NULL;
+
+
+
+CREATE TABLE sucursal (
+  sucursal_id INT AUTO_INCREMENT PRIMARY KEY,
+  empresa_id INT NOT NULL,
+  codigo VARCHAR(10) NOT NULL,               -- código de la sucursal
+  nombre VARCHAR(100) NOT NULL,              -- ej: Sucursal Lima
+  direccion VARCHAR(255) NOT NULL,
+  ubigeo VARCHAR(6) NOT NULL,                -- código de SUNAT para ubicación
+  telefono VARCHAR(20),
+  email VARCHAR(100),
+
+  -- configuración de firma digital
+  signature_id VARCHAR(50) NOT NULL DEFAULT 'SIGN-DEFAULT',
+  signature_note VARCHAR(100) NULL,
+
+  estado BOOLEAN DEFAULT TRUE,
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  FOREIGN KEY (empresa_id) REFERENCES empresas(empresa_id)
+    ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
+
+
 
 
 -- Catálogo 52: Códigos de Leyendas
@@ -19,7 +46,7 @@ ADD COLUMN tipo_comprobante_asociado VARCHAR(100) NULL;
 /*TIPO TRIBUTOS: catalogo_tipo_id => 8*  => CODCATALOGO:  '05/
 /*TIPO DE AFECTACUION: catalogo_tipo_id => 9*  => CODCATALOGO:  '07/
 /* Código de tipo de operación guia de remision=> 10*  => CODCATALOGO:  '51/
-/* Código de tipo de operación guia de remision=> 11*  => CODCATALOGO:  '52/
+/* LEYENDAS=> 11*  => CODCATALOGO:  '52/
 
 01	Intereses por mora
 02	Aumento en el valor

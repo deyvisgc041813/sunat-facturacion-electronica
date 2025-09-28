@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
 import {
-  MAP_TIPO_AFECTACION_TRIBUTO,
-  MAP_TRIBUTOS,
+  MAP_TIPO_AFECTACION_TRIBUTO
 } from 'src/util/catalogo.enum';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
+import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 /**
  * Tipos de Nota de Débito SUNAT (ResponseCode)
  *
@@ -22,18 +22,23 @@ import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/Creat
  *      - Requiere detalle de ítems.
  *      - Se agregan cargos adicionales como penalidades u otros conceptos
  *        no considerados en el comprobante original.
- * 
+ *
  */
 
 @Injectable()
 export class XmlBuilderNotaDebitoService {
-  buildXml(dto: CreateNotaDto): string {
+  buildXml(
+    dto: CreateNotaDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
+  ): string {
     const root = create({
       version: '1.0',
       encoding: 'utf-8',
       standalone: false,
     }).ele('DebitNote', {
-      xmlns: "urn:oasis:names:specification:ubl:schema:xsd:DebitNote-2",
+      xmlns: 'urn:oasis:names:specification:ubl:schema:xsd:DebitNote-2',
       'xmlns:cac':
         'urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2',
       'xmlns:cbc':
@@ -49,7 +54,7 @@ export class XmlBuilderNotaDebitoService {
     XmlCommonBuilder.addDatosBasicos(
       root,
       dto.ublVersion,
-      '2.0',
+      dto.customizationID,
       `${dto.serie}-${dto.correlativo}`,
     )
       .ele('cbc:IssueDate')
@@ -74,7 +79,7 @@ export class XmlBuilderNotaDebitoService {
     XmlCommonBuilder.addCompany(root, dto);
     XmlCommonBuilder.addCustomer(root, dto);
     // ====== Totales TaxTotal ======
-    this.addTaxTotal(root, dto);
+    this.addTaxTotal(root, dto, tipoAfectacionGravadas, tipoAfectacionExoneradas, tipoAfectacionInafectas);
     // ====== Totales RequestedMonetaryTotal ======
     this.addRequestedMonetaryTotal(root, dto);
     // ====== Detalles  ======
@@ -86,7 +91,7 @@ export class XmlBuilderNotaDebitoService {
   //     Caso 1:  Para los motivos 01 (Anulación de la operación) y 02 (Anulación por error en el RUC),
   //     el comprobante se invalida totalmente, por lo que los importes del único ítem que se envía
   //     deben ser establecidos en 0.00.
-  //    * 
+  //    *
   //    */
 
   //   if (
@@ -236,7 +241,8 @@ export class XmlBuilderNotaDebitoService {
         .ele('cbc:PriceAmount', { currencyID: dto.tipoMoneda })
         .txt((d.mtoValorUnitario * (1 + d.porcentajeIgv / 100)).toFixed(6)) // ej: 118.000000
         .up();
-      altPrice.ele('cbc:PriceTypeCode').txt('01').up(); // 01 = precio de referencia con IGV
+      let priceTypeCode = [21, 31, 37].includes(d.tipAfeIgv) ? "02" : "01"; // precio de referencia con IGV
+      altPrice.ele('cbc:PriceTypeCode').txt(priceTypeCode).up(); // 01 = precio de referencia con IGV, 02 => gratuitas
 
       // Impuestos de la línea
       const taxTotalLine = line.ele('cac:TaxTotal');
@@ -304,32 +310,76 @@ export class XmlBuilderNotaDebitoService {
       .txt((dto.mtoImpVenta ?? 0).toFixed(2))
       .up();
   }
-  private addTaxTotal(root: any, dto: CreateNotaDto) {
+  private addTaxTotal(
+    root: any,
+    dto: CreateNotaDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
+  ) {
     /**
      */
-    const tipos = [
-      {
-        monto: dto.mtoOperGravadas || 0,
-        igv: dto.mtoIGV || 0,
-        percent: (dto.porcentajeIgv || 0) * 100,
-        exemption: '10', // Gravado
-        map: MAP_TRIBUTOS.IGV,
-      },
-      {
-        monto: dto.mtoOperExoneradas || 0,
-        igv: 0,
-        percent: 0,
-        exemption: '20', // Exonerado
-        map: MAP_TRIBUTOS.EXO,
-      },
-      {
-        monto: dto.mtoOperInafectas || 0,
-        igv: 0,
-        percent: 0,
-        exemption: '30', // Inafecto
-        map: MAP_TRIBUTOS.INA,
-      },
-    ].filter((t) => t.monto > 0);
+    // const tipos = [
+    //   {
+    //     monto: dto.mtoOperGravadas || 0,
+    //     igv: dto.mtoIGV || 0,
+    //     percent: (dto.porcentajeIgv || 0) * 100,
+    //     exemption: '10', // Gravado
+    //     map: MAP_TRIBUTOS.IGV,
+    //   },
+    //   {
+    //     monto: dto.mtoOperExoneradas || 0,
+    //     igv: 0,
+    //     percent: 0,
+    //     exemption: '20', // Exonerado
+    //     map: MAP_TRIBUTOS.EXO,
+    //   },
+    //   {
+    //     monto: dto.mtoOperInafectas || 0,
+    //     igv: 0,
+    //     percent: 0,
+    //     exemption: '30', // Inafecto
+    //     map: MAP_TRIBUTOS.INA,
+    //   },
+    // ].filter((t) => t.monto > 0);
+
+    const tipos = Object.values(
+      dto.details.reduce(
+        (acc, dt) => {
+          const code = dt.tipAfeIgv;
+
+          if (!acc[code]) {
+            let monto = 0;
+            let igv = 0;
+
+            if (tipoAfectacionGravadas.includes(code)) {
+              monto = dto.mtoOperGravadas || 0;
+              igv = dto.mtoIGV || 0;
+            } else if (tipoAfectacionExoneradas.includes(code)) {
+              monto = dto.mtoOperExoneradas || 0;
+            } else if (tipoAfectacionInafectas.includes(code)) {
+              monto = dto.mtoOperInafectas || 0;
+            }
+
+            acc[code] = {
+              monto,
+              igv,
+              percent: (dto.porcentajeIgv || 0) * 100,
+              exemption: code,
+              map: ComprobantesHelper.getMapByCodeNotas(
+                code,
+                tipoAfectacionGravadas,
+                tipoAfectacionExoneradas,
+                tipoAfectacionInafectas,
+              ),
+            };
+          }
+
+          return acc;
+        },
+        {} as Record<string, any>,
+      ),
+    ).filter((t) => t.monto > 0);
 
     if (tipos.length > 0) {
       const taxTotal = root.ele('cac:TaxTotal');

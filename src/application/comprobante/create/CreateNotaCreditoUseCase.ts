@@ -1,5 +1,4 @@
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
-import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
@@ -15,13 +14,14 @@ import { ValidarAnulacionComprobanteUseCase } from '../validate/ValidarAnulacion
 import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/comprobante/comprobante.repository.impl';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
+import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
+import { FindCatalogosUseCase } from 'src/application/catalogo/FindCatalogosUseCase';
 @Injectable()
 export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
   constructor(
     xmlNCBuilder: XmlBuilderNotaCreditoService,
     firmaService: FirmaService,
     sunatService: SunatService,
-    empresaRepo: EmpresaRepositoryImpl,
     errorLogRepo: ErrorLogRepositoryImpl,
     useCreateCaseComprobante: CreateComprobanteUseCase,
     catalogoRepo: CatalogoRepositoryImpl,
@@ -31,13 +31,14 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
     findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     findTasaByCodeUseCase: FindTasaByCodeUseCase,
     validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
-    repoComprobante : ComprobanteRepositoryImpl,
+    repoComprobante: ComprobanteRepositoryImpl,
+    sucursalRepo: SucursalRepositoryImpl,
+    findCatalogosUseCase: FindCatalogosUseCase,
   ) {
     super(
       xmlNCBuilder,
       firmaService,
       sunatService,
-      empresaRepo,
       errorLogRepo,
       useCreateCaseComprobante,
       catalogoRepo,
@@ -47,10 +48,22 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
       findCorrelativoUseCase,
       findTasaByCodeUseCase,
       validarAnulacionComprobanteUseCase,
-      repoComprobante
+      repoComprobante,
+      sucursalRepo,
+      findCatalogosUseCase,
     );
   }
-  protected buildXml(data: CreateNotaDto): string {
-    return this.xmlNCBuilder.buildXml(data);
+  protected buildXml(
+    data: CreateNotaDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
+  ): string {
+    return this.xmlNCBuilder.buildXml(
+      data,
+      tipoAfectacionGravadas,
+      tipoAfectacionExoneradas,
+      tipoAfectacionInafectas,
+    );
   }
 }

@@ -7,12 +7,12 @@ export class GetByIdComprobantesUseCase {
 
   async execute(
     comprobanteId: number,
-    empresaId: number,
+    surcursalId: number,
   ): Promise<ComprobanteResponseDto | null> {
-    const rpta = await this.comprobante.findByEmpresaAndId(empresaId, [ comprobanteId ]);
+    const rpta = await this.comprobante.findById(surcursalId, [ comprobanteId ]);
     if (!rpta || rpta.length === 0) {
       throw new NotFoundException(
-        `Comprobante con id ${comprobanteId} no encontrado para la empresa ${empresaId}`,
+        `Comprobante con id ${comprobanteId} no encontrado para la sucursal ${surcursalId}`,
       );
     }
     return rpta[0];

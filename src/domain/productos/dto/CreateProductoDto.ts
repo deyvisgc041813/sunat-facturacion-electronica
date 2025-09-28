@@ -4,9 +4,9 @@ import { IsInt, IsNotEmpty, IsOptional, IsString, Length, IsNumber, IsBoolean } 
 export class CreateProductoDto {
   
   @Type(() => Number) // convierte string a number
-  @IsInt({ message: 'El empresaId debe ser un número entero' })
-  @IsNotEmpty({ message: 'La empresa es obligatoria' })
-  empresaId: number;
+  @IsInt({ message: 'El sucursalId debe ser un número entero' })
+  @IsNotEmpty({ message: 'La sucursal es obligatoria' })
+  sucursalId: number;
 
   @IsString({ message: 'El código debe ser texto' })
   @IsNotEmpty({ message: 'El código es obligatorio' })

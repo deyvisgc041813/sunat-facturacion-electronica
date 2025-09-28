@@ -1,7 +1,7 @@
 import { EstadoEnumComprobante } from "src/util/estado.enum";
 
 export class CreateErrorLogDto {
-  empresaId: number;
+  sucursalId: number;
   tipoComprobante:string;
   serie: string;
   correlativo: string;

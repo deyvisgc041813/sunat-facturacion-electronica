@@ -20,9 +20,9 @@ export class CancelInvoiceDto {
   @IsNotEmpty({ message: 'El motivo es obligatorio' })
   @Length(10, 100, { message: 'El motivo de anulación debe tener entre 10 y 100 caracteres' })
   motivo?: string; // opcional: "Error de emisión"
-  @IsNumber({}, { message: 'El ID de la empresa debe ser numérico' })
-  @Min(1, { message: 'El ID de la empresa debe ser mayor a 0' })
-  empresaId: number
+  @IsNumber({}, { message: 'El ID de la sucursal debe ser numérico' })
+  @Min(1, { message: 'El ID de la sucursal debe ser mayor a 0' })
+  sucursalId: number
   @IsOptional()
   serieId:number = 0
 }

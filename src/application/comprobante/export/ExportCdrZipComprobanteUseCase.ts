@@ -4,7 +4,7 @@ import { ArchivoDescargable, ConprobanteRepository } from "src/domain/comprobant
 export class ExportCdrZipComprobanteUseCase {
   constructor(private readonly comprobante: ConprobanteRepository) {}
 
-  async execute(componenteId:number, empresaId: number): Promise<ArchivoDescargable | null> {
-    return this.comprobante.getCdrZip(componenteId, empresaId);
+  async execute(componenteId:number, sucursalId: number): Promise<ArchivoDescargable | null> {
+    return this.comprobante.getCdrZip(componenteId, sucursalId);
   }
 }

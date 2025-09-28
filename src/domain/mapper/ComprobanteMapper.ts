@@ -1,16 +1,18 @@
 import { ComprobanteOrmEntity } from '../../infrastructure/persistence/comprobante/ComprobanteOrmEntity';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
-import { EmpresaMapper } from './EmpresaMapper';
 import { ClienteMapper } from './ClienteMapper';
 import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
 import { SerieMapper } from './SerieMapper';
 import { EstadoComunicacionEnvioSunat } from 'src/util/estado.enum';
+import { SucursalMapper } from './SucursalMapper';
+import { ComprobanteRespSunatMapper } from './ComprobanteRespSunatMapper.maper';
 
 export class ComprobanteMapper {
   static toDomain(orm: ComprobanteOrmEntity): ComprobanteResponseDto {
     const serie = orm.serie ? SerieMapper.toDomain(orm.serie) : null;
-    const empresa = orm.empresa ? EmpresaMapper.toDomain(orm.empresa) : null;
+    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm.sucursal) : null;
     const cliente = orm.cliente ? ClienteMapper.toDomain(orm.cliente) : null;
+    const comprobanteRspSunat = orm.respuestaSunat ? ComprobanteRespSunatMapper.toDomain(orm.respuestaSunat) : null
     return new ComprobanteResponseDto(
       orm.comprobanteId,
       orm.numeroComprobante,
@@ -27,10 +29,10 @@ export class ComprobanteMapper {
       orm.estado,
       orm.comunicadoSunat ?? EstadoComunicacionEnvioSunat.NO_ENVIADO,
       orm.serieCorrelativo ?? "",
-      empresa,
+      sucursal,
       cliente,
       serie,
-      orm.hashCpe,
+      comprobanteRspSunat,
       orm.payloadJson,
       orm.fechaAnulacion ?? undefined,
       orm.descripcionEstado,
@@ -45,15 +47,6 @@ export class ComprobanteMapper {
     }
     if (dto.descripcionEstado !== undefined) {
       comprobante.descripcionEstado = dto.descripcionEstado;
-    }
-    if (dto.xmlFirmado !== undefined) {
-      comprobante.xmlFirmado = dto.xmlFirmado;
-    }
-    if (dto.hashCpe) {
-      comprobante.hashCpe = dto.hashCpe;
-    }
-    if (dto.cdr !== undefined ) {
-      comprobante.cdr = dto.cdr
     }
     comprobante.fechaUpdate = dto.fechaUpdate
     return comprobante;

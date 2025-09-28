@@ -10,7 +10,6 @@ export class SerieAuditoriaMapper {
     const usuario = {}
     return new SerieAuditoriaResponseDto(
       orm.serieAuditoriaId,
-      orm.serieId,
       orm.usuarioId,
       orm.correlativoAnterior,
       orm.correlativoNuevo,
@@ -22,7 +21,7 @@ export class SerieAuditoriaMapper {
   }
  private static assignCommon(object: SerieAuditoriaOrmEntity, data: any, isUpdate = false): SerieAuditoriaOrmEntity {
     object.serieAuditoriaId = data.serieAuditoriaId ?? 0;
-    object.serieId = data.serieId;
+    //object.serieId = data.serieId;
     object.usuarioId = data.usuarioId;
     object.correlativoAnterior = data.correlativoAnterior;
     object.correlativoNuevo = data.correlativoNuevo;

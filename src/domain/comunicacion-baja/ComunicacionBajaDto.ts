@@ -4,6 +4,7 @@ import {
   IsIn,
   IsInt,
   IsNotEmpty,
+  IsNotEmptyObject,
   IsOptional,
   IsString,
   Matches,
@@ -34,16 +35,19 @@ export class ComunicacionBajaDto {
       'La fecha de referencia debe tener el formato: YYYY-MM-DDTHH:mm:ss o YYYY-MM-DDTHH:mm:ss±HH:mm (ejemplo: 2025-09-11T14:26:13 o 2025-09-11T14:26:13-05:00)',
   })
   fecReferencia: string;
-
+  @IsNotEmptyObject({}, { message: 'La empresa es obligatorio' })
   @ValidateNested({ message: 'La empresa emisora es obligatoria' })
   @Type(() => CompanyDto)
   company: CompanyDto;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ComunicacionBajaDetalleDto)
   detalles: ComunicacionBajaDetalleDto[];
-  // @IsOptional()
-  // errorReference?: string;
+  @IsOptional()
+  signatureId: string;
+  @IsOptional()
+  signatureNote: string;
 }
 
 export class ComunicacionBajaDetalleDto {
@@ -77,5 +81,5 @@ export class ComunicacionBajaDetalleDto {
     message:
       'Es necesario indicar el motivo de la baja para continuar con el registro',
   })
-  motivo: string;
+  motivo: string
 }

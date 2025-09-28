@@ -3,12 +3,12 @@ import {
   CreateSunatLogDto,
   SunatLogResponseDto,
 } from 'src/domain/sunat-log/interface/sunat.log.interface';
-import { EmpresaMapper } from './EmpresaMapper';
+import { SucursalMapper } from './SucursalMapper';
 
 export class SunatLogMapper {
   static toDomain(orm: SunatLogOrmEntity): SunatLogResponseDto {
-    const empresa = orm.empresa
-      ? EmpresaMapper.toDomain(orm.empresa)
+    const sucursal = orm.sucursal
+      ? SucursalMapper.toDomain(orm.sucursal)
       : undefined;
     const logs: SunatLogResponseDto = {
       id: orm.id,
@@ -18,7 +18,7 @@ export class SunatLogMapper {
       request: orm.request,
       response: orm.response,
       resumenId: orm.resumenId,
-      empresa,
+      sucursal,
       serie: orm.serie,
     };
     return logs;
@@ -34,10 +34,14 @@ export class SunatLogMapper {
     object.response = data?.response;
     object.resumenId = data?.resumenId ? data.resumenId : null;
     object.codigoResSunat = data?.codigoResSunat;
-    if (data.empresaId) {
-      object.empresa = { empresaId: data.empresaId } as any;
+    if (data.sucursalId) {
+      object.sucursal = { sucursalId: data.sucursalId } as any;
     }
-    object.serie = data.serie;
+    object.intento = data?.intentos;
+    object.usuarioEnvio = data?.usuarioEnvio
+    object.fechaRespuesta = data?.fechaRespuesta;
+    object.serie = data?.serie;
+    object.bajaId = data?.bajaId
     return object;
   }
 

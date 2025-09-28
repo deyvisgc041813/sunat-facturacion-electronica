@@ -17,11 +17,11 @@ export class GetValidatedCpeUseCase {
     private readonly comprobanteRepo: ConprobanteRepository,
   ) {  }
 
-  async execute(data: ConsultarLoteCpeDto, empresaId: number): Promise<any> {
+  async execute(data: ConsultarLoteCpeDto, sucursalId: number): Promise<any> {
     //IResponseSunat
     try {
       // 1 validacion de comprobantes
-      const rspValidateComp = await this.validarYConsultar(data, empresaId);
+      const rspValidateComp = await this.validarYConsultar(data, sucursalId);
       const limit = pLimit(5); // máximo 5 consultas en paralelo
 
       const tareas = rspValidateComp.data.map((cpe) =>
@@ -43,7 +43,7 @@ export class GetValidatedCpeUseCase {
       throw error;
     }
   }
-  private async validarYConsultar(dto: ConsultarLoteCpeDto, empresaId: number) {
+  private async validarYConsultar(dto: ConsultarLoteCpeDto, sucursalId: number) {
     // 1. Validar que todos sean del mismo tipo
     const tipos = new Set(dto.cpes.map((c) => c.tipo));
     if (tipos.size > 1) {
@@ -57,8 +57,8 @@ export class GetValidatedCpeUseCase {
 
     // 3. Consultamos en la BD los comprobantes que existen
     const comprobantes =
-      await this.comprobanteRepo.findByEmpresaAndSerieCorrelativos(
-        empresaId,
+      await this.comprobanteRepo.findBySerieCorrelativos(
+        sucursalId,
         seriesCorrelativos,
       );
 

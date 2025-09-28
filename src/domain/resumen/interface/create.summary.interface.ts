@@ -1,7 +1,7 @@
 import { ResumenBoletaDetalleDto } from "./create.summary.detalle.interface";
 
 export interface CreateResumenBoletaDto {
-  empresaId: number;         // ID de la empresa emisora
+  sucursalId: number;         // ID de la sucursal emisora
   fechaGeneracion: Date;     // Fecha en la que se genera el resumen
   fecReferencia: Date;       // Fecha de los comprobantes que se están resumiendo
   correlativo: number;       // Número correlativo del resumen

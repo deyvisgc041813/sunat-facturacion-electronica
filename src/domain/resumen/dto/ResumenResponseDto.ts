@@ -1,5 +1,5 @@
-import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 import { ResumenDetalleResponseDto } from './ResumenDetalleResponseDto';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
 
 export class ResumenResponseDto {
   constructor(
@@ -20,7 +20,7 @@ export class ResumenResponseDto {
     public hashResumen?: string,
     public observacionSunat?: string,
     // Relaciones
-    public empresa?: EmpresaResponseDto | null,
+    public sucursal?: SucursalResponseDto | null,
     public detalles?: ResumenDetalleResponseDto[] | null,
   ) {}
 }

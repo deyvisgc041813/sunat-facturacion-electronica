@@ -1,7 +1,6 @@
 export class ErrorLogResponseDto {
   constructor(
     public readonly errorId: number,
-    public readonly empresaId: number,
     public readonly tipoComprobante: string,
     public readonly serie: string,
     public readonly correlativo: string,

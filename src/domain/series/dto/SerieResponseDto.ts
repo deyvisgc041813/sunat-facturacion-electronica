@@ -1,4 +1,4 @@
-import { EmpresaResponseDto } from "src/domain/empresa/dto/EmpresaResponseDto";
+import { SucursalResponseDto } from "src/domain/sucursal/dto/SucursalResponseDto";
 
 export class SerieResponseDto {
  
@@ -8,7 +8,7 @@ export class SerieResponseDto {
     public serie: string,
     public correlativoInicial: number,
     public correlativoActual: number,
-    public empresa?: EmpresaResponseDto
+    public sucursal?: SucursalResponseDto
   ) {}
 
 }

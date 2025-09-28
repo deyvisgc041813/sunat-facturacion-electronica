@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { EmpresaMapper } from 'src/domain/mapper/EmpresaMapper';
 import { ProductoRepository } from 'src/domain/productos/Producto.repository';
 import { CreateProductoDto } from 'src/domain/productos/dto/CreateProductoDto';
 import { ProductoResponseDto } from 'src/domain/productos/dto/ProductoResponseDto';
 import { UpdateProductoDto } from 'src/domain/productos/dto/UpdateProductoDto';
 import { ProductoMapper } from 'src/domain/mapper/ProductoMapper';
 import { ProductoOrmEntity } from './ProductoOrmEntity';
+import { SucursalMapper } from 'src/domain/mapper/SucursalMapper';
 
 @Injectable()
 export class ProductoRepositoryImpl implements ProductoRepository {
@@ -28,17 +28,16 @@ export class ProductoRepositoryImpl implements ProductoRepository {
       relations: ['empresa'],
     });
     return result.map((p) => {
-      const empresaResponseDto = EmpresaMapper.toDomain(p.empresa)
+      const sucursal = SucursalMapper.toDomain(p.sucursal)
       return new ProductoResponseDto(
         p.productoId,
-        p.empresaId,
         p.codigo,
         p.descripcion,
         p.unidadMedida ?? '',
         p.precioUnitario,
         p.afectaIgv ?? 0,
         p.estado,
-        empresaResponseDto,
+        sucursal,
       );
     });
   }
@@ -51,17 +50,16 @@ export class ProductoRepositoryImpl implements ProductoRepository {
     if (!producto) {
       throw new NotFoundException(`Producto con id ${id} no encontrado`);
     }
-    const empresa = EmpresaMapper.toDomain(producto.empresa)
+    const sucursal = SucursalMapper.toDomain(producto.sucursal)
     return new ProductoResponseDto(
         producto.productoId,
-        producto.empresaId,
         producto.codigo,
         producto.descripcion,
         producto.unidadMedida ?? '',
         producto.precioUnitario,
         producto.afectaIgv ?? 0,
         producto.estado,
-        empresa,
+        sucursal,
     );
   }
   async update(producto: UpdateProductoDto, productId:number): Promise<{ status: boolean; message: string; data?: ProductoResponseDto }> {

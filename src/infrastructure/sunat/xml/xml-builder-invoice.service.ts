@@ -34,7 +34,7 @@ export class XmlBuilderInvoiceService {
     XmlCommonBuilder.addDatosBasicos(
       root,
       dto.ublVersion,
-      '2.0',
+      dto.customizationID,
       `${dto.serie}-${dto.correlativo}`,
     )
       .ele('cbc:IssueDate')

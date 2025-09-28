@@ -6,26 +6,28 @@ export interface SerieRepository {
   save(
     serie: CreateSerieDto,
   ): Promise<{ status: boolean; message: string; data?: SerieResponseDto }>;
-  findAll(): Promise<SerieResponseDto[]>;
-  findById(serieId: number): Promise<SerieResponseDto | null>;
-  findByEmpresaAndTipCompAndSerie(
-    empresaId: number,
+  findAll(sucursalId:number): Promise<SerieResponseDto[]>;
+  findById(sucursalId:number, serieId: number): Promise<SerieResponseDto | null>;
+  findBySucursalTipCompSerie(
+    surcursalId: number,
     tipoComprobante: string,
     serie: string,
   ): Promise<SerieResponseDto | null>;
   update(
+    sucursalId:number,
     serie: UpdateSerieDto,
     serieId: number,
   ): Promise<{ status: boolean; message: string; data?: SerieResponseDto }>;
   updateCorrelativoAndLog(
+    sucursalId:number,
     serieId: number,
     usuarioId: number,
     newCorrelativo: number,
     motivo: string,
   ): Promise<{ status: boolean; message: string; data?: SerieResponseDto }>;
-  actualizarCorrelativo(serieId: number, newCorrelativo: number): Promise<void>;
+  actualizarCorrelativo(surcursalId: number, serieId: number, newCorrelativo: number): Promise<void>;
   getNextCorrelativo(
-    empresaId: number,
+    surcursalId: number,
     tipoComprobante: string,
     serie: string,
   ): Promise<{correlativo:number, serieId:number}>;

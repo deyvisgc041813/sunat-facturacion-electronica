@@ -77,15 +77,15 @@ export class HttpErrorFilter implements ExceptionFilter {
 export function buildDuplicateMessage(sqlError: any): string {
   // Tomar el campo serie armada que setea tu aplicación
   if (sqlError.message.includes('comprobantes')) {
-    return 'Ya existe un comprobante registrado en esta empresa con la misma serie. Por favor, comunícate con ssu proveedor para solucionarlo.';
+    return 'Ya existe un comprobante registrado en esta sucursal con la misma serie. Por favor, comunícate con ssu proveedor para solucionarlo.';
   }
 
   if (sqlError.message.includes('resumen_boletas')) {
-    return 'Ya existe un resumen diario registrado en esta empresa con la misma fecha y número correlativo. Por favor, comunícate con su proveedor para solucionarlo.';
+    return 'Ya existe un resumen diario registrado en esta sucursal con la misma fecha y número correlativo. Por favor, comunícate con su proveedor para solucionarlo.';
   }
 
   if (sqlError.message.includes('baja_comprobante')) {
-    return 'Ya existe una comunicación de baja registrada en esta empresa con la misma fecha y número correlativo. Por favor, comunícate con su proveedor para solucionarlo.';
+    return 'Ya existe una comunicación de baja registrada en esta sucursal con la misma fecha y número correlativo. Por favor, comunícate con su proveedor para solucionarlo.';
   }
 
   return 'Ya existe un registro duplicado';

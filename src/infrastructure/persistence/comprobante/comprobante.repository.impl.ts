@@ -1,10 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Not, Repository } from 'typeorm';
 import { ComprobanteOrmEntity } from './ComprobanteOrmEntity';
 
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
-import { ComprobanteMapper } from 'src/domain/mapper/comprobante.maper';
 import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
 import {
   ArchivoDescargable,
@@ -19,11 +18,17 @@ import { ICreateComprobante } from 'src/domain/comprobante/interface/create.inte
 import { IResponsePs } from 'src/domain/comprobante/interface/response.ps.interface';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 import dayjs from 'dayjs';
+import { ComprobanteRespuestaSunatOrmEntity } from './ComprobanteRespuestaSunatOrmEntity';
+import { ComprobanteMapper } from 'src/domain/mapper/ComprobanteMapper';
 @Injectable()
 export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   constructor(
     @InjectRepository(ComprobanteOrmEntity)
     private readonly repo: Repository<ComprobanteOrmEntity>,
+
+    @InjectRepository(ComprobanteRespuestaSunatOrmEntity)
+    private readonly repoRespSnat: Repository<ComprobanteRespuestaSunatOrmEntity>,
+    
     @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
@@ -31,10 +36,11 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     dto: ICreateComprobante,
     payloadJson: any,
   ): Promise<{ status: boolean; message: string; response?: IResponsePs }> {
+    const mtoIcbper =  dto.mtoIcbper !== null ? dto.mtoIcbper : null
     const [rows] = await this.dataSource.query(
-      `CALL sp_guardar_comprobante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `CALL sp_guardar_comprobante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        dto.empresaId,
+        dto.sucursalId,
         dto.tipoComprobante,
         dto.serie,
         dto.fechaEmision,
@@ -44,6 +50,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
         dto.totalInafecto,
         dto.totalIgv,
         dto.mtoImpVenta,
+        mtoIcbper,
         dto.tipoDocumento,
         dto.numeroDocumento,
         JSON.stringify(payloadJson),
@@ -61,124 +68,33 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     };
   }
 
-  async findAll(empresaId: number): Promise<ComprobanteResponseDto[]> {
+  async findAll(sucursalId: number): Promise<ComprobanteResponseDto[]> {
     const result = await this.repo.find({
-      where: { empresaId },
-      relations: ['empresa', 'cliente', 'serie'],
+      where: { sucursal: { sucursalId } },
+      relations: ['sucursal', 'cliente', 'serie'],
     });
     return result.map((c) => ComprobanteMapper.toDomain(c));
   }
-  async findByEmpresaAndId(
-    empresaId: number,
+  async findById(
+    sucursalId: number,
     comprobanteIds: number[],
   ): Promise<ComprobanteResponseDto[] | null> {
     const comprobantes = await this.repo.find({
-      where: { comprobanteId: In(comprobanteIds), empresaId },
-      relations: ['empresa', 'cliente', 'serie'],
+      where: { comprobanteId: In(comprobanteIds), sucursal: { sucursalId } },
+      relations: ['sucursal', 'sucursal.empresa', 'cliente', 'serie'],
     });
     return comprobantes.map((rsp) => ComprobanteMapper.toDomain(rsp));
   }
-  async getXmlFirmado(
-    comprobanteId: number,
-    empresaId: number,
-  ): Promise<ArchivoDescargable | null> {
-    const cpe = await this.repo.findOne({
-      where: { comprobanteId, empresaId },
-    });
-    if (!cpe?.xmlFirmado) {
-      throw new NotFoundException(
-        `No se encontró el archivo XML del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
-      );
-    }
-
-    return {
-      fileName: `${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.xml`,
-      mimeType: 'application/xml',
-      content: Buffer.from(cpe.xmlFirmado, 'utf-8'),
-    };
-  }
-  async getZipEnviado(
-    comprobanteId: number,
-    empresaId: number,
-  ): Promise<ArchivoDescargable | null> {
-    const cpe = await this.repo.findOne({
-      where: { comprobanteId, empresaId },
-    });
-    if (!cpe?.xmlFirmado) {
-      throw new NotFoundException(
-        `No se encontró el archivo zip del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
-      );
-    }
-    // genera un ZIP con el XML firmado
-    return {
-      fileName: `${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.zip`,
-      mimeType: 'application/zip',
-      content: Buffer.from(cpe.xmlFirmado, 'utf-8'), // TODO: reemplazar con zip real
-    };
-  }
-  async getCdrZip(
-    comprobanteId: number,
-    empresaId: number,
-  ): Promise<ArchivoDescargable | null> {
-    const cpe = await this.repo.findOne({
-      where: { comprobanteId, empresaId },
-    });
-
-    if (!cpe?.cdr) {
-      throw new NotFoundException(
-        `No se encontró el archivo cdr del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
-      );
-    }
-
-    return {
-      fileName: `R-${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.zip`,
-      mimeType: 'application/zip',
-      content: Buffer.from(cpe.cdr, 'base64'), // 👈 convertir de string Base64 a Buffer
-    };
-  }
-
-  async getHashCpe(
-    comprobanteId: number,
-    empresaId: number,
-  ): Promise<string | null> {
-    const cpe = await this.repo.findOne({
-      where: { comprobanteId, empresaId },
-      select: ['hashCpe'],
-    });
-    if (!cpe?.cdr) {
-      throw new NotFoundException(
-        `No se encontró el hash cpe del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
-      );
-    }
-    return cpe?.hashCpe;
-  }
-  async update(
-    comprobanteId: number,
-    empresaId: number,
-    update: IUpdateComprobante,
-  ): Promise<{ status: boolean; message: string }> {
-    await this.repo.update(
-      { comprobanteId, empresaId },
-      ComprobanteMapper.dtoToOrmUpdate(update),
-    );
-    return { status: true, message: 'Comprobante actualizado correctamente' };
-  }
-  async findByEstado(
-    estado: EstadoEnumComprobante,
-  ): Promise<ComprobanteResponseDto[]> {
-    const cpes = await this.repo.find({ where: { estado } });
-    return cpes.map((c) => ComprobanteMapper.toDomain(c));
-  }
-  async findByEmpAndSerieAndNumCorreAceptado(
-    empresaId: number,
+  async findByComprobanteAceptado(
+    sucursalId: number,
     numCorrelativo: number,
     serieId: number,
   ): Promise<ComprobanteResponseDto | null> {
     const comprobante = await this.repo.findOne({
       where: {
-        empresaId,
+        sucursal: { sucursalId },
         numeroComprobante: numCorrelativo,
-        serieId,
+        serie: {serieId},
         estado: EstadoEnumComprobante.ACEPTADO,
       },
       relations: ['cliente', 'serie'],
@@ -186,48 +102,130 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     if (!comprobante) return null;
     return ComprobanteMapper.toDomain(comprobante);
   }
-  async findByEmpresaAndFecha(
-    empresaId: number,
+  async findBySucursalAndFecha(
+    sucursalId: number,
     fechaInicio: Date,
     fechaFin: Date,
   ): Promise<ComprobanteResponseDto[]> {
     const cpes = await this.repo.find({
       where: {
-        empresaId,
+        sucursal: { sucursalId },
         fechaEmision: Between(fechaInicio, fechaFin),
       },
     });
     return cpes.map((c) => ComprobanteMapper.toDomain(c));
   }
-  async updateComprobanteStatus(
+  async getXmlFirmado(
+    comprobanteId: number,
     empresaId: number,
-    serieId: number,
-    numCorrelativo: number,
-    desEstado: string,
-    estado: EstadoEnumComprobante,
-  ): Promise<boolean> {
-    const result = await this.repo.update(
+  ): Promise<ArchivoDescargable | null> {
+    return null
+    // const cpe = await this.repo.findOne({
+    //   where: { comprobanteId, empresaId },
+    // });
+    // if (!cpe?.xmlFirmado) {
+    //   throw new NotFoundException(
+    //     `No se encontró el archivo XML del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
+    //   );
+    // }
+
+    // return {
+    //   fileName: `${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.xml`,
+    //   mimeType: 'application/xml',
+    //   content: Buffer.from(cpe.xmlFirmado, 'utf-8'),
+    // };
+  }
+  async getZipEnviado(
+    comprobanteId: number,
+    empresaId: number,
+  ): Promise<ArchivoDescargable | null> {
+    // const cpe = await this.repo.findOne({
+    //   where: { comprobanteId, empresaId },
+    // });
+    // if (!cpe?.xmlFirmado) {
+    //   throw new NotFoundException(
+    //     `No se encontró el archivo zip del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
+    //   );
+    // }
+    // // genera un ZIP con el XML firmado
+    // return {
+    //   fileName: `${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.zip`,
+    //   mimeType: 'application/zip',
+    //   content: Buffer.from(cpe.xmlFirmado, 'utf-8'), // TODO: reemplazar con zip real
+    // };
+    return null
+  }
+  async getCdrZip(
+    comprobanteId: number,
+    empresaId: number,
+  ): Promise<ArchivoDescargable | null> {
+    // const cpe = await this.repo.findOne({
+    //   where: { comprobanteId, empresaId },
+    // });
+
+    // if (!cpe?.cdr) {
+    //   throw new NotFoundException(
+    //     `No se encontró el archivo cdr del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
+    //   );
+    // }
+
+    // return {
+    //   fileName: `R-${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.zip`,
+    //   mimeType: 'application/zip',
+    //   content: Buffer.from(cpe.cdr, 'base64'), // 👈 convertir de string Base64 a Buffer
+    // };
+    return null
+  }
+
+  async getHashCpe(
+    comprobanteId: number,
+    empresaId: number,
+  ): Promise<string | null> {
+    // const cpe = await this.repo.findOne({
+    //   where: { comprobanteId, empresaId },
+    //   select: ['hashCpe'],
+    // });
+    // if (!cpe?.cdr) {
+    //   throw new NotFoundException(
+    //     `No se encontró el hash cpe del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
+    //   );
+    // }
+    // return cpe?.hashCpe;
+    return null
+  }
+  async update(
+    comprobanteId: number,
+    sucursalId: number,
+    update: IUpdateComprobante,
+  ): Promise<{ status: boolean; message: string }> {
+    await this.repo.update(
+      { comprobanteId, sucursal: {sucursalId} },
       {
-        empresaId,
-        serieId,
-        numeroComprobante: numCorrelativo,
-        estado: Not(estado),
-      },
-      {
-        estado: estado,
-        descripcionEstado: desEstado,
-        fechaAnulacion:
-          estado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
+        estado: update.estado,
+        descripcionEstado: update.descripcionEstado,
+        fechaUpdate: update.fechaUpdate,
       },
     );
-    if (result.affected && result.affected > 0) {
-      return true;
-    }
-    return false;
+    await this.repoRespSnat.save(
+      {
+        comprobante: {comprobanteId},
+        cdr: update.cdr ?? undefined ,
+        xmlFirmado: update.xmlFirmado,
+        hashCpe: update.hashCpe ?? "",
+      },
+    );
+    return { status: true, message: 'Comprobante actualizado correctamente' };
+  }
+
+  async findByEstado(
+    estado: EstadoEnumComprobante,
+  ): Promise<ComprobanteResponseDto[]> {
+    const cpes = await this.repo.find({ where: { estado } });
+    return cpes.map((c) => ComprobanteMapper.toDomain(c));
   }
 
   async findComprobanteByReferencia(
-    empresaId: number,
+    sucursalId: number,
     tipoComprobante: string,
     motivos: string[],
     estado: string,
@@ -235,7 +233,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     correlativoRef: number,
   ): Promise<ComprobanteResponseDto | null> {
     const qb = this.repo.createQueryBuilder('c');
-    qb.where('c.empresa_id = :empresaId', { empresaId })
+    qb.where('c.sucursal_id = :sucursalId', { sucursalId })
       .andWhere(
         "JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.tipoComprobante')) = :tipoComprobante",
         { tipoComprobante },
@@ -273,9 +271,20 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     if (!comprobante) return null;
     return ComprobanteMapper.toDomain(comprobante);
   }
-
+  async findBySerieCorrelativos(
+    sucursalId: number,
+    serieCorrelativo: string[],
+  ): Promise<ComprobanteResponseDto[]> {
+    const data = await this.repo.find({
+      where: {
+        sucursal: { sucursalId },
+        serieCorrelativo: In(serieCorrelativo),
+      },
+    });
+    return data.map((dt) => ComprobanteMapper.toDomain(dt));
+  }
   async findBoletasForResumen(
-    empresaId: number,
+    sucursalId: number,
     serieId: number,
     fechaResumen: string,
     estados: EstadoEnumComprobante[],
@@ -288,8 +297,8 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
 
     const rsp = await this.repo.find({
       where: {
-        empresaId,
-        serieId,
+        sucursal: { sucursalId },
+        serie: {serieId},
         fechaEmision: Between(inicioDelDia, finDelDia),
         comunicadoSunat: EstadoComunicacionEnvioSunat.NO_ENVIADO,
         estado: In(estados),
@@ -298,8 +307,9 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
     });
     return rsp.map(ComprobanteMapper.toDomain);
   }
+
   async updateBoletaStatus(
-    empresaId: number,
+    sucursalId: number,
     boletasIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat,
@@ -319,11 +329,11 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
         comunicadoSunat: () => comunicadoSunat,
       })
       .whereInIds(boletasIds)
-      .andWhere('empresa_id = :empresaId', { empresaId })
+      .andWhere('sucursal_id = :sucursalId', { sucursalId })
       .execute();
   }
   async updateComprobanteStatusMultiple(
-    empresaId: number,
+    sucursalId: number,
     comprobanteIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat,
@@ -347,16 +357,34 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
             : null,
       })
       .whereInIds(comprobanteIds)
-      .andWhere('empresa_id = :empresaId', { empresaId })
+      .andWhere('sucursal_id = :sucursalId', { sucursalId })
       .execute();
   }
-  async findByEmpresaAndSerieCorrelativos(empresaId: number, serieCorrelativo: string[]): Promise<ComprobanteResponseDto[]> {
-    const data = await this.repo.find({
-      where: {
-        empresaId,
-        serieCorrelativo: In(serieCorrelativo),
+
+  async updateComprobanteStatus(
+    sucursalId: number,
+    serieId: number,
+    numCorrelativo: number,
+    desEstado: string,
+    estado: EstadoEnumComprobante,
+  ): Promise<boolean> {
+    const result = await this.repo.update(
+      {
+        sucursal: { sucursalId },
+        serie: {serieId},
+        numeroComprobante: numCorrelativo,
+        estado: Not(estado),
       },
-    });
-    return data.map(dt => ComprobanteMapper.toDomain(dt))
+      {
+        estado: estado,
+        descripcionEstado: desEstado,
+        fechaAnulacion:
+          estado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
+      },
+    );
+    if (result.affected && result.affected > 0) {
+      return true;
+    }
+    return false;
   }
 }

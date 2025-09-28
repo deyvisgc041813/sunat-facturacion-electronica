@@ -3,9 +3,9 @@ import { IsInt, IsNotEmpty, IsNumber, IsOptional, IsString} from "class-validato
 
 export class CreateSerieDto {
   @Type(() => Number)
-  @IsInt({ message: 'El empresaId debe ser un número entero' })
-  @IsNotEmpty({ message: 'La empresa es obligatoria' })
-  empresaId: number;
+  @IsInt({ message: 'El sucursalId debe ser un número entero' })
+  @IsNotEmpty({ message: 'La sucursal es obligatoria' })
+  sucursalId: number;
 
   @IsString({ message: 'El comprobante debe ser texto' })
   @IsNotEmpty({ message: 'El comprobante es obligatorio' })

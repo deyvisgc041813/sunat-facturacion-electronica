@@ -3,16 +3,12 @@ import { EmpresaOrmEntity } from '../../infrastructure/persistence/empresa/Empre
 import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
 import { ClienteMapper } from './ClienteMapper';
-import { ProductoMapper } from './ProductoMapper';
 import { EmpresaInternaResponseDto } from '../empresa/dto/EmpresaInternaResponseDto';
 
 export class EmpresaMapper {
   static toDomain(orm: EmpresaOrmEntity): EmpresaResponseDto {
     const clientes = orm.clientes
       ? orm.clientes?.map((c) => ClienteMapper.toDomain(c))
-      : [];
-    const productos = orm.productos
-      ? orm.productos?.map((p) => ProductoMapper.ormToDTO(p))
       : [];
     return new EmpresaResponseDto(
       orm.empresaId,
@@ -26,16 +22,12 @@ export class EmpresaMapper {
       orm.usuarioSolSecundario,
       orm.modo,
       orm.estado,
-      clientes,
-      productos,
+      clientes
     );
   }
   static toDomainInterno(orm: EmpresaOrmEntity): EmpresaInternaResponseDto {
     const clientes = orm.clientes
       ? orm.clientes?.map((c) => ClienteMapper.toDomain(c))
-      : [];
-    const productos = orm.productos
-      ? orm.productos?.map((p) => ProductoMapper.ormToDTO(p))
       : [];
     const base = new EmpresaResponseDto(
       orm.empresaId,
@@ -49,13 +41,13 @@ export class EmpresaMapper {
       orm.usuarioSolSecundario,
       orm.modo, 
       orm.estado,
-      clientes,
-      productos,
+      clientes
     );
     return new EmpresaInternaResponseDto(
       base,
       orm.claveCertificado,
-      orm.claveSolSecundario
+      orm.claveSolSecundario,
+      orm.certificadoDigital
     );
   }
   private static assignCommon(

@@ -33,17 +33,21 @@ export class SerieRepositoryImpl implements SerieRepository {
     };
   }
 
-  async findAll(): Promise<SerieResponseDto[]> {
+  async findAll(sucursalId: number): Promise<SerieResponseDto[]> {
     const result = await this.repo.find({
-      relations: ['empresa'],
+      where: { sucursal: { sucursalId } },
+      relations: ['sucursal'],
     });
     return result.map((s) => SerieMapper.toDomain(s));
   }
 
-  async findById(id: number): Promise<SerieResponseDto | null> {
+  async findById(
+    sucursalId: number,
+    id: number,
+  ): Promise<SerieResponseDto | null> {
     const serie = await this.repo.findOne({
-      where: { serieId: id },
-      relations: ['empresa'],
+      where: { serieId: id, sucursal: { sucursalId } },
+      relations: ['sucursal'],
     });
     if (!serie) {
       throw new NotFoundException(`Serie con id ${id} no encontrado`);
@@ -51,24 +55,25 @@ export class SerieRepositoryImpl implements SerieRepository {
     return SerieMapper.toDomain(serie);
   }
   async update(
+    sucursalId: number,
     serie: UpdateSerieDto,
     serieId: number,
   ): Promise<{ status: boolean; message: string; data?: SerieResponseDto }> {
     serie.serieId = serieId;
+    serie.sucursalId = sucursalId;
     await this.repo.save(SerieMapper.dtoToOrmUpdate(serie));
-
     return {
       status: true,
       message: 'Actualizado correctamente',
     };
   }
-  async findByEmpresaAndTipCompAndSerie(
-    empresaId: number,
+  async findBySucursalTipCompSerie(
+    sucursalId: number,
     tipoComprobante: string,
     serie: string,
   ): Promise<SerieResponseDto | null> {
     const rsp = await this.repo.findOne({
-      where: { empresaId, tipoComprobante, serie },
+      where: { sucursal: { sucursalId }, tipoComprobante, serie },
     });
     if (!rsp) {
       throw new NotFoundException(`Serie no encontrado`);
@@ -77,13 +82,14 @@ export class SerieRepositoryImpl implements SerieRepository {
   }
 
   async updateCorrelativoAndLog(
+    sucursalId: number,
     serieId: number,
     usuarioId: number,
     newCorrelativo: number,
     motivo: string,
   ): Promise<{ status: boolean; message: string; data?: SerieResponseDto }> {
     try {
-      const serieOrm = await this.repo.findOne({ where: { serieId } });
+      const serieOrm = await this.repo.findOne({ where: { serieId, sucursal: {sucursalId} }, relations: ['sucursal'] });
       if (!serieOrm) {
         return {
           status: false,
@@ -106,7 +112,7 @@ export class SerieRepositoryImpl implements SerieRepository {
         data: serieDto,
       };
     } catch (error) {
-      console.error('Error en actualizarCorrelativo:', error);
+      console.error('Error en updateCorrelativoAndLog:', error);
       return {
         status: false,
         message: 'Ocurrió un error al actualizar el correlativo',
@@ -114,12 +120,13 @@ export class SerieRepositoryImpl implements SerieRepository {
     }
   }
   async actualizarCorrelativo(
+    sucursalId: number,
     serieId: number,
     newCorrelativo: number,
   ): Promise<void> {
     try {
       await this.repo.update(
-        { serieId }, // condición de búsqueda
+        { serieId, sucursal: { sucursalId } }, // condición de búsqueda
         { correlativoActual: newCorrelativo, fechaActualizacion: new Date() }, // campos a actualizar
       );
     } catch (error) {
@@ -128,13 +135,13 @@ export class SerieRepositoryImpl implements SerieRepository {
   }
 
   async getNextCorrelativo(
-    empresaId: number,
+    sucursalId: number,
     tipoComprobante: string,
     serie: string,
   ): Promise<{ correlativo: number; serieId: number }> {
     try {
       const rsp = await this.repo.findOne({
-        where: { empresaId, tipoComprobante, serie },
+        where: { sucursal: { sucursalId }, tipoComprobante, serie },
       });
       if (!rsp) {
         throw new BadRequestException(`No se encontró la serie con ID ${rsp}`);

@@ -1,4 +1,3 @@
-import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { IPdfService } from 'src/domain/exportar/pdf/pdf.service';
 import { BadRequestException } from '@nestjs/common';
@@ -13,30 +12,33 @@ import { formatDateForSunat, formatDateToDDMMYYYY } from 'src/util/Helpers';
 import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
+import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 export class CreatePdfUseCase {
   constructor(
-    private readonly empresaRepo: EmpresaRepository,
+    private readonly sucursalRepo: ISucursalRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
     private readonly pdfService: IPdfService,
   ) {}
-  async execute(empresaId: number, comprobanteId: number): Promise<any> {
+  async execute(empresaId:number, sucursalId: number, comprobanteId: number): Promise<any> {
     try {
-      const empresa = await this.empresaRepo.findById(empresaId, false);
-      if (!empresa) {
+      const sucursal = await this.sucursalRepo.findSucursalInterna(empresaId, sucursalId);
+      if (!sucursal) {
         throw new BadRequestException(
-          'No se encontró información de la empresa asociada al usuario actual. No es posible generar el comprobante.',
+          'No se encontró información de la sucursal asociada al usuario actual. No es posible generar el comprobante.',
         );
       }
-      const comprobante = await this.comprobanteRepo.findByEmpresaAndId(
-        empresaId,
+      const comprobante = await this.comprobanteRepo.findById(
+        sucursalId,
         [comprobanteId],
       );
       if (!comprobante || comprobante.length === 0) {
         throw new BadRequestException(
-          `No se encontró información del comprobante con ID ${comprobanteId} para la empresa ${empresaId}.`,
+          `No se encontró información del comprobante con ID ${comprobanteId} para la sucursal ${sucursalId}.`,
         );
       }
       const dataComprobante = comprobante[0];
+      const empresa =  sucursal.empresa  as EmpresaResponseDto
       const itemDetalle: ItemComprobante[] =
         comprobante[0].payloadJson?.details?.map((com: DetailDto) => {
           const cantidad = Number(com.cantidad) || 0;
@@ -51,6 +53,7 @@ export class CreatePdfUseCase {
             total: (cantidad * pUnit).toFixed(2),
           };
         }) ?? [];
+
 
       const qr = await this.generarQRBoleta(
         empresa?.ruc,
@@ -100,7 +103,7 @@ export class CreatePdfUseCase {
         total: String(dataComprobante?.total),
         montoLetras: convertirMontoEnLetras(Number(dataComprobante?.total)),
         qrPath: qr ?? '',
-        hash: dataComprobante?.hashCpe ?? '',
+        hash: dataComprobante?.comprobanteRespuestaSunat?.hashCpe ?? '',
         condicionPago: formaPago,
         medioPago: 'Efectivo',
         vendedor: '',

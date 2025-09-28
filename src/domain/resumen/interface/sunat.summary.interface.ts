@@ -6,7 +6,10 @@ export interface ISummaryDocument {
   fecReferencia: Date; //fecha de los comprobantes que se están resumiendo.
   company: Company;
   documentos: IDocumento[];
+  signatureId:string
+  signatureNote:string
 }
+
 
 export interface Company {
   ruc: string;

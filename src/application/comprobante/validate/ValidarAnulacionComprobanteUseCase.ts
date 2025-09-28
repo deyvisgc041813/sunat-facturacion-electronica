@@ -6,8 +6,8 @@ import { ComprobanteRepositoryImpl } from "src/infrastructure/persistence/compro
 export class ValidarAnulacionComprobanteUseCase {
   constructor(private readonly comprobante: ComprobanteRepositoryImpl) {}
 
-  async execute(empresaId:number, tipoComprobante:string, motivos: string[], estado: string, serieRef: string, correlativoRef: number): Promise<Boolean | null> {
-    const comprobanteEncontrado = await this.comprobante.findComprobanteByReferencia(empresaId, tipoComprobante, motivos, estado, serieRef, correlativoRef)
+  async execute(sucursalId:number, tipoComprobante:string, motivos: string[], estado: string, serieRef: string, correlativoRef: number): Promise<Boolean | null> {
+    const comprobanteEncontrado = await this.comprobante.findComprobanteByReferencia(sucursalId, tipoComprobante, motivos, estado, serieRef, correlativoRef)
     if (comprobanteEncontrado) {
       const payload = comprobanteEncontrado?.payloadJson;
       throw new BadRequestException(

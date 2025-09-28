@@ -40,4 +40,15 @@ export class CreateInvoiceDto extends ComprobanteBaseDto {
   @ValidateNested({ each: true, message: 'Las leyendas no son válidas' })
   @Type(() => LegendDto)
   legends: LegendDto[];
+  @IsOptional()
+  telefonoEmpresa:string
+  @IsOptional()
+  correoEmpresa:string
+
+  @IsOptional()
+  signatureId:string
+  @IsOptional()
+  signatureNote:string
+  @IsOptional()
+  codigoEstablecimientoSunat:string
 }

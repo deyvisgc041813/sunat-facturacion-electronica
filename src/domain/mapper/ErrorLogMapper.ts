@@ -8,7 +8,6 @@ export class ErrorLogMapper {
   static toDomain(orm: ErrorLogOrmEntity): ErrorLogResponseDto {
     return new ErrorLogResponseDto(
       orm.errorId,
-      orm.empresaId,
       orm.tipoComprobante,
       orm.serie,
       orm.correlativo,
@@ -25,7 +24,6 @@ export class ErrorLogMapper {
     data: any,
     isUpdate = false,
   ): ErrorLogOrmEntity {
-    object.empresaId = data.empresaId;
     object.tipoComprobante = data.tipoComprobante;
     object.serie = data.serie;
     object.correlativo = data.correlativo;

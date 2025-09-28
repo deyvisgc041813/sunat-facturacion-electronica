@@ -4,9 +4,9 @@ import { CreateComunicacionBajaDto } from './create.comunicacion.interface';
 
 export interface IComunicacionBajaRepository {
   save(resumen: CreateComunicacionBajaDto): Promise<GenericResponse<number>>;
-  findByEmpresaAndId(empresaId:number, id: number): Promise<BajaComprobanteResponseDto | null>;
-  getNextCorrelativo(empresaId: number): Promise<number>;
-  update(serie: string | number, empresaId: number, data: Partial<CreateComunicacionBajaDto>): Promise<void>;
-  updateByEmpresaAndTicket(empresaId: number, ticket: string, data: any): Promise<void>;
-  findByEmpresaAndTicket(empresaId: number, ticket: string): Promise<BajaComprobanteResponseDto | null>;
+  findBySucursalAndId(sucursalId:number, id: number): Promise<BajaComprobanteResponseDto | null>;
+  getNextCorrelativo(sucursalId: number): Promise<number>;
+  update(serie: string | number, sucursalId: number, data: Partial<CreateComunicacionBajaDto>): Promise<void>;
+  updateBySucursalAndTicket(sucursalId: number, ticket: string, data: any): Promise<void>;
+  findBySucursalAndTicket(sucursalId: number, ticket: string): Promise<BajaComprobanteResponseDto | null>;
 }

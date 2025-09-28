@@ -7,7 +7,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { BajaComprobanteDetalleOrmEntity } from './BajaComprobanteDetalleOrmEntity';
-import { EmpresaOrmEntity } from '../empresa/EmpresaOrmEntity';
+import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
 @Entity({ name: 'baja_comprobante' })
 export class BajaComprobanteOrmEntity {
   @PrimaryGeneratedColumn({ name: 'baja_comprobante_id' })
@@ -56,9 +56,9 @@ export class BajaComprobanteOrmEntity {
   @Column({ name: 'observaciones_sunat', type: 'longtext', nullable: true })
   observacionSunat?: string;
 
-  @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.comunicacionBaja)
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: EmpresaOrmEntity;
+  @ManyToOne(() => SucursalOrmEntity, (sucursal: SucursalOrmEntity) => sucursal.comunicacionBaja)
+  @JoinColumn({ name: 'sucursal_id' })
+  sucursal: SucursalOrmEntity;
 
   // 🔹 Relación con detalles
   @OneToMany(() => BajaComprobanteDetalleOrmEntity, (detalle) => detalle.baja, {

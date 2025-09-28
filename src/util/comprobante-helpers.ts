@@ -235,4 +235,16 @@ export class ComprobantesHelper {
 
     return errores;
   }
+  static getMapByCodeNotas(
+    code: number,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
+  ) {
+    if (tipoAfectacionGravadas.includes(code)) return MAP_TRIBUTOS.IGV;
+    if (tipoAfectacionExoneradas.includes(code)) return MAP_TRIBUTOS.EXO;
+    if (tipoAfectacionInafectas.includes(code)) return MAP_TRIBUTOS.INA;
+    if (code === 40) return MAP_TRIBUTOS.EXP; // tributo de exportacion
+    return MAP_TRIBUTOS.IGV;
+  }
 }

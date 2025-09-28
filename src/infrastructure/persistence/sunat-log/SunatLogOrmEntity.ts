@@ -6,7 +6,7 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { EmpresaOrmEntity } from '../empresa/EmpresaOrmEntity';
+import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
 
 @Entity('sunat_logs')
 export class SunatLogOrmEntity {
@@ -17,7 +17,8 @@ export class SunatLogOrmEntity {
   comprobanteId: number | null;
   @Column({ name: 'resumen_id', type: 'int' })
   resumenId: number | null;
-
+  @Column({ name: 'baja_id', type: 'int' })
+  bajaId: number | null;
   @CreateDateColumn({
     name: 'fecha_envio',
     type: 'datetime',
@@ -36,7 +37,31 @@ export class SunatLogOrmEntity {
   estado: string;
   @Column({ type: 'varchar', length: 20, nullable: true })
   serie: string;
-  @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.sunatLog)
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: EmpresaOrmEntity;
+  @Column({ type: 'int'})
+  intento: number;
+  @CreateDateColumn({
+    name: 'fecha_respuesta',
+    type: 'datetime'
+  })
+  fechaRespuesta: Date;
+  @Column({ name: "usuario_envio", type: 'varchar', length: 20, nullable: true })
+  usuarioEnvio: string;
+
+  @CreateDateColumn({
+    name: 'created_at',
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt: string;
+  
+  @CreateDateColumn({
+    name: 'updated_at',
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: string;
+
+  @ManyToOne(() => SucursalOrmEntity, (sucursal: SucursalOrmEntity) => sucursal.sunatLog)
+  @JoinColumn({ name: 'sucursal_id' })
+  sucursal: SucursalOrmEntity;
 }

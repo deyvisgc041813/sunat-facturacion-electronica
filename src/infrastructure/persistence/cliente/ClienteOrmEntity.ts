@@ -41,7 +41,7 @@ export class ClienteOrmEntity {
   estadoComtribuyente?: string;
   @Column({name: "condicion_domicilio",  type: 'varchar', length: 45 })
   condicionDomicilio?: string;
-  // Relación con Empresa
+
   @ManyToOne(() => EmpresaOrmEntity, (empresa: EmpresaOrmEntity) => empresa.clientes, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'empresa_id' })
   empresa: EmpresaOrmEntity;

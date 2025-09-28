@@ -14,6 +14,7 @@ import { CreateResumenUseCase } from './application/resumen/create/CreateResumen
 import { GetNextCorrelativoUseCase } from './application/resumen/query/GetNextCorrelativoUseCase';
 import { ResumenRepositoryImpl } from './infrastructure/persistence/resumen/resumen.repository';
 import { GetStatusResumenUseCase } from './application/resumen/query/GetStatusResumenUseCase';
+import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteRespuestaSunatOrmEntity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { GetStatusResumenUseCase } from './application/resumen/query/GetStatusRe
       EmpresaOrmEntity,
       ErrorLogOrmEntity,
       ComprobanteOrmEntity,
+      ComprobanteRespuestaSunatOrmEntity,
       SunatLogOrmEntity
     ]),
     CatalogoModule,

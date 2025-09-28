@@ -33,6 +33,10 @@ import { SunatLogRepositoryImpl } from './infrastructure/persistence/sunat-log/s
 import { SerieOrmEntity } from './infrastructure/persistence/serie/SerieOrmEntity';
 import { GetValidatedCpeUseCase } from './application/comprobante/query/GetValidatedCpeUseCase';
 import { GetStatusValidateCpeUseCase } from './application/comprobante/query/GetStatusValidateCpeUseCase';
+import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteRespuestaSunatOrmEntity';
+import { SucursalOrmEntity } from './infrastructure/persistence/sucursal/SucursalOrmEntity';
+import { SucursalRepositoryImpl } from './infrastructure/persistence/sucursal/sucursal.repository.impl';
+import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCase';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -43,7 +47,9 @@ import { GetStatusValidateCpeUseCase } from './application/comprobante/query/Get
       ErrorLogOrmEntity,
       ComprobanteOrmEntity,
       SunatLogOrmEntity,
-      TributoTasaOrmEntity
+      TributoTasaOrmEntity,
+      ComprobanteRespuestaSunatOrmEntity,
+      SucursalOrmEntity
     ]),
     CatalogoModule,
     TasaTributoModule
@@ -59,6 +65,7 @@ import { GetStatusValidateCpeUseCase } from './application/comprobante/query/Get
     ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
+    SucursalRepositoryImpl,
     SerieRepositoryImpl,
     CreateComprobanteUseCase,
     UpdateComprobanteUseCase,
@@ -71,12 +78,14 @@ import { GetStatusValidateCpeUseCase } from './application/comprobante/query/Get
     AnularComprobanteUseCase,
     FindTasaByCodeUseCase,
     GetValidatedCpeUseCase,
-    GetStatusValidateCpeUseCase
+    GetStatusValidateCpeUseCase,
+    FindCatalogosUseCase
   ],
   exports: [
     ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
+    SucursalRepositoryImpl,
     ValidarAnulacionComprobanteUseCase,
     FirmaService,
     SunatService,
@@ -84,7 +93,8 @@ import { GetStatusValidateCpeUseCase } from './application/comprobante/query/Get
     ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     SerieRepositoryImpl,
-    GetValidatedCpeUseCase
+    GetValidatedCpeUseCase,
+    FindCatalogosUseCase
   ],
 })
 export class ComprobanteModule {}

@@ -44,8 +44,8 @@ export class XmlCommonBuilder {
   // Firma digital base
   static appendSignature(root: any, dto: CreateInvoiceDto | CreateNotaDto | ISummaryDocument | ComunicacionBajaDto) {
     const signature = root.ele('cac:Signature');
-    signature.ele('cbc:ID').txt('signatureFACTURALOPERU').up();
-    signature.ele('cbc:Note').txt('FACTURALO').up();
+    signature.ele('cbc:ID').txt(dto.signatureId).up(); //'signatureFACTURALOPERU'
+    signature.ele('cbc:Note').txt(dto.signatureNote).up(); // 'FACTURALO'
     const signatory = signature.ele('cac:SignatoryParty');
     signatory
       .ele('cac:PartyIdentification')
@@ -62,7 +62,7 @@ export class XmlCommonBuilder {
     digitalAttachment
       .ele('cac:ExternalReference')
       .ele('cbc:URI')
-      .txt('#signatureFACTURALOPERU');
+      .txt(`#${dto.signatureId}`);
   }
   static addCompany(root: any, dto: CreateInvoiceDto | CreateNotaDto) {
     const supplier = root.ele('cac:AccountingSupplierParty').ele('cac:Party');
@@ -87,10 +87,11 @@ export class XmlCommonBuilder {
       dto.company?.address?.distrito,
       dto.company?.address?.direccion,
       true,
+      dto.codigoEstablecimientoSunat
     );
     const contact = supplier.ele('cac:Contact');
-    contact.ele('cbc:Telephone').txt('(051) 931091443').up(); // aqui falta  hacelro dinamico
-    contact.ele('cbc:ElectronicMail').txt('rdinersiones@gmail.com').up(); // aqui falta  hacelro dinamico
+    contact.ele('cbc:Telephone').txt(`(051)${dto.telefonoEmpresa}`).up();
+    contact.ele('cbc:ElectronicMail').txt(dto.correoEmpresa).up();
   }
   static addCustomer(root: any, dto: CreateInvoiceDto | CreateNotaDto) {
     const customer = root.ele('cac:AccountingCustomerParty').ele('cac:Party');
@@ -110,6 +111,8 @@ export class XmlCommonBuilder {
       dto.client?.address?.departamento,
       dto.client?.address?.distrito,
       dto.client?.address?.direccion,
+      false,
+      dto.codigoEstablecimientoSunat
     );
   }
   static addAddres(
@@ -120,10 +123,11 @@ export class XmlCommonBuilder {
     distrito: string,
     direccion: string,
     isSupplier: any = false,
+    codigoEstablecimientoSunat:string
   ) {
     const supAddr = supLegal.ele('cac:RegistrationAddress');
     supAddr.ele('cbc:ID').txt(ubigeo).up();
-    if (isSupplier) supAddr.ele('cbc:AddressTypeCode').txt('0000'); // validar
+    if (isSupplier) supAddr.ele('cbc:AddressTypeCode').txt(codigoEstablecimientoSunat); // validar
     supAddr.ele('cbc:CityName').txt(provincia).up();
     supAddr.ele('cbc:CountrySubentity').txt(departamento).up();
     supAddr.ele('cbc:District').txt(distrito).up();

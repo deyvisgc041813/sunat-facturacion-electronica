@@ -7,9 +7,9 @@ export class EmpresaInternaResponseDto extends EmpresaResponseDto {
   constructor(
     base: EmpresaResponseDto, // <- aquí recibes el dto base
     public claveCertificado?: string,
-    public claveUsuarioSecundario?: string
+    public claveSolSecundario?: string,
+    public certificadoDigital?: Buffer | undefined
   ) {
-    // llamas al constructor del padre con los campos comunes
     super(
       base.empresaId,
       base.ruc,
@@ -22,8 +22,7 @@ export class EmpresaInternaResponseDto extends EmpresaResponseDto {
       base.usuarioSolSecundario,
       base.modo,
       base.estado,
-      base.cliente,
-      base.productos
+      base.cliente
     );
   }
 }

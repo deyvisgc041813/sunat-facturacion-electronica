@@ -31,13 +31,13 @@ export class SerieAuditoriaRepositoryImpl implements SerieAuditoriaRepository {
     return result.map((s) => SerieAuditoriaMapper.toDomain(s));
   }
 
-  async findById(id: number): Promise<SerieAuditoriaResponseDto | null> {
+  async findById(serieId: number): Promise<SerieAuditoriaResponseDto | null> {
     const serie = await this.repo.findOne({
-      where: { serieId: id },
+      where: { serie: {serieId} },
       relations: ['serie', 'usario'],
     });
     if (!serie) {
-      throw new NotFoundException(`Log con id ${id} no encontrado`);
+      throw new NotFoundException(`Log con id ${serieId} no encontrado`);
     }
     return SerieAuditoriaMapper.toDomain(serie)
   }

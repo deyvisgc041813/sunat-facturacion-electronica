@@ -1,15 +1,14 @@
 import { ResumenBoletasOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasOrmEntity';
-import { EmpresaMapper } from './EmpresaMapper';
 import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
 import { ResumenBPDetalleMapper } from './ResumenBPDetalleMapper';
 import { CreateResumenBoletaDto } from '../resumen/interface/create.summary.interface';
-import { ResumenBoletaDetalleDto } from '../resumen/interface/create.summary.detalle.interface';
 import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
 import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/comprobante/ComprobanteOrmEntity';
+import { SucursalMapper } from './SucursalMapper';
 
 export class ResumenBPMaper {
   static toDomain(orm: ResumenBoletasOrmEntity): ResumenResponseDto {
-    const empresa = orm.empresa ? EmpresaMapper.toDomain(orm.empresa) : null;
+    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm.sucursal) : null;
     const resumenDetalle = orm.detalles
       ? orm.detalles?.map((d) => ResumenBPDetalleMapper.toDomain(d))
       : [];
@@ -29,7 +28,7 @@ export class ResumenBPMaper {
       orm.cdr,
       orm.hashResumen,
       orm.observacionSunat,
-      empresa,
+      sucursal,
       resumenDetalle,
     );
   }
@@ -58,8 +57,8 @@ export class ResumenBPMaper {
         return detalle;
       }) ?? [];
 
-    if (data.empresaId) {
-      object.empresa = { empresaId: data.empresaId } as any;
+    if (data.sucursalId) {
+      object.sucursal = { sucursalId: data.sucursalId } as any;
     }
 
     object.ticket = data.ticket;

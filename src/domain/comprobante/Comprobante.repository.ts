@@ -11,47 +11,47 @@ export interface ConprobanteRepository {
   /**
    * Retorna todos los comprobantes registrados.
    */
-  findAll(empresaId: number): Promise<ComprobanteResponseDto[]>;
+  findAll(sucursalId: number): Promise<ComprobanteResponseDto[]>;
 
   /**
    * Busca un comprobante por su ID.
    */
 
-  findByEmpresaAndId(
-    empresaId: number,
+  findById(
+    sucursalId: number,
     comprobanteIds: number[],
   ): Promise<ComprobanteResponseDto[] | null>;
 
   // 📄 XML firmado
   getXmlFirmado(
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
   ): Promise<ArchivoDescargable | null>;
 
   // 📦 ZIP enviado a SUNAT
   getZipEnviado(
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
   ): Promise<ArchivoDescargable | null>;
 
   // 📩 ZIP CDR de SUNAT
   getCdrZip(
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
   ): Promise<ArchivoDescargable | null>;
 
   // 🔑 Hash del comprobante
-  getHashCpe(comprobanteId: number, empresaId: number): Promise<string | null>;
+  getHashCpe(comprobanteId: number, sucursalId: number): Promise<string | null>;
 
   /**
    * Retorna el hash del comprobante (firmado).
    */
-  getHashCpe(comprobanteId: number, empresaId: number): Promise<string | null>;
+  getHashCpe(comprobanteId: number, sucursalId: number): Promise<string | null>;
 
   // 🔄 Un solo método de actualización flexible
   update(
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
     update: IUpdateComprobante,
   ): Promise<{ status: boolean; message: string }>;
 
@@ -60,19 +60,19 @@ export interface ConprobanteRepository {
    */
   findByEstado(
     estado: EstadoEnumComprobante,
-    empresaId: number,
+    sucursalId: number,
   ): Promise<ComprobanteResponseDto[]>;
 
   /**
-   * Obtiene todos los comprobantes de una empresa en un rango de fechas.
+   * Obtiene todos los comprobantes de una sucursal en un rango de fechas.
    */
-  findByEmpresaAndFecha(
-    empresaId: number,
+  findBySucursalAndFecha(
+    sucursalId: number,
     fechaInicio: Date,
     fechaFin: Date,
   ): Promise<ComprobanteResponseDto[]>;
-  findByEmpAndSerieAndNumCorreAceptado(
-    empresaId: number,
+  findByComprobanteAceptado(
+    sucursalId: number,
     serieId: number,
     numCorrelativo: number,
   ): Promise<ComprobanteResponseDto | null>;
@@ -80,26 +80,26 @@ export interface ConprobanteRepository {
    * Actualizar el estado de un comprobante (ej: comunicación de baja).
    */
   updateComprobanteStatus(
-    empresaId: number,
+    sucursalId: number,
     serieId: number,
     numCorrelativo: number,
     desEstado: string,
     estado: EstadoEnumComprobante,
   ): Promise<boolean>;
   updateComprobanteStatusMultiple(
-    empresaId: number,
+    sucursalId: number,
     comprobanteIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat
   );
   updateBoletaStatus(
-    empresaId: number,
+    sucursalId: number,
     boletasIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat,
   );
   findComprobanteByReferencia(
-    empresaId: number,
+    sucursalId: number,
     tipoComprobante: string,
     motivos: string[],
     estado: string,
@@ -107,13 +107,13 @@ export interface ConprobanteRepository {
     correlativoRef: number,
   ): Promise<ComprobanteResponseDto | null>;
   findBoletasForResumen(
-    empresaId: number,
+    sucursalId: number,
     serieId: number,
     fechaResumen: string,
     estados: EstadoEnumComprobante[],
   ): Promise<ComprobanteResponseDto[]>;
-  findByEmpresaAndSerieCorrelativos(
-    empresaId: number,
+  findBySerieCorrelativos(
+    sucursalId: number,
     serieCorrelativos: string[],
   ): Promise<ComprobanteResponseDto[]>
 }

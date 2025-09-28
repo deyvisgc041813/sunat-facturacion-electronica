@@ -1,6 +1,6 @@
-import { ComprobanteMapper } from './comprobante.maper';
 import { BajaComprobanteDetalleOrmEntity } from 'src/infrastructure/persistence/comunicacion-baja/BajaComprobanteDetalleOrmEntity';
 import { BajaComprobanteDetalleResponseDto } from '../comunicacion-baja/BajaComprobanteDetalleResponseDto';
+import { ComprobanteMapper } from './ComprobanteMapper';
 
 export class ComunicacionBajaDetalleMapper {
   static toDomain(  orm: BajaComprobanteDetalleOrmEntity): BajaComprobanteDetalleResponseDto {

@@ -4,7 +4,7 @@ export interface IUpdateComprobante {
   estado?: EstadoEnumComprobante;
   xmlFirmado?: string;
   hashCpe?: string | null
-  cdr?: string | null
+  cdr?: Buffer | null
   descripcionEstado?:string
   fechaUpdate?:any
 }

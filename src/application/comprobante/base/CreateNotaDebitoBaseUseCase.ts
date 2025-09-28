@@ -1,4 +1,4 @@
-import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
+
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { CreateComprobanteUseCase } from './CreateComprobanteUseCase';
@@ -11,13 +11,11 @@ import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   CodigoProductoNotaDebito,
+  CodigoSunatTasasEnum,
   LegendCodeEnum,
   MAP_TRIBUTOS,
   NotaDebitoMotivo,
   ProcesoNotaCreditoEnum,
-  TIPO_AFECTACION_EXONERADAS,
-  TIPO_AFECTACION_GRAVADAS,
-  TIPO_AFECTACION_INAFECTAS,
   TipoAumentoNotaDebito,
   TipoCatalogoEnum,
   TipoComprobanteEnum,
@@ -32,6 +30,7 @@ import {
   calcularMora,
   extraerHashCpe,
   identificarTipoAumentoNotaDebito,
+  obtenerTiposAfectacion,
   setobjectUpdateComprobante,
   sonMontosCero,
   validarNumeroDocumentoCliente,
@@ -40,7 +39,6 @@ import {
   validateLegends,
 } from 'src/util/Helpers';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
-import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
@@ -52,13 +50,17 @@ import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteRe
 import { XmlBuilderNotaDebitoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-debito.service';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
+import { FindCatalogosUseCase } from 'src/application/catalogo/FindCatalogosUseCase';
+import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
 
 export abstract class CreateNotaDebitoBaseUseCase {
   constructor(
     protected readonly xmlNDBuilder: XmlBuilderNotaDebitoService,
     protected readonly firmaService: FirmaService,
     protected readonly sunatService: SunatService,
-    protected readonly empresaRepo: EmpresaRepositoryImpl,
     protected readonly errorLogRepo: ErrorLogRepositoryImpl,
     protected readonly useCreateComprobanteCase: CreateComprobanteUseCase,
     protected readonly catalogoRepo: CatalogoRepositoryImpl,
@@ -67,31 +69,64 @@ export abstract class CreateNotaDebitoBaseUseCase {
     protected readonly findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
     protected readonly findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
+    protected readonly findCatalogosUseCase: FindCatalogosUseCase,
+    protected readonly sucurSalRepo: SucursalRepositoryImpl,
   ) {}
+  private readonly tiposCatalogos = [
+    TipoCatalogoEnum.TIPO_AFECTACION,
+    TipoCatalogoEnum.UNIDAD_MEDIDA,
+  ];
+  private readonly tasasVigentes = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.MORA.id];
+  protected abstract buildXml(
+    data: any,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
+  ): string;
 
-  protected abstract buildXml(data: any): string;
+  async execute(
+    data: CreateNotaDto,
+    empresaId: number,
+    sucursalId: number,
+  ): Promise<IResponseSunat> {
+    //const empresa = await this.validarCatalogOyObtenerCertificado(data);
+    const sucursal = await this.sucurSalRepo.findSucursalInterna(
+      empresaId,
+      sucursalId,
+    );
+    if (!sucursal) {
+      throw new BadRequestException(
+        `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
+      );
+    }
+    const empresa = await this.validarCatalogOyObtenerCertificado(
+      data,
+      sucursal,
+    );
 
-  async execute(data: CreateNotaDto): Promise<IResponseSunat> {
-    const empresa = await this.validarCatalogOyObtenerCertificado(data);
     let comprobanteId = 0;
     let xmlFirmadoError = '';
     try {
-      const tributoTasa = await this.findTasaByCodeUseCase.execute(
-        MAP_TRIBUTOS.IGV.id,
-      );
-      const tributoTasaAnualMoras = await this.findTasaByCodeUseCase.execute(
-        MAP_TRIBUTOS.MORA.id,
-      );
-      const tasaAnual = tributoTasaAnualMoras?.tasa ?? 14.64;
-      data.porcentajeIgv = !tributoTasa ? 0.18 : (tributoTasa.tasa ?? 0) / 100;
+      const catalogos =
+        (await this.findCatalogosUseCase.execute(this.tiposCatalogos)) ?? [];
+      const tiposAfectacion = obtenerTiposAfectacion(catalogos);
+      const tributosTasa =
+        (await this.findTasaByCodeUseCase.execute(this.tasasVigentes)) ?? [];
+      const tasaIgv = tributosTasa.get(CodigoSunatTasasEnum.IGV);
+      data.porcentajeIgv = tasaIgv == null ? 0.18 : tasaIgv / 100;
+      const tasaMora = tributosTasa.get(CodigoSunatTasasEnum.TASA_ANUAL_MORA);
+      const tasaAnual = tasaMora == null ? 14.64 : tasaMora;
       const comprobanteOriginal = await this.obtenerComprobanteAceptado(
         data,
-        empresa.empresaId,
+        sucursalId,
       );
       const mtoCalculados: any = await this.buildCreditNoteAmountsJson(
         data,
         comprobanteOriginal,
         tasaAnual,
+        tiposAfectacion?.tipoAfectacionGravada,
+        tiposAfectacion?.tipoAfectacionExoneradas,
+        tiposAfectacion?.tipoAfectacionInafectas,
       );
       data.mtoOperGravadas =
         mtoCalculados?.mtoOperGravadas ?? data.mtoOperGravadas;
@@ -106,17 +141,28 @@ export abstract class CreateNotaDebitoBaseUseCase {
         data.details = mtoCalculados.details;
       }
       data.legends = mtoCalculados?.legends ?? data.legends;
-      const comprobante = await this.registrarComprobante(
-        data,
-        empresa.empresaId,
-      );
+      const comprobante = await this.registrarComprobante(data, sucursalId);
       comprobanteId = comprobante.response?.comprobanteId ?? 0;
       data.correlativo = comprobante.response?.correlativo ?? data.correlativo;
+      const sucursal = await this.sucurSalRepo.findSucursalInterna(
+        empresa.empresaId,
+        sucursalId,
+      );
+      ((data.correoEmpresa = empresa.correo),
+        (data.telefonoEmpresa = empresa.telefono));
+      data.signatureId = sucursal?.signatureId ?? '';
+      data.signatureNote = sucursal?.signatureNote ?? '';
+      data.codigoEstablecimientoSunat =
+        sucursal?.codigoEstablecimientoSunat ?? '';
+
       // 2. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
         data,
         empresa.certificadoDigital,
         empresa.claveCertificado,
+        tiposAfectacion?.tipoAfectacionGravada,
+        tiposAfectacion?.tipoAfectacionExoneradas,
+        tiposAfectacion?.tipoAfectacionInafectas,
       );
       xmlFirmadoError = xmlFirmado;
       // 3. Enviar a SUNAT
@@ -128,13 +174,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
         `${fileName}.zip`,
         zipBuffer,
         usuarioSecundario,
-        claveSecundaria
+        claveSecundaria,
       );
       responseSunat.xmlFirmado = xmlFirmado;
       // 4. Actualizar comprobante con CDR, Hash y estado
       await this.actualizarComprobante(
         comprobanteId,
-        empresa.empresaId,
+        sucursalId,
         data.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado,
         responseSunat,
@@ -145,14 +191,17 @@ export abstract class CreateNotaDebitoBaseUseCase {
         error,
         data,
         comprobanteId,
-        empresa.empresaId,
+        sucursalId,
         xmlFirmadoError,
       );
       throw error;
     }
   }
 
-  private async validarCatalogOyObtenerCertificado(data: CreateNotaDto) {
+  private async validarCatalogOyObtenerCertificado(
+    data: CreateNotaDto,
+    sucursal: SucursalResponseDto,
+  ) {
     const existCatalogo = await this.catalogoRepo.obtenerDetallePorCatalogo(
       TipoCatalogoEnum.TIPO_COMPROBANTE,
       data.tipoComprobante,
@@ -162,21 +211,27 @@ export abstract class CreateNotaDebitoBaseUseCase {
         `El tipo de comprobante ${data.tipoComprobante} no se encuentra en los catálogos de SUNAT`,
       );
     }
-
-    const empresa = await this.empresaRepo.findCertificado(
-      data.company.ruc.trim(),
-    );
+    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
     if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
       throw new Error(
-        `No se encontró certificado para la empresa con RUC ${data.company.ruc}`,
+        `No se encontró certificado digital para la sucursal con RUC ${data.company.ruc}`,
       );
     }
-    return empresa;
+    const certificado = new GetCertificadoDto(
+      empresa.empresaId,
+      empresa.certificadoDigital,
+      empresa.claveCertificado ?? '',
+      empresa.usuarioSolSecundario ?? '',
+      empresa.claveSolSecundario ?? '',
+      empresa.email,
+      empresa.telefono,
+    );
+    return certificado;
   }
 
-  private async registrarComprobante(data: any, empresaId: number) {
+  private async registrarComprobante(data: any, sucursalId: number) {
     const objComprobante: ICreateComprobante = {
-      empresaId,
+      sucursalId,
       tipoComprobante: data.tipoComprobante as TipoComprobanteEnum,
       serie: data.serie,
       numeroDocumento: data.client.numDoc,
@@ -197,9 +252,17 @@ export abstract class CreateNotaDebitoBaseUseCase {
     data: any,
     certificadoDigital: any,
     claveCertificado: string,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ) {
     const passwordDecrypt = CryptoUtil.decrypt(claveCertificado);
-    const xml = this.buildXml(data);
+    const xml = this.buildXml(
+      data,
+      tipoAfectacionGravadas,
+      tipoAfectacionExoneradas,
+      tipoAfectacionInafectas,
+    );
     const xmlFirmado = await this.firmaService.firmarXml(
       xml,
       certificadoDigital,
@@ -212,13 +275,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
   private async actualizarComprobante(
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
     tipoComprobante: TipoComprobanteEnum,
     xmlFirmado: string,
     responseSunat: IResponseSunat,
   ) {
-    const cdr = responseSunat.cdr?.toString('base64') ?? null;
-    const hash = await extraerHashCpe(xmlFirmado);
+    const hash = (await extraerHashCpe(xmlFirmado)) ?? '';
     const motivo = responseSunat?.observaciones
       ? JSON.stringify(responseSunat.observaciones)
       : null;
@@ -226,14 +288,14 @@ export abstract class CreateNotaDebitoBaseUseCase {
     const objectUpdate = setobjectUpdateComprobante(
       tipoComprobante,
       xmlFirmado,
-      cdr,
+      responseSunat.cdr,
       hash,
       responseSunat.estadoSunat,
       motivo ?? '',
     );
     await this.useUpdateCaseComprobante.execute(
       comprobanteId,
-      empresaId,
+      sucursalId,
       objectUpdate,
     );
   }
@@ -242,11 +304,11 @@ export abstract class CreateNotaDebitoBaseUseCase {
     error: any,
     data: CreateNotaDto,
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
     xmlFirmado: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
+      sucursalId,
       tipo: data.tipoComprobante,
       serie: data.serie,
       correlativo: data.correlativo,
@@ -256,8 +318,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.comprobanteId = comprobanteId;
       obj.request = JSON.stringify(data);
-      obj.empresaId = empresaId;
       obj.serie = `${data.serie}-${data.correlativo}`;
+      obj.sucursalId = sucursalId;
+      ((obj.intentos = 0), // esto cambiar cuando este ok
+        (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
+      obj.fechaRespuesta = new Date();
+      obj.fechaEnvio = new Date()
       await this.sunatLogRepo.save(obj);
       // 4. Actualizar comprobante con CDR, Hash y estado
       responseSunat = {
@@ -267,7 +333,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
           EstadoEnumComprobante.RECHAZADO,
         status: false,
         observaciones: [obj.response ?? ''],
-        cdr: null,
         xmlFirmado,
       };
     } else {
@@ -278,14 +343,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
         codigoResponse: rspError.create.codigoError || 'ERR_SYSTEM',
         status: false,
         observaciones: [rspError.create.mensajeError ?? ''],
-        cdr: null,
         xmlFirmado,
       };
     }
     if (comprobanteId > 0) {
       await this.actualizarComprobante(
         comprobanteId,
-        empresaId,
+        sucursalId,
         data.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado || '',
         responseSunat,
@@ -296,6 +360,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
     data: CreateNotaDto,
     comprobante: ComprobanteResponseDto,
     tasaAnual: number,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ) {
     const esEntradaSinTotalesDev = sonMontosCero(
       data.mtoOperGravadas,
@@ -313,6 +380,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
             comprobante,
             comprobante.fechaEmision,
             tasaAnual,
+            tipoAfectacionGravadas,
+            tipoAfectacionExoneradas,
+            tipoAfectacionInafectas,
           );
         } else {
           // Modo calculado: ya se envian los montos calculados
@@ -320,39 +390,64 @@ export abstract class CreateNotaDebitoBaseUseCase {
             data,
             comprobante,
             new Date(data.fechaPago ?? new Date()),
+            tasaAnual,
+            tipoAfectacionGravadas,
+            tipoAfectacionExoneradas,
+            tipoAfectacionInafectas,
           );
         }
       case NotaDebitoMotivo.AUMENTO_VALOR:
         if (esEntradaSinTotalesDev) {
           // Modo simple: calular los montos
-          return this.generarAumentoValor(data, comprobante);
+          return this.generarAumentoValor(
+            data,
+            comprobante,
+            tipoAfectacionGravadas,
+            tipoAfectacionExoneradas,
+            tipoAfectacionInafectas,
+          );
         } else {
           // Modo calculado: ya se envian los montos calculados
           return this.validateNotaDebitoCalculadaAumentoValor(
             data,
             comprobante,
+            tipoAfectacionGravadas,
+            tipoAfectacionExoneradas,
+            tipoAfectacionInafectas,
           );
         }
       case NotaDebitoMotivo.PENALIDADES:
         if (esEntradaSinTotalesDev) {
           // Modo simple: calular los montos
-          return this.generarPenalidad(data, comprobante);
+          return this.generarPenalidad(
+            data,
+            comprobante,
+            tipoAfectacionGravadas,
+            tipoAfectacionExoneradas,
+            tipoAfectacionInafectas,
+          );
         } else {
           // Modo calculado: ya se envian los montos calculados
-          return this.validateNotaDebitoCalculadaPenalidad(data, comprobante);
+          return this.validateNotaDebitoCalculadaPenalidad(
+            data,
+            comprobante,
+            tipoAfectacionGravadas,
+            tipoAfectacionExoneradas,
+            tipoAfectacionInafectas,
+          );
         }
     }
   }
 
   async obtenerComprobanteAceptado(
     data: CreateNotaDto,
-    empresaId: number,
+    sucursalId: number,
   ): Promise<ComprobanteResponseDto> {
     const numCorrelativoRelacionado = data?.documentoRelacionado?.correlativo;
     const tipCompRelacionado = data?.documentoRelacionado?.tipoComprobante;
     const serieRelacionado = data?.documentoRelacionado?.serie;
     const serie = await this.findSerieUseCase.execute(
-      empresaId,
+      sucursalId,
       tipCompRelacionado,
       serieRelacionado,
     );
@@ -363,7 +458,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     }
     // 1. Buscar comprobante original
     const comprobante = await this.findCorrelativoUseCase.execute(
-      empresaId,
+      sucursalId,
       numCorrelativoRelacionado,
       serie?.serieId,
     );
@@ -387,6 +482,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
     comprobanteOriginal: ComprobanteResponseDto,
     fechaVencimiento: Date,
     tasaAnual: number,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ) {
     // 1. Validar cliente
     validarNumeroDocumentoCliente(
@@ -443,7 +541,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         let mtoValorVenta = montoMora;
         let mtoPrecioUnitario = montoMora;
         let porcentajeIgv = 0;
-        if (TIPO_AFECTACION_GRAVADAS.includes(baseMora.tipAfeIgv)) {
+        if (tipoAfectacionGravadas.includes(baseMora.tipAfeIgv)) {
           mtoBaseIgv = montoMora;
           igv = +(montoMora * (baseMora.porcentajeIgv / 100)).toFixed(2);
           mtoPrecioUnitario = +(
@@ -452,8 +550,8 @@ export abstract class CreateNotaDebitoBaseUseCase {
           ).toFixed(2);
           porcentajeIgv = baseMora.porcentajeIgv;
         } else if (
-          TIPO_AFECTACION_EXONERADAS.includes(baseMora.tipAfeIgv) ||
-          TIPO_AFECTACION_INAFECTAS.includes(baseMora.tipAfeIgv)
+          tipoAfectacionExoneradas.includes(baseMora.tipAfeIgv) ||
+          tipoAfectacionInafectas.includes(baseMora.tipAfeIgv)
         ) {
           mtoBaseIgv = 0;
           igv = 0;
@@ -495,7 +593,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       if (nuevo.codProducto === CodigoProductoNotaDebito.INTERES_POR_MORA)
         continue;
 
-      if (TIPO_AFECTACION_GRAVADAS.includes(nuevo.tipAfeIgv)) {
+      if (tipoAfectacionGravadas.includes(nuevo.tipAfeIgv)) {
         nuevo.mtoBaseIgv = nuevo.mtoValorUnitario * nuevo.cantidad;
         nuevo.igv = +(nuevo.mtoBaseIgv * (nuevo.porcentajeIgv / 100)).toFixed(
           2,
@@ -521,12 +619,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
      * 5. Recalcular totales globales
      */
     for (const d of detallesNotaDebito) {
-      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+      if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
         totales.mtoOperGravadas += d.mtoBaseIgv ?? 0;
         totales.mtoIGV += d.igv ?? 0;
-      } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+      } else if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
         totales.mtoOperExoneradas += d.mtoValorVenta ?? 0;
-      } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+      } else if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
         totales.mtoOperInafectas += d.mtoValorVenta ?? 0;
       }
     }
@@ -558,6 +656,10 @@ export abstract class CreateNotaDebitoBaseUseCase {
     data: CreateNotaDto,
     comprobante: ComprobanteResponseDto,
     fechaPago: Date,
+    tasaAnual: number,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ): boolean {
     const original = comprobante.payloadJson;
 
@@ -575,7 +677,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
       (original.mtoOperInafectas ?? 0);
 
     // 3. Calcular mora esperada
-    const tasaAnual = 14.64; // parametrizable
     const fechaVencimiento = new Date(original?.fechaEmision);
     const montoMora = calcularMora(
       montoPendiente,
@@ -596,13 +697,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
     let igvMora = 0;
 
     // 6. Sumar la mora en la categoría correspondiente
-    if (TIPO_AFECTACION_GRAVADAS.includes(tipAfeigv)) {
+    if (tipoAfectacionGravadas.includes(tipAfeigv)) {
       igvMora = +(montoMora * data.porcentajeIgv).toFixed(2);
       mtoOperGravadasEsperado += montoMora;
       mtoIGVEsperado += igvMora;
-    } else if (TIPO_AFECTACION_EXONERADAS.includes(tipAfeigv)) {
+    } else if (tipoAfectacionExoneradas.includes(tipAfeigv)) {
       mtoOperExoneradasEsperado += montoMora;
-    } else if (TIPO_AFECTACION_INAFECTAS.includes(tipAfeigv)) {
+    } else if (tipoAfectacionInafectas.includes(tipAfeigv)) {
       mtoOperInafectasEsperado += montoMora;
     }
 
@@ -639,7 +740,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         }
 
         // Solo validar IGV si la factura original es gravada
-        if (TIPO_AFECTACION_GRAVADAS.includes(tipAfeigv)) {
+        if (tipoAfectacionGravadas.includes(tipAfeigv)) {
           if (d.igv !== igvMora) {
             throw new BadRequestException(
               `El ítem de mora está mal calculado en IGV.   Esperado: ${igvMora}, Recibido: ${d.igv}. 
@@ -727,6 +828,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
   private generarAumentoValor(
     data: CreateNotaDto,
     comprobanteOriginal: ComprobanteResponseDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ) {
     // 1. Validar cliente
     validarNumeroDocumentoCliente(
@@ -759,10 +863,10 @@ export abstract class CreateNotaDebitoBaseUseCase {
         );
         // Cálculo de IGV a nivel de detalle
         const base = d.mtoValorUnitario ?? 0;
-        const igv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        const igv = tipoAfectacionGravadas.includes(d.tipAfeIgv)
           ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
           : 0;
-        const porcentajeIgv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        const porcentajeIgv = tipoAfectacionGravadas.includes(d.tipAfeIgv)
           ? d.porcentajeIgv
           : 0;
         const valorVenta = base;
@@ -779,12 +883,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
         };
         detallesCalculados.push(detalleCalculado);
         // Acumular totales
-        if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+        if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
           totales.mtoOperGravadas += base;
           totales.mtoIGV += igv;
-        } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+        } else if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
           totales.mtoOperExoneradas += valorVenta;
-        } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+        } else if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
           totales.mtoOperInafectas += valorVenta;
         }
       }
@@ -802,12 +906,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
         // Cálculo igual que en global
         const base = d.mtoValorUnitario ?? 0;
-        const igv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        const igv = tipoAfectacionGravadas.includes(d.tipAfeIgv)
           ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
           : 0;
         const valorVenta = base;
         const precioUnitario = base + igv;
-        const porcentajeIgv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+        const porcentajeIgv = tipoAfectacionGravadas.includes(d.tipAfeIgv)
           ? d.porcentajeIgv
           : 0;
         const detalleCalculado: DetailDto = {
@@ -822,12 +926,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
         detallesCalculados.push(detalleCalculado);
 
         // Acumular totales
-        if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+        if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
           totales.mtoOperGravadas += base;
           totales.mtoIGV += igv;
-        } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+        } else if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
           totales.mtoOperExoneradas += valorVenta;
-        } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+        } else if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
           totales.mtoOperInafectas += valorVenta;
         }
       }
@@ -858,6 +962,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
   private validateNotaDebitoCalculadaAumentoValor(
     data: CreateNotaDto,
     comprobanteOriginal: ComprobanteResponseDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ): boolean {
     // 1. Validar cliente
     validarNumeroDocumentoCliente(
@@ -949,7 +1056,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     // 3. Validar detalles
     for (const d of data.details) {
       const base = d.mtoBaseIgv ?? 0;
-      const igvEsperado = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+      const igvEsperado = tipoAfectacionGravadas.includes(d.tipAfeIgv)
         ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
         : 0;
       // 4. Validar escenario: por ítem vs global
@@ -975,7 +1082,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         );
       }
       // 3.1 Validar IGV según tipo de afectación
-      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+      if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
         if (igvEsperado !== d.igv) {
           throw new BadRequestException(
             `El IGV del item ${d.codProducto} no es correcto. Esperado ${igvEsperado}, recibido ${d.igv}. 
@@ -1017,7 +1124,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       }
 
       // 3.2 Validar coherencia entre detalle y cabecera
-      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+      if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
         if (
           (data.mtoOperExoneradas ?? 0) > 0 ||
           (data.mtoOperInafectas ?? 0) > 0
@@ -1028,7 +1135,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         }
       }
 
-      if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+      if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
         if (
           (data.mtoOperGravadas ?? 0) > 0 ||
           (data.mtoOperInafectas ?? 0) > 0
@@ -1039,7 +1146,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         }
       }
 
-      if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+      if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
         if (
           (data.mtoOperGravadas ?? 0) > 0 ||
           (data.mtoOperExoneradas ?? 0) > 0
@@ -1075,12 +1182,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
     let totalIgv = 0;
 
     for (const d of data.details) {
-      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+      if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
         totalGravadas += d.mtoBaseIgv ?? 0;
         totalIgv += d.igv ?? 0;
-      } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+      } else if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
         totalExoneradas += d.mtoValorVenta ?? 0;
-      } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+      } else if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
         totalInafectas += d.mtoValorVenta ?? 0;
       }
     }
@@ -1137,6 +1244,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
   private generarPenalidad(
     data: CreateNotaDto, // datos de entrada (mensaje simple)
     comprobanteOriginal: ComprobanteResponseDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ): {
     mtoOperGravadas: number;
     mtoOperExoneradas: number;
@@ -1167,14 +1277,20 @@ export abstract class CreateNotaDebitoBaseUseCase {
         NotaDebitoMotivo.PENALIDADES,
         d.codProducto,
       );
-      this.validarTipoAfectacionPenalidad(comprobanteOriginal, d.tipAfeIgv);
+      this.validarTipoAfectacionPenalidad(
+        comprobanteOriginal,
+        d.tipAfeIgv,
+        tipoAfectacionGravadas,
+        tipoAfectacionExoneradas,
+        tipoAfectacionInafectas,
+      );
       const base = d.mtoValorUnitario ?? 0;
 
       // IGV solo si está en afectación gravada
-      const igv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+      const igv = tipoAfectacionGravadas.includes(d.tipAfeIgv)
         ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
         : 0;
-      const porcentajeIgv = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+      const porcentajeIgv = tipoAfectacionGravadas.includes(d.tipAfeIgv)
         ? d.porcentajeIgv
         : 0;
       const valorVenta = base;
@@ -1193,12 +1309,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
       detallesCalculados.push(detalleCalculado);
 
       // Acumular totales
-      if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+      if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
         totales.mtoOperGravadas += base;
         totales.mtoIGV += igv;
-      } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+      } else if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
         totales.mtoOperExoneradas += valorVenta;
-      } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+      } else if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
         totales.mtoOperInafectas += valorVenta;
       }
     }
@@ -1231,6 +1347,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
   private validateNotaDebitoCalculadaPenalidad(
     data: CreateNotaDto,
     comprobanteOriginal: ComprobanteResponseDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ): boolean {
     // 1. Validar cliente
     validarNumeroDocumentoCliente(
@@ -1253,10 +1372,16 @@ export abstract class CreateNotaDebitoBaseUseCase {
       NotaDebitoMotivo.PENALIDADES,
       d.codProducto,
     );
-    this.validarTipoAfectacionPenalidad(comprobanteOriginal, d.tipAfeIgv);
+    this.validarTipoAfectacionPenalidad(
+      comprobanteOriginal,
+      d.tipAfeIgv,
+      tipoAfectacionGravadas,
+      tipoAfectacionExoneradas,
+      tipoAfectacionInafectas,
+    );
 
     // 3.1 Validar coherencia tipAfeIgv vs montos
-    if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
       if (d.mtoBaseIgv !== 0) {
         throw new BadRequestException(
           `El item ${d.codProducto} es exonerado (afectación ${d.tipAfeIgv}), por lo tanto mtoBaseIgv debe ser 0, recibido ${d.mtoBaseIgv}.
@@ -1277,7 +1402,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       }
     }
 
-    if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
       if (d.mtoBaseIgv !== 0) {
         throw new BadRequestException(
           `El item ${d.codProducto} es inafecto (afectación ${d.tipAfeIgv}), por lo tanto mtoBaseIgv debe ser 0, recibido ${d.mtoBaseIgv}.
@@ -1302,7 +1427,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
     // 6. Validar cálculos del detalle
     const base = d.mtoValorUnitario ?? 0;
-    const igvEsperado = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
+    const igvEsperado = tipoAfectacionGravadas.includes(d.tipAfeIgv)
       ? +(base * (d.porcentajeIgv / 100)).toFixed(2)
       : 0;
 
@@ -1340,7 +1465,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     }
 
     // 7. Validar cabecera vs detalle
-    if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
       if (data.mtoOperGravadas !== d.mtoBaseIgv) {
         throw new BadRequestException(
           `El monto gravado en cabecera (${data.mtoOperGravadas}) no coincide con el detalle (${d.mtoBaseIgv}).
@@ -1348,7 +1473,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         );
       }
     }
-    if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
       if (data.mtoOperExoneradas !== d.mtoValorVenta) {
         throw new BadRequestException(
           `El monto exonerado en cabecera (${data.mtoOperExoneradas}) no coincide con el detalle (${d.mtoValorVenta}).
@@ -1356,7 +1481,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         );
       }
     }
-    if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
       if (data.mtoOperInafectas !== d.mtoValorVenta) {
         throw new BadRequestException(
           `El monto inafecto en cabecera (${data.mtoOperInafectas}) no coincide con el detalle (${d.mtoValorVenta}).
@@ -1366,7 +1491,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     }
 
     // Validar que la cabecera corresponda al tipo de afectación
-    if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
       if (data.mtoOperExoneradas !== 0 || data.mtoOperInafectas !== 0) {
         throw new BadRequestException(
           `Si la ND es gravada, no puede tener montos en Exoneradas ni Inafectas.`,
@@ -1374,7 +1499,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       }
     }
 
-    if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionExoneradas.includes(d.tipAfeIgv)) {
       if (data.mtoOperGravadas !== 0 || data.mtoOperInafectas !== 0) {
         throw new BadRequestException(
           `Si la ND es exonerada, no puede tener montos en Gravadas ni Inafectas.`,
@@ -1382,7 +1507,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       }
     }
 
-    if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
+    if (tipoAfectacionInafectas.includes(d.tipAfeIgv)) {
       if (data.mtoOperGravadas !== 0 || data.mtoOperExoneradas !== 0) {
         throw new BadRequestException(
           `Si la ND es inafecta, no puede tener montos en Gravadas ni Exoneradas.`,
@@ -1420,6 +1545,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
   private validarTipoAfectacionPenalidad(
     comprobanteOriginal: ComprobanteResponseDto,
     tipoAfecIgv: number,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
   ) {
     // 4. Determinar afectación tributaria de la factura original a nivel de detalle
     const tiposAfectacionFactura = new Set(
@@ -1427,13 +1555,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
     );
 
     const esFacturaGravada = [...tiposAfectacionFactura].every((t: any) =>
-      TIPO_AFECTACION_GRAVADAS.includes(t),
+      tipoAfectacionGravadas.includes(t),
     );
     const esFacturaExonerada = [...tiposAfectacionFactura].every((t: any) =>
-      TIPO_AFECTACION_EXONERADAS.includes(t),
+      tipoAfectacionExoneradas.includes(t),
     );
     const esFacturaInafecta = [...tiposAfectacionFactura].every((t: any) =>
-      TIPO_AFECTACION_INAFECTAS.includes(t),
+      tipoAfectacionInafectas.includes(t),
     );
 
     if (!(esFacturaGravada || esFacturaExonerada || esFacturaInafecta)) {
@@ -1443,20 +1571,17 @@ export abstract class CreateNotaDebitoBaseUseCase {
       );
     }
     // 5. Validar que la ND herede el régimen de la factura
-    if (esFacturaGravada && !TIPO_AFECTACION_GRAVADAS.includes(tipoAfecIgv)) {
+    if (esFacturaGravada && !tipoAfectacionGravadas.includes(tipoAfecIgv)) {
       throw new BadRequestException(
         `La factura original es gravada, pero la ND de penalidad se envió con afectación distinta (${tipoAfecIgv}). Debe ser gravada (ej. 10).`,
       );
     }
-    if (
-      esFacturaExonerada &&
-      !TIPO_AFECTACION_EXONERADAS.includes(tipoAfecIgv)
-    ) {
+    if (esFacturaExonerada && !tipoAfectacionExoneradas.includes(tipoAfecIgv)) {
       throw new BadRequestException(
         `La factura original es exonerada, pero la ND de penalidad se envió con afectación distinta (${tipoAfecIgv}). Debe ser exonerada (20).`,
       );
     }
-    if (esFacturaInafecta && !TIPO_AFECTACION_INAFECTAS.includes(tipoAfecIgv)) {
+    if (esFacturaInafecta && !tipoAfectacionInafectas.includes(tipoAfecIgv)) {
       throw new BadRequestException(
         `La factura original es inafecta, pero la ND de penalidad se envió con afectación distinta (${tipoAfecIgv}). Debe ser inafecta (30–36).`,
       );

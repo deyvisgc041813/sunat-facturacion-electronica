@@ -1,4 +1,3 @@
-import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { CreateComprobanteUseCase } from './CreateComprobanteUseCase';
@@ -27,45 +26,70 @@ import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 import { ICatalogoRepository } from 'src/domain/catalogo/interface/catalogo.repository';
 import { ITributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.repository';
+import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
+import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 
 export abstract class CreateInvoiceBaseUseCase {
   constructor(
     protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService,
     protected readonly firmaService: FirmaService,
     protected readonly sunatService: SunatService,
-    protected readonly empresaRepo: EmpresaRepositoryImpl,
+    protected readonly sucurSalRepo: SucursalRepositoryImpl,
     protected readonly errorLogRepo: ErrorLogRepositoryImpl,
     protected readonly useCreateComprobanteCase: CreateComprobanteUseCase,
     protected readonly catalogoRepo: ICatalogoRepository,
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
-    protected readonly tributoRepo: ITributoTasaRepository
+    protected readonly tributoRepo: ITributoTasaRepository,
   ) {}
 
   protected abstract buildXml(data: CreateInvoiceDto): string;
 
-  async execute(data: CreateInvoiceDto): Promise<IResponseSunat> {
-    const empresa = await this.validarCatalogOyObtenerCertificado(data);
+  async execute(
+    data: CreateInvoiceDto,
+    empresaId: number,
+    surcursalId: number,
+  ): Promise<IResponseSunat> {
+    const sucursal = await this.sucurSalRepo.findSucursalInterna(
+      empresaId,
+      surcursalId,
+    );
+    if (!sucursal) {
+      throw new BadRequestException(
+        `No se encontró ninguna sucursal asociada al identificador proporcionado (${surcursalId}). Verifique que el ID sea correcto.`,
+      );
+    }
+    const empresa = await this.validarCatalogOyObtenerCertificado(
+      data,
+      sucursal
+    );
 
     // Centralizamos las variables necesarias para manejar errores
     const contextoError = {
       comprobanteId: 0,
-      empresaId: empresa.empresaId,
+      sucursalId: 0,
       xmlFirmado: '',
       data,
     };
 
     try {
-      const tiposCatalogos = [TipoCatalogoEnum.UNIDAD_MEDIDA, TipoCatalogoEnum.TIPO_AFECTACION,]
-      const tasasTributos = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.ICBPER.id]
-      const catologo =  (await this.catalogoRepo.obtenertipoCatalogo(tiposCatalogos)) ?? [];
-      const tasas = await this.tributoRepo.findByCodigosSunat(tasasTributos) ?? [] 
+      const tiposCatalogos = [
+        TipoCatalogoEnum.UNIDAD_MEDIDA,
+        TipoCatalogoEnum.TIPO_AFECTACION,
+      ];
+      const tasasTributos = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.ICBPER.id];
+      const catologo =
+        (await this.catalogoRepo.obtenertipoCatalogo(tiposCatalogos)) ?? [];
+      const tasas =
+        (await this.tributoRepo.findByCodigosSunat(tasasTributos)) ?? [];
       // 1. Validar item de la factura
       ComprobantesHelper.validarDetallesCliente(data);
       const errores = ComprobantesHelper.validarDetalleInvoice(
         data.details,
         catologo,
-        tasas
+        tasas,
       );
       if (errores.length > 0) {
         throw new BadRequestException({
@@ -74,17 +98,21 @@ export abstract class CreateInvoiceBaseUseCase {
           errors: errores,
         });
       }
+
       // 2. Recalcular montos
       const invoice = ComprobantesHelper.recalcularMontos(data);
 
       // 3. Registrar comprobante en BD
-      const comprobante = await this.registrarComprobante(
-        invoice,
-        empresa.empresaId,
-      );
+      const comprobante = await this.registrarComprobante(invoice, surcursalId);
       contextoError.comprobanteId = comprobante.response?.comprobanteId ?? 0;
       invoice.correlativo = comprobante.response?.correlativo ?? 0;
-
+      // esto tambien agregar en nota de credito y debito , resumens y bajas
+      ((invoice.correoEmpresa = empresa.correo),
+        (invoice.telefonoEmpresa = empresa.telefono));
+      invoice.signatureId = sucursal?.signatureId ?? '';
+      invoice.signatureNote = sucursal?.signatureNote ?? '';
+      invoice.codigoEstablecimientoSunat =
+        sucursal?.codigoEstablecimientoSunat ?? '';
       // 4. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
         invoice,
@@ -92,6 +120,7 @@ export abstract class CreateInvoiceBaseUseCase {
         empresa.claveCertificado,
       );
       contextoError.xmlFirmado = xmlFirmado;
+      contextoError.sucursalId = surcursalId
       const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt(
         empresa.claveSolSecundario ?? '',
@@ -109,7 +138,7 @@ export abstract class CreateInvoiceBaseUseCase {
       // 6. Actualizar comprobante con CDR, Hash y estado
       await this.actualizarComprobante(
         contextoError.comprobanteId,
-        empresa.empresaId,
+        surcursalId,
         invoice.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado,
         responseSunat,
@@ -121,14 +150,17 @@ export abstract class CreateInvoiceBaseUseCase {
         error,
         contextoError.data,
         contextoError.comprobanteId,
-        contextoError.empresaId,
+        contextoError.sucursalId,
         contextoError.xmlFirmado,
       );
       throw error;
     }
   }
 
-  private async validarCatalogOyObtenerCertificado(data: CreateInvoiceDto) {
+  private async validarCatalogOyObtenerCertificado(
+    data: CreateInvoiceDto,
+    sucursal: SucursalResponseDto,
+  ) {
     const existCatalogo = await this.catalogoRepo.obtenerDetallePorCatalogo(
       TipoCatalogoEnum.TIPO_COMPROBANTE,
       data.tipoComprobante,
@@ -138,24 +170,30 @@ export abstract class CreateInvoiceBaseUseCase {
         `El tipo de comprobante ${data.tipoComprobante} no se encuentra en los catálogos de SUNAT`,
       );
     }
-
-    const empresa = await this.empresaRepo.findCertificado(
-      data.company.ruc.trim(),
-    );
+    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
     if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
       throw new Error(
-        `No se encontró certificado para la empresa con RUC ${data.company.ruc}`,
+        `No se encontró certificado digital para la sucursal con RUC ${data.company.ruc}`,
       );
     }
-    return empresa;
+    const certificado = new GetCertificadoDto(
+      empresa.empresaId,
+      empresa.certificadoDigital,
+      empresa.claveCertificado ?? '',
+      empresa.usuarioSolSecundario ?? '',
+      empresa.claveSolSecundario ?? '',
+      empresa.email,
+      empresa.telefono,
+    );
+    return certificado;
   }
 
   private async registrarComprobante(
     data: CreateInvoiceDto,
-    empresaId: number,
+    sucursalId: number,
   ) {
     const objComprobante: ICreateComprobante = {
-      empresaId,
+      sucursalId,
       tipoComprobante: data.tipoComprobante as TipoComprobanteEnum,
       serie: data.serie,
       numeroDocumento: data.client.numDoc,
@@ -168,6 +206,7 @@ export abstract class CreateInvoiceBaseUseCase {
       totalIgv: data.mtoIGV ?? 0,
       mtoImpVenta: data.mtoImpVenta ?? 0,
       payloadJson: JSON.stringify(data),
+      mtoIcbper: data.icbper
     };
     return this.useCreateComprobanteCase.execute(objComprobante, data);
   }
@@ -191,27 +230,28 @@ export abstract class CreateInvoiceBaseUseCase {
 
   private async actualizarComprobante(
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
     tipoComprobante: TipoComprobanteEnum,
     xmlFirmado: string,
     responseSunat: IResponseSunat,
   ) {
-    const cdr = responseSunat.cdr?.toString('base64') ?? null;
-    const hash = await extraerHashCpe(xmlFirmado);
+    //const cdr = responseSunat.cdr?.toString('base64') ?? null;
+    const hash = (await extraerHashCpe(xmlFirmado)) ?? '';
     const motivo = responseSunat?.observaciones
       ? JSON.stringify(responseSunat.observaciones)
       : null;
     const objectUpdate = setobjectUpdateComprobante(
       tipoComprobante,
       xmlFirmado,
-      cdr,
+      responseSunat.cdr,
       hash,
       responseSunat.estadoSunat,
       motivo ?? '',
     );
+
     await this.useUpdateCaseComprobante.execute(
       comprobanteId,
-      empresaId,
+      sucursalId,
       objectUpdate,
     );
   }
@@ -220,22 +260,27 @@ export abstract class CreateInvoiceBaseUseCase {
     error: any,
     data: CreateInvoiceDto,
     comprobanteId: number,
-    empresaId: number,
+    sucursalId: number,
     xmlFirmado: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
+      sucursalId,
       tipo: data.tipoComprobante,
       serie: data.serie,
       correlativo: data.correlativo,
     });
     let responseSunat: IResponseSunat;
+    console.log(sucursalId)
     if (rspError.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError.create as CreateSunatLogDto;
       obj.comprobanteId = comprobanteId;
       obj.request = JSON.stringify(data);
-      obj.empresaId = empresaId;
+      obj.sucursalId = sucursalId;
       obj.serie = `${data.serie}-${data.correlativo}`;
+      obj.intentos = 0;
+      obj.usuarioEnvio = 'DEYVISGC'
+      obj.fechaRespuesta = new Date();
+      obj.fechaEnvio = new Date()
       await this.sunatLogRepo.save(obj);
       responseSunat = {
         mensaje: obj.response || 'Error SUNAT',
@@ -244,7 +289,6 @@ export abstract class CreateInvoiceBaseUseCase {
           EstadoEnumComprobante.RECHAZADO,
         status: false,
         observaciones: [obj.response ?? ''],
-        cdr: null,
         xmlFirmado,
       };
     } else {
@@ -254,7 +298,6 @@ export abstract class CreateInvoiceBaseUseCase {
         codigoResponse: rspError.create.codigoError || 'ERR_SYSTEM',
         status: false,
         observaciones: [rspError.create.mensajeError ?? ''],
-        cdr: null,
         xmlFirmado,
       };
     }
@@ -262,7 +305,7 @@ export abstract class CreateInvoiceBaseUseCase {
     if (comprobanteId > 0) {
       await this.actualizarComprobante(
         comprobanteId,
-        empresaId,
+        sucursalId,
         data.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado || '',
         responseSunat,

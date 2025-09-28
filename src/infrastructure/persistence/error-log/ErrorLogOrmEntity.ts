@@ -10,9 +10,6 @@ export class ErrorLogOrmEntity {
   @PrimaryGeneratedColumn({ name: "id", type: 'bigint' })
   errorId: number; // identificador único
 
-  @Column({ name: "empresa_id", type: 'bigint' })
-  empresaId: number; // id interno de la empresa en tu sistema
-
   @Column({ name: "tipo_comprobante", type: 'varchar', length: 2 })
   tipoComprobante: string; // 01 factura, 03 boleta, etc.
 

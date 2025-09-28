@@ -14,6 +14,11 @@ export class ComprobanteBaseDto {
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   @IsIn(['2.1'], { message: 'La versión UBL debe ser 2.1' })
   ublVersion: string;
+  @IsString({ message: 'El CustomizationID debe ser un texto' })
+  @IsNotEmpty({ message: 'El CustomizationID es obligatorio' })
+  @IsIn(['2.0'], { message: 'El CustomizationID debe ser 2.0' })
+  customizationID: string;
+
   @IsString({ message: 'El tipo de operación debe ser un texto' })
   @IsNotEmpty({ message: 'El tipo de operación es obligatorio' })
   @IsIn(['0101', '0200', '0301'], {
@@ -33,7 +38,6 @@ export class ComprobanteBaseDto {
   @IsNotEmpty({ message: 'La serie es obligatoria' })
   @IsSerieValida('tipoComprobante')
   serie: string;
-
 
   @IsISO8601(
     {},

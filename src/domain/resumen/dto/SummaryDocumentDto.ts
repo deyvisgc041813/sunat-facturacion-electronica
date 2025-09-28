@@ -4,6 +4,7 @@ import {
   ValidateNested,
   IsOptional,
   Matches,
+  IsNotEmptyObject,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CompanyDto } from '../../comprobante/dto/base/CompanyDto';
@@ -32,7 +33,7 @@ export class SummaryDocumentDto {
       'La fecha de referencia debe tener el formato: YYYY-MM-DDTHH:mm:ss o YYYY-MM-DDTHH:mm:ss±HH:mm (ejemplo: 2025-09-11T14:26:13 o 2025-09-11T14:26:13-05:00)',
   })
   fecReferencia: string;
-
+  @IsNotEmptyObject({}, { message: 'El nodo empresa es obligatorio' })
   @ValidateNested({ message: 'La empresa emisora es obligatoria' })
   @Type(() => CompanyDto)
   company: CompanyDto;

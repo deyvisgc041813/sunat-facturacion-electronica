@@ -1,4 +1,4 @@
-import { EmpresaResponseDto } from '../empresa/dto/EmpresaResponseDto';
+import { SucursalResponseDto } from '../sucursal/dto/SucursalResponseDto';
 import { BajaComprobanteDetalleResponseDto } from './BajaComprobanteDetalleResponseDto';
 
 export class BajaComprobanteResponseDto {
@@ -19,7 +19,7 @@ export class BajaComprobanteResponseDto {
     public mensajeSunat?: string,
     public observacionSunat?: string,
     // Relaciones
-    public empresa?: EmpresaResponseDto | null,
+    public sucursal?: SucursalResponseDto | null,
     public detalles?: BajaComprobanteDetalleResponseDto[] | null,
   ) {}
 }

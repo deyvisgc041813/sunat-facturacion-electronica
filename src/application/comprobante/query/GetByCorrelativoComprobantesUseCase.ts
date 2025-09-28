@@ -7,7 +7,7 @@ import { ComprobanteRepositoryImpl } from "src/infrastructure/persistence/compro
 export class GetByCorrelativoComprobantesUseCase {
   constructor(private readonly comprobante: ComprobanteRepositoryImpl) {}
 
-  async execute(empresaId: number, numCorrelativo: number, serieId: number): Promise<ComprobanteResponseDto | null> {
-    return this.comprobante.findByEmpAndSerieAndNumCorreAceptado(empresaId, numCorrelativo, serieId);
+  async execute(sucursalId: number, numCorrelativo: number, serieId: number): Promise<ComprobanteResponseDto | null> {
+    return this.comprobante.findByComprobanteAceptado(sucursalId, numCorrelativo, serieId);
   }
 }

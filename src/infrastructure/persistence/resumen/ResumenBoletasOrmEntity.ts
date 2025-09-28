@@ -7,18 +7,24 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ResumenBoletasDetalleOrmEntity } from './ResumenBoletasDetalleOrmEntity';
-import { EmpresaOrmEntity } from 'src/infrastructure/persistence/empresa/EmpresaOrmEntity';
-import { SunatLogOrmEntity } from '../sunat-log/SunatLogOrmEntity';
+import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
 
 @Entity({ name: 'resumen_boletas' })
 export class ResumenBoletasOrmEntity {
   @PrimaryGeneratedColumn({ name: 'res_bol_id' })
   resBolId: number;
 
-  @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.resumenes)
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: EmpresaOrmEntity;
-
+  @ManyToOne(() => SucursalOrmEntity, (sucursal: SucursalOrmEntity) => sucursal.resumenes)
+  @JoinColumn({ name: 'sucursal_id' })
+  sucursal: SucursalOrmEntity;
+  @OneToMany(
+    () => ResumenBoletasDetalleOrmEntity,
+    (detalle) => detalle.resumen,
+    {
+      cascade: true,
+    },
+  )
+  detalles: ResumenBoletasDetalleOrmEntity[];
   @Column({ name: 'fecha_generacion', type: 'date' })
   fechaGeneracion: Date;
 
@@ -64,14 +70,7 @@ export class ResumenBoletasOrmEntity {
   resumenId: string;
   @Column({ name: 'observaciones_sunat', type: 'longtext', nullable: true })
   observacionSunat?: string;
-  @OneToMany(
-    () => ResumenBoletasDetalleOrmEntity,
-    (detalle) => detalle.resumen,
-    {
-      cascade: true,
-    },
-  )
-  detalles: ResumenBoletasDetalleOrmEntity[];
+
 
   // @OneToMany(
   //   () => SunatLogOrmEntity,

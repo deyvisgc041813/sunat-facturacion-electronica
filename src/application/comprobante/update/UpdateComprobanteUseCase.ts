@@ -6,9 +6,9 @@ import { ComprobanteRepositoryImpl } from "src/infrastructure/persistence/compro
 export class UpdateComprobanteUseCase {
   constructor(private readonly comprobanteRepo: ComprobanteRepositoryImpl) {}
 
-  async execute(comprobanteId: number, empresaId:number, data: IUpdateComprobante): Promise<{ status: boolean; message: string }> {
+  async execute(comprobanteId: number, sucursalId:number, data: IUpdateComprobante): Promise<{ status: boolean; message: string }> {
     data.fechaUpdate = dayjs().toDate();
-    await this.comprobanteRepo.update(comprobanteId, empresaId, data);
+    await this.comprobanteRepo.update(comprobanteId, sucursalId, data);
     return {
       status: true,
       message: `Comprobante ${comprobanteId} actualizado correctamente`,

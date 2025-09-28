@@ -16,11 +16,17 @@ import { MotivoNotaDto } from './MotivoNotaDto';
 import { DescuentoGlobales } from './DescuentoGlobales';
 
 export class CreateNotaDto extends ComprobanteBaseDto {
-
+  @IsNotEmptyObject(
+    {},
+    { message: 'El nodo cliente es obligatorio y no puede estar vacío' },
+  )
   @ValidateNested({ message: 'Los datos del cliente no son válidos' })
   @Type(() => ClienteDto)
   client: ClienteDto;
-
+  @IsNotEmptyObject(
+    {},
+    { message: 'El nodo empresa es obligatorio y no puede estar vacío' },
+  )
   @ValidateNested({ message: 'Los datos de la empresa no son válidos' })
   @Type(() => CompanyDto)
   company: CompanyDto;
@@ -68,4 +74,15 @@ export class CreateNotaDto extends ComprobanteBaseDto {
   legends: LegendDto[];
   @IsOptional()
   porcentajeIgv: number; // solo se usara a nivel de backend
+
+  @IsOptional()
+  telefonoEmpresa:string
+  @IsOptional()
+  correoEmpresa:string
+  @IsOptional()
+  signatureId:string
+  @IsOptional()
+  signatureNote:string
+  @IsOptional()
+  codigoEstablecimientoSunat:string
 }

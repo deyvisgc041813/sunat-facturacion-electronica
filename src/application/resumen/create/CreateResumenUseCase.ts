@@ -3,7 +3,6 @@ import { ZipUtil } from 'src/util/ZipUtil';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { SummaryDocumentDto } from 'src/domain/resumen/dto/SummaryDocumentDto';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
-import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { XmlBuilderResumenService } from 'src/infrastructure/sunat/xml/xml-builder-resumen.service';
 import { IResumenRepository } from 'src/domain/resumen/interface/resumen.repository.interface';
@@ -23,48 +22,68 @@ import {
   getFechaHoyYYYYMMDD,
 } from 'src/util/Helpers';
 import { CreateResumenBoletaDto } from 'src/domain/resumen/interface/create.summary.interface';
-import { EstadoComunicacionEnvioSunat, EstadoEnumComprobante, EstadoEnvioSunat } from 'src/util/estado.enum';
+import {
+  EstadoComunicacionEnvioSunat,
+  EstadoEnumComprobante,
+  EstadoEnvioSunat,
+} from 'src/util/estado.enum';
 import { ResumenBoletaDetalleDto } from 'src/domain/resumen/interface/create.summary.detalle.interface';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
+import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { BadRequestException } from '@nestjs/common';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 
 export class CreateResumenUseCase {
   constructor(
     private readonly xmlBuilderResumenBpService: XmlBuilderResumenService,
     private readonly firmaService: FirmaService,
     private readonly sunatService: SunatService,
-    private readonly empresaRepo: EmpresaRepository,
     protected readonly sunatLogRepo: SunatLogRepository,
     private readonly resumenRepo: IResumenRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
     private readonly serieRepo: SerieRepository,
+    private readonly sucursalRepo: ISucursalRepository,
   ) {}
 
-  async execute(data: SummaryDocumentDto): Promise<{
+  async execute(
+    data: SummaryDocumentDto,
+    empresaId: number,
+    sucursalId: number,
+  ): Promise<{
     status: boolean;
     message: string;
     xmlFirmado: string;
     ticket: string;
   }> {
-    const respCert = await this.empresaRepo.findCertificado(
-      data?.company?.ruc.trim(),
+    const sucursal = await this.sucursalRepo.findSucursalInterna(
+      empresaId,
+      sucursalId,
     );
-
-    if (!respCert?.certificadoDigital || !respCert?.claveCertificado) {
+    if (!sucursal) {
+      throw new BadRequestException(
+        `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
+      );
+    }
+    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
+    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
       throw new Error(
-        `No se encontró certificado o clave para la empresa con RUC ${data.company.ruc}`,
+        `No se encontró certificado digital para la sucursal con RUC ${data.company.ruc}`,
       );
     }
 
-    const empresaId = respCert.empresaId ?? 0;
     const fechaEnvio: Date = getFechaHoraActualLima();
     const fechaEnvioResumen = getFechaHoyYYYYMMDD();
     // 1. Obtener correlativo y boletas
-    const resumen = await this.obtenerResumenId(empresaId, fechaEnvioResumen, data.serieResumen);
+    const resumen = await this.obtenerResumenId(
+      sucursalId,
+      fechaEnvioResumen,
+      data.serieResumen,
+    );
 
     const boletas = await this.obtenerBoletasPendientes(
-      empresaId,
+      sucursalId,
       data.serie ?? 'B001',
       data.fecReferencia,
     );
@@ -88,15 +107,17 @@ export class CreateResumenUseCase {
       fecReferencia: new Date(data.fecReferencia),
       company: data.company,
       documentos,
+      signatureId: sucursal?.signatureId ?? '',
+      signatureNote: sucursal?.signatureNote ?? '',
     };
 
     // 3. Firmar XML
     const xml =
       this.xmlBuilderResumenBpService.buildResumenBoletas(objectSummary);
-    const passwordDecript = CryptoUtil.decrypt(respCert.claveCertificado);
+    const passwordDecript = CryptoUtil.decrypt(empresa.claveCertificado);
     const xmlFirmado = await this.firmaService.firmarXml(
       xml,
-      respCert.certificadoDigital,
+      empresa.certificadoDigital,
       passwordDecript,
     );
 
@@ -105,7 +126,7 @@ export class CreateResumenUseCase {
       objectSummary.company.ruc,
       fechaEnvioResumen,
       resumen.correlativo,
-      data.serieResumen
+      data.serieResumen,
     );
     const zipBuffer = await ZipUtil.createZip(fileName, xmlFirmado);
 
@@ -118,7 +139,7 @@ export class CreateResumenUseCase {
       }),
     );
     const resumenEntity: CreateResumenBoletaDto = {
-      empresaId,
+      sucursalId,
       correlativo: resumen.correlativo,
       estado: EstadoEnvioSunat.PENDIENTE,
       fechaGeneracion: new Date(fechaEnvio),
@@ -131,20 +152,26 @@ export class CreateResumenUseCase {
       detalle,
     };
     const resumenBd = await this.resumenRepo.save(resumenEntity);
-    await this.serieRepo.actualizarCorrelativo(resumen?.serieId, resumen?.correlativo)
+    await this.serieRepo.actualizarCorrelativo(
+      sucursalId,
+      resumen?.serieId,
+      resumen?.correlativo,
+    );
     try {
       // 6. Enviar a SUNAT
-      const usuarioSecundario = respCert?.usuarioSolSecundario ?? ""
-      const claveSecundaria = CryptoUtil.decrypt(respCert.claveSolSecundario ?? "");
+      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(
+        empresa.claveSolSecundario ?? '',
+      );
       const ticket = await this.sunatService.sendSummary(
         `${fileName}.zip`,
         zipBuffer,
         usuarioSecundario,
-        claveSecundaria
+        claveSecundaria,
       );
 
       // 7. Actualizar resumen a ENVIADO
-      await this.resumenRepo.update(resumen?.resumenId, empresaId, {
+      await this.resumenRepo.update(resumen?.resumenId, sucursalId, {
         estado: EstadoEnvioSunat.ENVIADO,
         ticket,
       });
@@ -152,7 +179,7 @@ export class CreateResumenUseCase {
       // 8. Actualizar boletas
       const boletasIds = detalle.map((d) => d.comprobanteId);
       await this.comprobanteRepo.updateBoletaStatus(
-        empresaId,
+        sucursalId,
         boletasIds,
         EstadoEnumComprobante.ENVIADO,
         EstadoComunicacionEnvioSunat.ENVIADO,
@@ -165,18 +192,17 @@ export class CreateResumenUseCase {
       };
     } catch (error: any) {
       // 9. Actualizar resumen con error
-      await this.resumenRepo.update(resumen.resumenId, empresaId, {
+      await this.resumenRepo.update(resumen.resumenId, sucursalId, {
         estado: EstadoEnvioSunat.ERROR,
       });
       await this.procesarErrorResumen(
         error,
         resumenBd.data ?? 0,
-        empresaId,
+        sucursalId,
         resumen.resumenId,
         xmlFirmado,
-        data.serie ?? ""
+        data.serie ?? '',
       );
-      //await this.logErrorSunat(error, empresaId);
       throw error;
     }
   }
@@ -184,19 +210,19 @@ export class CreateResumenUseCase {
   // 🔹 Helpers privados
 
   private async obtenerBoletasPendientes(
-    empresaId: number,
+    sucursalId: number,
     serie: string,
     fechaReferencia: string,
   ) {
-    const rspSerie = await this.serieRepo.findByEmpresaAndTipCompAndSerie(
-      empresaId,
+    const rspSerie = await this.serieRepo.findBySucursalTipCompSerie(
+      sucursalId,
       TipoComprobanteEnum.BOLETA,
       serie,
     );
     const serieId = rspSerie?.serieId ?? 0;
 
     return this.comprobanteRepo.findBoletasForResumen(
-      empresaId,
+      sucursalId,
       serieId,
       fechaReferencia,
       [EstadoEnumComprobante.PENDIENTE, EstadoEnumComprobante.ANULADO],
@@ -244,43 +270,51 @@ export class CreateResumenUseCase {
     ruc: string,
     fecReferencia: string,
     correlativo: number,
-    serie:string
+    serie: string,
   ) {
     return `${ruc}-${serie}-${fecReferencia}-${correlativo}`;
   }
 
   private async obtenerResumenId(
-    empresaId: number,
+    sucursalId: number,
     fecResumen: string,
-    serie:string,
-  ): Promise<{resumenId: string, correlativo:number, serieId:number}> {
-    const rsp = await this.serieRepo.getNextCorrelativo(empresaId, TipoComprobanteEnum.RESUMEN_DIARIO, serie);
+    serie: string,
+  ): Promise<{ resumenId: string; correlativo: number; serieId: number }> {
+    const rsp = await this.serieRepo.getNextCorrelativo(
+      sucursalId,
+      TipoComprobanteEnum.RESUMEN_DIARIO,
+      serie,
+    );
     return {
       resumenId: `${serie}-${fecResumen}-${rsp.correlativo}`,
       correlativo: rsp.correlativo,
-      serieId: rsp.serieId
+      serieId: rsp.serieId,
     };
   }
   private async procesarErrorResumen(
     error: any,
     resumendIdBd: number,
-    empresaId: number,
+    sucursalId: number,
     resumenId: string,
     xmlFirmado: string,
-    serie:string,
+    serie: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
+      sucursalId,
       tipo: serie, // Resumen
       serie: resumenId,
     });
 
     if (rspError.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError.create as CreateSunatLogDto;
-      //obj.resumenId = resumendIdBd;
+      obj.resumenId = resumendIdBd;
       obj.request = xmlFirmado;
-      obj.empresaId = empresaId;
       obj.serie = resumenId;
+      obj.sucursalId = sucursalId;
+      ((obj.intentos = 0), // esto cambiar cuando este ok
+        (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
+      obj.fechaRespuesta = new Date();
+      obj.fechaEnvio = new Date()
       await this.sunatLogRepo.save(obj);
     }
   }

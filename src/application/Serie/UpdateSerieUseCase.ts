@@ -5,9 +5,9 @@ import { SerieRepository } from "src/domain/series/Serie.repository";
 
 export class UpdateSerieUseCase {
   constructor(private readonly serieRepo: SerieRepository) {}
-  async execute(data: UpdateSerieDto, serieId: number): Promise<{status: boolean, message: string, data?: SerieResponseDto}> {
-    const empresa = await this.serieRepo.findById(serieId);
-    if (!empresa) throw new NotFoundException('Serie no encontrada');
-    return this.serieRepo.update(data, serieId);
+  async execute(data: UpdateSerieDto, sucursalId:number, serieId: number): Promise<{status: boolean, message: string, data?: SerieResponseDto}> {
+    const serie = await this.serieRepo.findById(sucursalId, serieId);
+    if (!serie) throw new NotFoundException('Serie no encontrada');
+    return this.serieRepo.update(sucursalId, data, serieId);
   }
 }

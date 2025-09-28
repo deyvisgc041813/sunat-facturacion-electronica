@@ -6,6 +6,7 @@ import {
   TIPO_AFECTACION_GRAVADAS,
   TIPO_AFECTACION_INAFECTAS,
   TipoAumentoNotaDebito,
+  TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
   TipoDocumentoLetras,
@@ -31,6 +32,7 @@ export type TipoNotaDebito = 'GLOBAL' | 'ITEM' | 'INVALIDO';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -180,7 +182,7 @@ export function mapResponseCodeToEstado(
   } else {
     estado = EstadoEnumComprobante.PENDIENTE; // cualquier otro caso no mapeado
   }
-  
+
   return {
     estado,
     codigo: responseCode,
@@ -217,8 +219,8 @@ export async function extraerHashCpe(
 export function setobjectUpdateComprobante(
   tipoComprobante: TipoComprobanteEnum,
   xmlFirmado: string,
-  cdr: string | null,
-  hashCpe: string | null,
+  cdr: Buffer | null | undefined,
+  hashCpe: string,
   estado: EstadoEnumComprobante,
   descripcionEstado: string,
 ): IUpdateComprobante {
@@ -515,4 +517,31 @@ export function mapSunatToEstado(codigo: string): EstadoEnvioSunat {
 }
 export function formatDateToDDMMYYYY(date: Date | string): string {
   return dayjs(date).tz('America/Lima').format('DD/MM/YYYY');
+}
+export function obtenerTiposAfectacion(catalogos: ResponseCatalogoTipoDTO[]): {
+  tipoAfectacionGravada: number[];
+  tipoAfectacionExoneradas: number[];
+  tipoAfectacionInafectas: number[];
+} {
+  // tomar detalles del catálogo TIPO_AFECTACION
+  const detalles = catalogos
+    .filter((c) => c.codigoCatalogo === TipoCatalogoEnum.TIPO_AFECTACION)
+    .flatMap((c) => c.catalogoDetalle);
+
+  // helper interno para no repetir código
+  const extraerCodigos = (tipo: string): number[] =>
+    detalles
+      .filter((d) => d.tipoAfectacion?.toUpperCase() === tipo)
+      .map((d) => parseInt(d.codigo, 10));
+  return {
+    tipoAfectacionGravada: extraerCodigos('GRAVADA'),
+    tipoAfectacionExoneradas: extraerCodigos('EXONERADA'),
+    tipoAfectacionInafectas: extraerCodigos('INAFECTA'),
+  };
+}
+export function obtenerCatalogoPorCodigo(
+  catalogos: ResponseCatalogoTipoDTO[],
+  codigo: TipoCatalogoEnum
+): ResponseCatalogoTipoDTO | undefined {
+  return catalogos.find((c) => c.codigoCatalogo === codigo);
 }

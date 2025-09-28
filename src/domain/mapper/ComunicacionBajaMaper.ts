@@ -1,14 +1,14 @@
-import { EmpresaMapper } from './EmpresaMapper';
 import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/comprobante/ComprobanteOrmEntity';
 import { BajaComprobanteResponseDto } from '../comunicacion-baja/ComunicacionBajaResponseDto';
 import { BajaComprobanteOrmEntity } from 'src/infrastructure/persistence/comunicacion-baja/BajaComprobanteOrmEntity';
 import { ComunicacionBajaDetalleMapper } from './ComunicacionBajaDetalleMapper';
 import { BajaComprobanteDetalleOrmEntity } from 'src/infrastructure/persistence/comunicacion-baja/BajaComprobanteDetalleOrmEntity';
 import { CreateComunicacionBajaDto } from '../comunicacion-baja/interface/create.comunicacion.interface';
+import { SucursalMapper } from './SucursalMapper';
 
 export class ComunicacionBajaMaper {
   static toDomain(orm: BajaComprobanteOrmEntity): BajaComprobanteResponseDto {
-    const empresa = orm.empresa ? EmpresaMapper.toDomain(orm.empresa) : null;
+    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm.sucursal) : null;
     const bajaDetalle = orm.detalles  ? orm.detalles?.map((d) => ComunicacionBajaDetalleMapper.toDomain(d)) : [];
     return new BajaComprobanteResponseDto(
       orm.bajaComprobanteId,
@@ -26,7 +26,7 @@ export class ComunicacionBajaMaper {
       orm.codResPuestaSunat,
       orm.mensajeSunat,
       orm.observacionSunat,
-      empresa,
+      sucursal,
       bajaDetalle
     );
   }
@@ -52,8 +52,8 @@ private static assignCommon(
       detalle.motivo = d.motivo;
       return detalle;
     }) ?? [];
-    if (data.empresaId) {
-      object.empresa = { empresaId: data.empresaId } as any;
+    if (data.sucursalId) {
+      object.sucursal = { sucursalId: data.sucursalId } as any;
     }
     return object;
   }

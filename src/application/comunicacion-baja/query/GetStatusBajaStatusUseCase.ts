@@ -1,12 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
-import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import { BajaComprobanteResponseDto } from 'src/domain/comunicacion-baja/ComunicacionBajaResponseDto';
 import { IComunicacionBajaRepository } from 'src/domain/comunicacion-baja/interface/baja.repository.interface';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
-import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
@@ -31,11 +30,34 @@ export class GetStatusBajaStatusUseCase {
     private readonly bajaRepo: IComunicacionBajaRepository,
     private readonly sunatLogRepo: SunatLogRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
-    private readonly empresaRepo: EmpresaRepository,
+    private readonly sucurSalRepo: ISucursalRepository,
   ) {}
 
-  async execute(empresaId: number, ticket: string): Promise<IResponseSunat> {
-    const baja = await this.bajaRepo.findByEmpresaAndTicket(empresaId, ticket);
+  async execute(
+    empresaId: number,
+    sucursalId: number,
+    ticket: string,
+  ): Promise<IResponseSunat> {
+    const sucursal = await this.sucurSalRepo.findSucursalInterna(
+      empresaId,
+      sucursalId,
+    );
+    if (!sucursal) {
+      throw new BadRequestException(
+        `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
+      );
+    }
+    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
+    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
+      throw new Error(
+        `No se encontró certificado digital para la sucursal con RUC ${empresa?.ruc}`,
+      );
+    }
+    const baja = await this.bajaRepo.findBySucursalAndTicket(
+      sucursalId,
+      ticket,
+    );
+
     try {
       if (!baja) {
         throw new BadRequestException(
@@ -43,18 +65,9 @@ export class GetStatusBajaStatusUseCase {
         );
       }
       await this.validarEstadoFinalBaja(baja);
-      const empresa = (await this.empresaRepo.findById(
-        empresaId,
-        true,
-      )) as EmpresaInternaResponseDto;
-      if (!empresa) {
-        throw new BadRequestException(
-          'No se ha encontrado una empresa asociada al identificador obtenido del token de autenticación.',
-        );
-      }
       const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt(
-        empresa.claveUsuarioSecundario ?? '',
+        empresa.claveSolSecundario ?? '',
       );
       const result = await this.sunatService.getStatus(
         ticket,
@@ -64,7 +77,7 @@ export class GetStatusBajaStatusUseCase {
 
       // 2. Actualizar estado en la BD según respuesta
 
-      await this.bajaRepo.updateByEmpresaAndTicket(empresaId, ticket, {
+      await this.bajaRepo.updateBySucursalAndTicket(sucursalId, ticket, {
         estado: mapSunatToEstado(result.codigoResponse ?? ''),
         codResPuestaSunat: result.codigoResponse,
         cdr: result.cdr,
@@ -81,7 +94,7 @@ export class GetStatusBajaStatusUseCase {
         .filter((id): id is number => id !== undefined);
 
       await this.comprobanteRepo.updateComprobanteStatusMultiple(
-        empresaId,
+        sucursalId,
         comprobantesIds,
         EstadoEnumComprobante.ANULADO,
         EstadoComunicacionEnvioSunat.ACEPTADO_PROCESADO,
@@ -92,14 +105,14 @@ export class GetStatusBajaStatusUseCase {
       // 9. Actualizar resumen con error
       if (baja) {
         if (!estadosFinales.has(baja.estado as EstadoEnvioSunat)) {
-          await this.bajaRepo.update(baja?.serie, empresaId, {
+          await this.bajaRepo.update(baja?.serie, sucursalId, {
             estado: EstadoEnvioSunat.ERROR,
           });
         }
-        await this.procesarErrorResumen(
+        await this.procesarErrorBaja(
           error,
           0,
-          empresaId ?? 0,
+          sucursalId ?? 0,
           baja?.serie,
           baja.xml ?? '',
         );
@@ -107,26 +120,30 @@ export class GetStatusBajaStatusUseCase {
       throw error;
     }
   }
-  private async procesarErrorResumen(
+  private async procesarErrorBaja(
     error: any,
-    resumendIdBd: number,
-    empresaId: number,
+    bajaId: number,
+    sucursalId: number,
     serie: string,
     xmlFirmado: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
-      tipo: 'RA', // Resumen
+      sucursalId,
+      tipo: 'RA', // BAJA
       serie,
     });
 
     if (rspError.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError.create as CreateSunatLogDto;
       obj.codigoResSunat = JSON.parse(obj.response ?? '')?.code;
-      obj.resumenId = resumendIdBd;
-      obj.empresaId = empresaId;
+      //obj.bajaId = bajaId;
       obj.serie = serie;
       obj.request = xmlFirmado;
+      obj.sucursalId = sucursalId;
+      ((obj.intentos = 0), // esto cambiar cuando este ok
+        (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
+      obj.fechaRespuesta = new Date();
+      obj.fechaEnvio = new Date()
       await this.sunatLogRepo.save(obj);
     }
   }

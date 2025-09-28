@@ -1,7 +1,7 @@
 import { IComunicacionBajaDetalle } from "./baja.detalle.interface";
 
 export interface CreateComunicacionBajaDto {
-  empresaId: number;                 // Empresa emisora
+  sucursalId: number;                 // sucursal emisora
   fechaGeneracion: Date;             // Fecha en que se genera la comunicación de baja
   fecReferencia: Date;               // Fecha de los comprobantes a dar de baja
   correlativo: number;               // Número correlativo del RA

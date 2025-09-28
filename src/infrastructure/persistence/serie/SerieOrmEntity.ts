@@ -1,16 +1,13 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany, CreateDateColumn, UpdateDateColumn } from 'typeorm';
-import { EmpresaOrmEntity } from '../../persistence/empresa/EmpresaOrmEntity';
 import { ComprobanteOrmEntity } from '../../persistence/comprobante/ComprobanteOrmEntity';
 import { SerieAuditoriaOrmEntity } from '../serie-log/SerieAuditoriaOrmEntity';
+import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
 
-@Entity('series')
+@Entity('series_comprobantes')
 export class SerieOrmEntity {
-  @PrimaryGeneratedColumn({ name: 'serie_id' })
+  @PrimaryGeneratedColumn({ name: 'serie_comprobante_id' })
   serieId: number;
-
-  @Column({ name: 'empresa_id' })
-  empresaId: number;
 
   @Column({ name: "tipo_comprobante", type: 'varchar', length: 2 })
   tipoComprobante: string;
@@ -28,10 +25,10 @@ export class SerieOrmEntity {
   fechaCreacion: Date;
   @UpdateDateColumn({ name: "fecha_actualizacion",  type: 'timestamp' })
   fechaActualizacion: Date;
-  // Relación con Empresa
-  @ManyToOne(() => EmpresaOrmEntity, (empresa: EmpresaOrmEntity) => empresa.clientes, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: EmpresaOrmEntity;
+
+  @ManyToOne(() => SucursalOrmEntity, (sucursal: SucursalOrmEntity) => sucursal.series, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'sucursal_id' })
+  sucursal: SucursalOrmEntity;
   @OneToMany(() => SerieAuditoriaOrmEntity, (auditoria: SerieAuditoriaOrmEntity) => auditoria.serie)
   auditorias: SerieAuditoriaOrmEntity[];
   @OneToMany(() => ComprobanteOrmEntity, (comprobante: ComprobanteOrmEntity) => comprobante.serie)

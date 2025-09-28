@@ -10,7 +10,7 @@ export interface ITributoTasaRepository {
     message: string;
     data?: TributoTasaResponseDto;
   }>;
-  findAll(empresaId: number): Promise<TributoTasaResponseDto[]>;
+  findAll(tasaId: number): Promise<TributoTasaResponseDto[]>;
   findByCodigoSunat(
     codigoSunat: string
   ): Promise<TributoTasaResponseDto | null>;

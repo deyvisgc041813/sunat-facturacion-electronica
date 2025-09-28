@@ -1,8 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
-import {
-  CpeDto,
-} from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
+import { CpeDto } from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
@@ -26,15 +24,15 @@ export class GetValidatedCdrUseCase {
     this.password = process.env.SUNAT_PASSWORD || 'moddatos'; // pruebas
   }
 
-  async execute(data: CpeDto, empresaId: number): Promise<any> {
+  async execute(data: CpeDto, sucursalId: number): Promise<any> {
     //IResponseSunat
     try {
       // 1 validacion de comprobantes
-       // const usuario = '20600887735SOROVECA'
-    // const passwrod = 'ambitinbe'
-     //const resultado = await this.sunatService.getStatusCdr(data);
+      // const usuario = '20600887735SOROVECA'
+      // const passwrod = 'ambitinbe'
+      //const resultado = await this.sunatService.getStatusCdr(data);
 
-     return "";
+      return '';
       //const rspValidateComp = await this.validarYConsultar(data, empresaId);
       ///const limit = pLimit(5); // máximo 5 consultas en paralelo
 
@@ -54,7 +52,7 @@ export class GetValidatedCdrUseCase {
       //const resultados = await Promise.all(tareas);
       //return resultados;
 
-      return ""
+      return '';
     } catch (error: any) {
       throw error;
     }
@@ -62,12 +60,12 @@ export class GetValidatedCdrUseCase {
   private async procesarErrorResumen(
     error: any,
     resumendIdBd: number,
-    empresaId: number,
+    sucursalId: number,
     serie: string,
     xmlFirmado: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
-      empresaId,
+      sucursalId,
       tipo: 'RC', // Resumen
       serie,
     });
@@ -76,14 +74,17 @@ export class GetValidatedCdrUseCase {
       const obj = rspError.create as CreateSunatLogDto;
       obj.codigoResSunat = JSON.parse(obj.response ?? '')?.code;
       obj.resumenId = resumendIdBd;
-      obj.empresaId = empresaId;
       obj.serie = serie;
       obj.request = xmlFirmado;
+      obj.sucursalId = sucursalId;
+      ((obj.intentos = 0), // esto cambiar cuando este ok
+        (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
+      obj.fechaRespuesta = new Date();
+
       await this.sunatLogRepo.save(obj);
     }
   }
   private async validarYConsultar(dto: CpeDto, empresaId: number) {
-    
     // 1. Validar que todos sean del mismo tipo
     // const tipos = new Set(dto.cpes.map((c) => c.tipo));
     // if (tipos.size > 1) {
@@ -91,20 +92,16 @@ export class GetValidatedCdrUseCase {
     //     'Todos los comprobantes deben ser del mismo tipo (ej. solo facturas o solo boletas).',
     //   );
     // }
-
     // // 2. Armamos el array de serieNumero desde el DTO
     // const seriesCorrelativos = dto.cpes.map((dt: CpeDto) => dt.serieNumero);
-
     // // 3. Consultamos en la BD los comprobantes que existen
     // const comprobantes =
     //   await this.comprobanteRepo.findByEmpresaAndSerieCorrelativos(
     //     empresaId,
     //     seriesCorrelativos,
     //   );
-
     // // Pasamos a un Set para búsqueda rápida
     // const existentesSet = new Set(comprobantes.map((c) => c.serieCorrelativo));
-
     // // 4. Construimos el array final con estado
     // const resultados: CpeValidadoDto[] = dto.cpes.map((cpe) => ({
     //   ...cpe,
@@ -113,7 +110,6 @@ export class GetValidatedCdrUseCase {
     //     ? 'Comprobante válido en el sistema'
     //     : 'Este comprobante no existe en el sistema',
     // }));
-
     // // 5. Devolvemos la respuesta consolidada
     // return {
     //   success: true,

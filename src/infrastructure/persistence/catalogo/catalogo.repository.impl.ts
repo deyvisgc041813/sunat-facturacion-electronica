@@ -16,7 +16,7 @@ export class CatalogoRepositoryImpl implements ICatalogoRepository {
     private readonly detalleRepo: Repository<CatalogoDetalleOrmEnity>,
   ) {}
   save(
-    empresa: any,
+    catalogo: any,
   ): Promise<{ status: boolean; message: string; data?: any }> {
     throw new Error('Method not implemented.');
   }

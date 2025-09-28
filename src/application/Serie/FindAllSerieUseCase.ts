@@ -4,7 +4,7 @@ import { SerieRepository } from "src/domain/series/Serie.repository";
 export class FindAllSerieUseCase {
   constructor(private readonly serieRepo: SerieRepository) {}
 
-  async execute(): Promise<SerieResponseDto[]> {
-    return this.serieRepo.findAll();
+  async execute(sucursalId:number): Promise<SerieResponseDto[]> {
+    return this.serieRepo.findAll(sucursalId);
   }
 }

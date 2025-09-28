@@ -7,9 +7,6 @@ import { UsuariosOrmEntity } from '../usuario/UsuariosOrmEntity';
 export class SerieAuditoriaOrmEntity {
   @PrimaryGeneratedColumn({ name: 'id' })
   serieAuditoriaId: number;
-  
-  @Column({ name: 'serie_id' })
-  serieId: number;
   @Column({ name: 'usuario_id' })
   usuarioId: number;
   @Column({ name: "correlativo_anterior" })
@@ -21,7 +18,7 @@ export class SerieAuditoriaOrmEntity {
   @Column({ name: "fecha_cambio", type: 'datetime', default: () => 'CURRENT_TIMESTAMP' })
   fechaCambio: Date;
   @ManyToOne(() => SerieOrmEntity, (serie: SerieOrmEntity) => serie.auditorias)
-  @JoinColumn({ name: 'serie_id' })
+  @JoinColumn({ name: 'serie_comprobante_id' })
   serie: SerieOrmEntity;
 
   @ManyToOne(() => UsuariosOrmEntity, (usuario) => usuario.auditorias)

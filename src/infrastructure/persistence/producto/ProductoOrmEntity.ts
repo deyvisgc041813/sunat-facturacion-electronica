@@ -1,14 +1,11 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { EmpresaOrmEntity } from '../../persistence/empresa/EmpresaOrmEntity';
+import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
 
 @Entity('productos')
 export class ProductoOrmEntity {
   @PrimaryGeneratedColumn({ name: 'producto_id' })
   productoId: number;
-
-  @Column({ name: 'empresa_id' })
-  empresaId: number;
 
   @Column({ name: "codigo", type: 'varchar', length: 10 })
   codigo: string;
@@ -28,8 +25,7 @@ export class ProductoOrmEntity {
   @Column({ name: "estado", type: 'tinyint', default: 1 })
   estado: number;
 
-  // Relación con Empresa
-  @ManyToOne(() => EmpresaOrmEntity, (empresa: EmpresaOrmEntity) => empresa.productos, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'empresa_id' })
-  empresa: EmpresaOrmEntity;
+  @ManyToOne(() => SucursalOrmEntity, (sucursal: SucursalOrmEntity) => sucursal.productos, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'sucursal_id' })
+  sucursal: SucursalOrmEntity;
 }

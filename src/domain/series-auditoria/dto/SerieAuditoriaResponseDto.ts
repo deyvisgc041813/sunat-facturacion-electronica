@@ -4,7 +4,6 @@ export class SerieAuditoriaResponseDto {
  
   constructor(
     public readonly serieAuditoriaId: number,
-    public readonly serieId: number,
     public readonly usuarioId: number,
     public readonly correlativoAnterior: number,
     public readonly correlativoNuevo: number,

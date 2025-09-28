@@ -4,7 +4,9 @@ export class GetCertificadoDto {
     public readonly certificadoDigital : Buffer,
     public readonly claveCertificado: string,
     public readonly usuarioSolSecundario: string,
-    public readonly claveSolSecundario: string
+    public readonly claveSolSecundario: string,
+    public readonly correo: string,
+    public readonly telefono: string
   ) {}
 
 }

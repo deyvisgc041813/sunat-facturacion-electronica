@@ -15,6 +15,7 @@ import { TasaTributoModule } from './tasa-tributo.module';
 import { ResumenBoletasModule } from './resumen-boletas.module';
 import { ComunicacionBajaModule } from './comunicacion-baja.module';
 import { ExportarModule } from './exportar.module';
+import { SucursalModule } from './sucursal.module';
 
 @Module({
   imports: [
@@ -40,7 +41,8 @@ import { ExportarModule } from './exportar.module';
    TasaTributoModule,
    ResumenBoletasModule,
    ComunicacionBajaModule,
-   ExportarModule
+   ExportarModule,
+   SucursalModule
   ],
   
   controllers: [AppController],

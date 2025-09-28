@@ -1,6 +1,4 @@
-
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
-import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { CreateComprobanteUseCase } from '../base/CreateComprobanteUseCase';
@@ -15,13 +13,14 @@ import { CreateNotaDebitoBaseUseCase } from '../base/CreateNotaDebitoBaseUseCase
 import { XmlBuilderNotaDebitoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-debito.service';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
+import { FindCatalogosUseCase } from 'src/application/catalogo/FindCatalogosUseCase';
+import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
 @Injectable()
 export class CreateNotaDebitoUseCase extends CreateNotaDebitoBaseUseCase {
   constructor(
     xmlNDBuilder: XmlBuilderNotaDebitoService,
     firmaService: FirmaService,
     sunatService: SunatService,
-    empresaRepo: EmpresaRepositoryImpl,
     errorLogRepo: ErrorLogRepositoryImpl,
     useCreateCaseComprobante: CreateComprobanteUseCase,
     catalogoRepo: CatalogoRepositoryImpl,
@@ -29,13 +28,32 @@ export class CreateNotaDebitoUseCase extends CreateNotaDebitoBaseUseCase {
     sunatLogRepo: SunatLogRepositoryImpl,
     findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
     findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
-    findTasaByCodeUseCase : FindTasaByCodeUseCase
+    findTasaByCodeUseCase: FindTasaByCodeUseCase,
+    findCatalogosUseCase: FindCatalogosUseCase,
+    protected readonly sucurSalRepo: SucursalRepositoryImpl,
   ) {
-    super(xmlNDBuilder, firmaService, sunatService, empresaRepo, errorLogRepo, 
-      useCreateCaseComprobante, catalogoRepo, useUpdateCaseComprobante,
-      sunatLogRepo, findSerieUseCase, findCorrelativoUseCase, findTasaByCodeUseCase);
+    super(
+      xmlNDBuilder,
+      firmaService,
+      sunatService,
+      errorLogRepo,
+      useCreateCaseComprobante,
+      catalogoRepo,
+      useUpdateCaseComprobante,
+      sunatLogRepo,
+      findSerieUseCase,
+      findCorrelativoUseCase,
+      findTasaByCodeUseCase,
+      findCatalogosUseCase,
+      sucurSalRepo,
+    );
   }
-  protected buildXml(data: CreateNotaDto): string {
-    return this.xmlNDBuilder.buildXml(data);
+  protected buildXml(
+    data: CreateNotaDto,
+    tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[],
+    tipoAfectacionInafectas: number[],
+  ): string {
+    return this.xmlNDBuilder.buildXml(data, tipoAfectacionGravadas, tipoAfectacionExoneradas, tipoAfectacionInafectas);
   }
 }

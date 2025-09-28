@@ -183,7 +183,7 @@ function validarFacturaBoleta(comprobante: any): void {
 
   if (!comprobante.company?.ruc) {
     throw new BadRequestException(
-      'La empresa emisora debe tener un RUC válido.',
+      'La sucursal emisora debe tener un RUC válido.',
     );
   }
 

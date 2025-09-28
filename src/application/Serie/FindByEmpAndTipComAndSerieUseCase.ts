@@ -4,7 +4,7 @@ import { SerieRepositoryImpl } from "src/infrastructure/persistence/serie/serie.
 @Injectable()
 export class FindByEmpAndTipComAndSerieUseCase {
   constructor(private readonly serieRepo: SerieRepositoryImpl) {}
-  async execute(empresaId: number, tipoComprobante: string, serie: string): Promise<SerieResponseDto | null> {
-    return this.serieRepo.findByEmpresaAndTipCompAndSerie(empresaId, tipoComprobante, serie);
+  async execute(sucursalId: number, tipoComprobante: string, serie: string): Promise<SerieResponseDto | null> {
+    return this.serieRepo.findBySucursalTipCompSerie(sucursalId, tipoComprobante, serie);
   }
 }
