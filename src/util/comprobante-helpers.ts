@@ -30,8 +30,7 @@ export class ComprobantesHelper {
       const valorVenta = item.cantidad * item.mtoValorUnitario; // sin redondeo aún
       const baseIgv = valorVenta;
 
-      const igv = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)
-        ? valorVenta * (item.porcentajeIgv / 100) // full precision
+      const igv = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)  ? valorVenta * (item.porcentajeIgv / 100) // full precision
         : 0;
       // calcular icbper si viene definido en el ítem
       const icbper = item.icbper ? item.icbper * item.cantidad : 0;
@@ -51,10 +50,8 @@ export class ComprobantesHelper {
     // acumular totales con los valores originales (sin redondeo)
     data.details.forEach((item) => {
       const valorVentaRaw = item.cantidad * item.mtoValorUnitario;
-      const igvRaw = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)
-        ? valorVentaRaw * (item.porcentajeIgv / 100)
-        : 0;
-
+      const igvRaw = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv) ? valorVentaRaw * (item.porcentajeIgv / 100)
+        : 0;  
       subTotal += valorVentaRaw;
       totalIGV += igvRaw;
       totalICBPER += item.icbper; // acumular ICBPER
@@ -78,7 +75,7 @@ export class ComprobantesHelper {
     // importe bruto y final
 
     const mtoImpVentaBruto = subTotal + totalIGV + totalICBPER; // aquí puede tener 4 decimales
-
+    //const mtoImpVentaBruto = subTotal + totalIGV;
     data.mtoImpVenta = this.round(mtoImpVentaBruto, 2);
     // leyenda en letras (ejemplo)
     data.legends = generateLegends(data.mtoImpVenta);

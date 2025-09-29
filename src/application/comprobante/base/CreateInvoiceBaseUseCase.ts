@@ -101,7 +101,6 @@ export abstract class CreateInvoiceBaseUseCase {
 
       // 2. Recalcular montos
       const invoice = ComprobantesHelper.recalcularMontos(data);
-
       // 3. Registrar comprobante en BD
       const comprobante = await this.registrarComprobante(invoice, surcursalId);
       contextoError.comprobanteId = comprobante.response?.comprobanteId ?? 0;
@@ -270,7 +269,6 @@ export abstract class CreateInvoiceBaseUseCase {
       correlativo: data.correlativo,
     });
     let responseSunat: IResponseSunat;
-    console.log(sucursalId)
     if (rspError.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError.create as CreateSunatLogDto;
       obj.comprobanteId = comprobanteId;

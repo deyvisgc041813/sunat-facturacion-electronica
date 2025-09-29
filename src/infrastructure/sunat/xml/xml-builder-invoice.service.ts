@@ -98,7 +98,7 @@ export class XmlBuilderInvoiceService {
       .txt(mtoOperacion.toFixed(2))
       .up()
       .ele('cbc:TaxInclusiveAmount', { currencyID: dto.tipoMoneda })
-      .txt((mtoOperacion + (dto.mtoIGV ?? 0)).toFixed(2))
+      .txt((dto.mtoImpVenta ?? 0).toFixed(2))
       .up()
       .ele('cbc:PayableAmount', { currencyID: dto.tipoMoneda })
       .txt((dto.mtoImpVenta ?? 0).toFixed(2));
@@ -174,7 +174,7 @@ export class XmlBuilderInvoiceService {
             String(d.tipAfeIgv),
             dto.tipoMoneda,
             MAP_TRIBUTOS.ICBPER,
-            { baseUnit: d.unidad, qty: d.cantidad, perUnit: d.icbper },
+            { baseUnit: d.unidad, qty: d.cantidad, perUnit: d.mtoPrecioUnitario },
           );
         }
       } else {
@@ -253,14 +253,16 @@ export class XmlBuilderInvoiceService {
     root: any,
     totalesPorTributo: any,
     tipoMoneda: string,
-    mtoIgv: any,
+    mtoIgv: number,
   ) {
     const taxTotal = root.ele('cac:TaxTotal');
+    const taxtoTal:any = Object.values(totalesPorTributo)
+    .reduce((acc: number, dd: any) => acc + (+dd.tax), 0);
     taxTotal
       .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
-      .txt(mtoIgv.toFixed(2))
+      .txt(taxtoTal.toFixed(2))
       .up();
-
+    console.log(totalesPorTributo)  
     const subtotales = Object.values(totalesPorTributo) as Array<{
       taxable: number;
       tax: number;
@@ -283,9 +285,9 @@ export class XmlBuilderInvoiceService {
         .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
         .txt(tax.toFixed(2))
         .up();
-
+        
       const taxCat = taxSub.ele('cac:TaxCategory');
-      taxCat.ele('cbc:Percent').txt(mtoIgv.toFixed(2)).up();
+      taxCat.ele('cbc:Percent').txt(18.00.toFixed(2)).up();
       taxCat.ele('cbc:TaxExemptionReasonCode').txt(info.taxTypeCode).up();
       const taxScheme = taxCat.ele('cac:TaxScheme');
       taxScheme.ele('cbc:ID').txt(info.id).up();
@@ -326,7 +328,8 @@ export class XmlBuilderInvoiceService {
     }
     const cat = sub.ele('cac:TaxCategory');
     cat.ele('cbc:Percent').txt(percent.toFixed(2)).up();
-    cat.ele('cbc:TaxExemptionReasonCode').txt(reasonCode).up();
+    const reasonCodeFinal = MAP_TRIBUTOS.ICBPER.id == scheme.id ? "9996" : reasonCode 
+    cat.ele('cbc:TaxExemptionReasonCode').txt(reasonCodeFinal).up();
     const schemeNode = cat.ele('cac:TaxScheme');
     schemeNode.ele('cbc:ID').txt(scheme.id).up();
     schemeNode.ele('cbc:Name').txt(scheme.name).up();
