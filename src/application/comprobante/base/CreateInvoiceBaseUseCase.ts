@@ -176,7 +176,6 @@ export abstract class CreateInvoiceBaseUseCase {
       );
     }
     const certificado = new GetCertificadoDto(
-      empresa.empresaId,
       empresa.certificadoDigital,
       empresa.claveCertificado ?? '',
       empresa.usuarioSolSecundario ?? '',

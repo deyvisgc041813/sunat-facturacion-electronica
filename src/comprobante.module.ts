@@ -18,7 +18,7 @@ import { XmlBuilderInvoiceService } from './infrastructure/sunat/xml/xml-builder
 import { CreateNotaCreditoUseCase } from './application/comprobante/create/CreateNotaCreditoUseCase';
 import { XmlBuilderNotaCreditoService } from './infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { FindByEmpAndTipComAndSerieUseCase } from './application/Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from './application/comprobante/query/GetByCorrelativoComprobantesUseCase';
+import { GetByComprobanteAceptadoUseCase } from './application/comprobante/query/GetByComprobanteAceptadoUseCase';
 import { SerieRepositoryImpl } from './infrastructure/persistence/serie/serie.repository.impl';
 import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity';
 import { TributoTasaOrmEntity } from './infrastructure/persistence/tasa-tributo/TributoTasaOrmEntity';
@@ -73,7 +73,7 @@ import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCas
     CreateNotaCreditoUseCase,
     CreateNotaDebitoUseCase,
     FindByEmpAndTipComAndSerieUseCase,
-    GetByCorrelativoComprobantesUseCase,
+    GetByComprobanteAceptadoUseCase,
     ValidarAnulacionComprobanteUseCase,
     AnularComprobanteUseCase,
     FindTasaByCodeUseCase,

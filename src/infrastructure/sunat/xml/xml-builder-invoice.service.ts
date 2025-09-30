@@ -84,8 +84,7 @@ export class XmlBuilderInvoiceService {
     this.addTotalesImpuestos(
       root,
       totalesPorTributo,
-      dto.tipoMoneda,
-      dto.mtoIGV,
+      dto.tipoMoneda
     );
     // Totales monetarios
     const mtoOperacion =
@@ -138,7 +137,7 @@ export class XmlBuilderInvoiceService {
         // // Genera el nodo TaxSubtotal con IGV (código 1000) solo para líneas con afectación gravada
         if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
           // Operacion grabadas
-          this.agregarDetalleSubtotalIcbper(
+          XmlCommonBuilder.agregarDetalleSubtotalIcbper(
             taxTotalLine,
             d.mtoBaseIgv,
             d.igv,
@@ -153,7 +152,7 @@ export class XmlBuilderInvoiceService {
           const mapTributo = TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)
             ? MAP_TRIBUTOS.EXO
             : MAP_TRIBUTOS.INA;
-          this.agregarDetalleSubtotalIcbper(
+          XmlCommonBuilder.agregarDetalleSubtotalIcbper(
             taxTotalLine,
             d.mtoBaseIgv,
             0,
@@ -166,7 +165,7 @@ export class XmlBuilderInvoiceService {
         //// Agrega el TaxSubtotal correspondiente al ICBPER (impuesto por bolsa plástica),
         // indicando la cantidad de bolsas y el monto por unidad
         if (d.icbper > 0) {
-          this.agregarDetalleSubtotalIcbper(
+          XmlCommonBuilder.agregarDetalleSubtotalIcbper(
             taxTotalLine,
             0,
             d.icbper,
@@ -252,8 +251,7 @@ export class XmlBuilderInvoiceService {
   private addTotalesImpuestos(
     root: any,
     totalesPorTributo: any,
-    tipoMoneda: string,
-    mtoIgv: number,
+    tipoMoneda: string
   ) {
     const taxTotal = root.ele('cac:TaxTotal');
     const taxtoTal:any = Object.values(totalesPorTributo)
@@ -262,7 +260,6 @@ export class XmlBuilderInvoiceService {
       .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
       .txt(taxtoTal.toFixed(2))
       .up();
-    console.log(totalesPorTributo)  
     const subtotales = Object.values(totalesPorTributo) as Array<{
       taxable: number;
       tax: number;
@@ -294,45 +291,5 @@ export class XmlBuilderInvoiceService {
       taxScheme.ele('cbc:Name').txt(info.name).up();
       taxScheme.ele('cbc:TaxTypeCode').txt(info.taxTypeCode).up();
     }
-  }
-  private agregarDetalleSubtotalIcbper(
-    parent: any,
-    taxableAmount: number,
-    taxAmount: number,
-    percent: number,
-    reasonCode: string,
-    tipoMoneda: string,
-    scheme: { id: string; name: string; taxTypeCode: string },
-    extra?: { baseUnit?: string; qty?: number; perUnit?: number },
-  ) {
-    const sub = parent.ele('cac:TaxSubtotal');
-    sub
-      .ele('cbc:TaxableAmount', { currencyID: tipoMoneda })
-      .txt(taxableAmount.toFixed(2))
-      .up();
-
-    sub
-      .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
-      .txt(taxAmount.toFixed(2))
-      .up();
-
-    if (extra?.baseUnit) {
-      sub
-        .ele('cbc:BaseUnitMeasure', { unitCode: extra.baseUnit })
-        .txt(String(extra.qty))
-        .up();
-      sub
-        .ele('cbc:PerUnitAmount', { currencyID: tipoMoneda })
-        .txt(extra.perUnit?.toFixed(2) ?? '0.00')
-        .up();
-    }
-    const cat = sub.ele('cac:TaxCategory');
-    cat.ele('cbc:Percent').txt(percent.toFixed(2)).up();
-    const reasonCodeFinal = MAP_TRIBUTOS.ICBPER.id == scheme.id ? "9996" : reasonCode 
-    cat.ele('cbc:TaxExemptionReasonCode').txt(reasonCodeFinal).up();
-    const schemeNode = cat.ele('cac:TaxScheme');
-    schemeNode.ele('cbc:ID').txt(scheme.id).up();
-    schemeNode.ele('cbc:Name').txt(scheme.name).up();
-    schemeNode.ele('cbc:TaxTypeCode').txt(scheme.taxTypeCode).up();
   }
 }

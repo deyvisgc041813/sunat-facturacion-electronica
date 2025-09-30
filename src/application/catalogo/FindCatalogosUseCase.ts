@@ -1,6 +1,7 @@
+import { Injectable } from '@nestjs/common';
 import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
-
+@Injectable()
 export class FindCatalogosUseCase {
   constructor(private readonly catalogoRepo: CatalogoRepositoryImpl) {}
 

@@ -1,0 +1,1956 @@
+{
+	"info": {
+		"_postman_id": "bc9e0375-c212-46c1-b763-0a1b1cd8904b",
+		"name": "Facturacion electronica",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "25250834"
+	},
+	"item": [
+		{
+			"name": "cliente",
+			"item": [
+				{
+					"name": "obtener",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/cliente/15",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"cliente",
+								"15"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "save",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"empresaId\": 1,\r\n  \"tipoDocumento\": \"1\",\r\n  \"numeroDocumento\": \"48762828\",\r\n  \"nombre\": \"Deyvis Ronald\",\r\n  \"apellidoPaterno\": \"Garcia\",\r\n  \"apellidoMaterno\": \"Cercado\",\r\n  \"direccion\": \"Av. Los Olivos 123 - Lima\",\r\n  \"correo\": \"cliente@prueba.com\",\r\n  \"telefono\": \"999888777\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/cliente",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"cliente"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"empresaId\": 1,\r\n  \"tipoDocumento\": \"1\",\r\n  \"numeroDocumento\": \"20123456789\",\r\n  \"razonSocial\": \"CLIENTE DE PRUEBA SAC132313232sasasasa\",\r\n  \"direccion\": \"Av. Los Olivos 123 - Lima\",\r\n  \"correo\": \"cliente@prueba.com\",\r\n  \"telefono\": \"999888777\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/cliente/15",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"cliente",
+								"15"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Producto",
+			"item": [
+				{
+					"name": "New Folder",
+					"item": []
+				},
+				{
+					"name": "obtener",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/producto",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"producto"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "save",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"empresaId\": 1,\r\n  \"codigo\": \"001\",\r\n  \"descripcion\": \"Tanque rotoplas\",\r\n  \"unidadMedida\": \"NIU\",\r\n  \"precioUnitario\": 20.0\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/producto",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"producto"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"empresaId\": 1,\r\n  \"codigo\": \"001\",\r\n  \"descripcion\": \"Tanque rotoplas\",\r\n  \"unidad_medida\": \"NIU\",\r\n  \"precio_unitario\": 20.0\r\n}\r\n\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/producto/8",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"producto",
+								"8"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Empresa",
+			"item": [
+				{
+					"name": "Obtener",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/empresa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"empresa"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "save",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "ruc",
+									"value": "20000000003",
+									"type": "text"
+								},
+								{
+									"key": "razonSocial",
+									"value": "EMPRESA PRUEBA",
+									"type": "text"
+								},
+								{
+									"key": "nombreComercial",
+									"value": "selva 1",
+									"type": "text"
+								},
+								{
+									"key": "direccion",
+									"value": "Puno, peru",
+									"type": "text"
+								},
+								{
+									"key": "certificadoDigital",
+									"type": "file",
+									"src": "/D:/CT2412116789 (1).pfx"
+								},
+								{
+									"key": "claveCertificado",
+									"value": "123456232",
+									"type": "text"
+								},
+								{
+									"key": "usuarioSolSecundario",
+									"value": "DEYVISGC22",
+									"type": "text"
+								},
+								{
+									"key": "claveSolSecundario",
+									"value": "Lesly1396",
+									"type": "text"
+								},
+								{
+									"key": "modo",
+									"value": "PRODUCCION",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "http://localhost:3000/empresa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"empresa"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "comprobantes",
+			"item": [
+				{
+					"name": "facturas",
+					"item": [
+						{
+							"name": "factura gravada",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"customizationID\": \"2.0\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 3,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\", // 'Contado', 'Crédito'\r\n    \"medioPago\": \"Efectivo\" // 'Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n    \"telefono\": \"\", //Opcional\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 0,\r\n  \"mtoOperInafectas\": 0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 0,\r\n  \"mtoImpVenta\": 0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08, // precio sin igv\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"igv\": 0, \r\n       \"mtoDescuento\": 0.0,\r\n      \"tipAfeIgv\": 10,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n      {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95, // precio sin igv\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"igv\": 0,\r\n      \"tipAfeIgv\": 10,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoDescuento\": 0.0,\r\n      \"mtoPrecioUnitario\": 0\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "factura exoneradas",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n    \"customizationID\": \"2.0\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 3,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\", // 'Contado', 'Crédito'\r\n    \"medioPago\": \"Efectivo\" // 'Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n     \"telefono\": \"\", //Opcional\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoValorVenta\": 0,\r\n       \"mtoBaseIgv\": 0.0,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.0,\r\n      \"tipAfeIgv\": 20,\r\n      \"mtoDescuento\": 0.0,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n     {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoValorVenta\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"tipAfeIgv\": 20,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoPrecioUnitario\": 0\r\n    }\r\n  ],\r\n  \"legends\": [ ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "factura inafecta",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"customizationID\": \"2.0\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 3,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\", // 'Contado', 'Crédito'\r\n    \"medioPago\": \"Efectivo\" // 'Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n    \"telefono\": \"\", // opcional\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.00,\r\n  \"mtoOperExoneradas\": 0.00,\r\n  \"mtoOperInafectas\": 0,\r\n  \"mtoIGV\": 0.00,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"mtoDescuento\": 0.0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 0\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "factura  mixta",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n   \"customizationID\": \"2.0\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 3,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\", // 'Contado', 'Crédito'\r\n    \"medioPago\": \"Efectivo\" // 'Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n    \"telefono\": \"\", // opcional\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.00,\r\n  \"mtoOperExoneradas\": 0.00,\r\n  \"mtoOperInafectas\": 0,\r\n  \"mtoIGV\": 0.00,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 18,\r\n      \"mtoDescuento\": 0.0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 10,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 20,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 100,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 0\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "factura gratuistas (error)",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 4,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"moneda\": \"PEN\",\r\n    \"tipo\": \"Contado\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.00,\r\n  \"mtoOperExoneradas\": 0.00,\r\n  \"mtoOperInafectas\": 0.00,\r\n  \"mtoIGV\": 0.00,\r\n  \"subTotal\": 0.00,\r\n  \"mtoImpVenta\": 0.00,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS (Entrega gratuita)\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 0.00,\r\n      \"mtoValorVenta\": 0.00,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 21,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 0.00\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO (Entrega gratuita)\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 0.00,\r\n      \"mtoValorVenta\": 0.00,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 21,\r\n      \"mtoDescuento\": 0.0,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 0.00\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"CERO con 00/100\"\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "factura Icbper gravadas",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"customizationID\": \"2.0\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 3,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\", // 'Contado', 'Crédito'\r\n    \"medioPago\": \"Efectivo\" // 'Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n    \"telefono\": \"\", // opcional\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0,\r\n  \"icbper\": 0,\r\n  \"subTotal\": 0,\r\n  \"mtoImpVenta\": 0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"igv\": 0,\r\n      \"tipAfeIgv\": 10,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"igv\": 0,\r\n      \"tipAfeIgv\": 10,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n    {\r\n      \"codProducto\": \"BOLSA001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"Bolsa plástica 30x40 cm\",\r\n      \"cantidad\": 20,\r\n      \"mtoValorUnitario\": 0.50,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"mtoDescuento\": 0.0,\r\n      \"igv\": 0,\r\n      \"tipAfeIgv\": 10,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"icbper\": 0.5 \r\n    }\r\n  ],\r\n  \"legends\": [ ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "factura Icbper exoneradas",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"customizationID\": \"2.0\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 4,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\", // 'Contado', 'Crédito'\r\n    \"medioPago\": \"Efectivo\" // 'Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n    \"telefono\": \"\", // opcional\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 623.03,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"icbper\": 1.00,\r\n  \"subTotal\": 623.03,\r\n  \"mtoImpVenta\": 624.03,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoValorVenta\": 555.08,\r\n      \"mtoBaseIgv\": 555.08,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.0,\r\n      \"tipAfeIgv\": 20,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoPrecioUnitario\": 555.08\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoValorVenta\": 66.95,\r\n      \"mtoBaseIgv\": 66.95,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.0,\r\n      \"tipAfeIgv\": 20,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoPrecioUnitario\": 66.95\r\n    },\r\n    {\r\n      \"codProducto\": \"BOLSA001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"Bolsa plástica 30x40 cm\",\r\n      \"cantidad\": 20,\r\n      \"mtoValorUnitario\": 0.50,\r\n      \"mtoValorVenta\": 1.00,\r\n      \"mtoBaseIgv\": 1.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.0,     \"mtoDescuento\": 0.0,\r\n      \"tipAfeIgv\": 20,\r\n      \"totalImpuestos\": 1.00,\r\n      \"mtoPrecioUnitario\": 0.50,\r\n      \"icbper\": 0.50\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"Seiscientos veinticuatro con 03/100\"\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "factura Icbper inafecto",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"customizationID\": \"2.0\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\",\r\n  \"correlativo\": 4,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\", // 'Contado', 'Crédito'\r\n    \"medioPago\": \"Efectivo\" // 'Efectivo', 'Tarjeta', 'Transferencia', 'Yape', 'Plin'\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n    \"telefono\": \"\", // opcional\r\n    \"address\": {\r\n      \"direccion\": \"Av. Los Incas 123\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"LIMA\",\r\n      \"departamento\": \"LIMA\",\r\n      \"distrito\": \"LIMA\",\r\n      \"ubigueo\": \"150101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0,\r\n  \"mtoIGV\": 0.0,\r\n  \"icbper\": 0,\r\n  \"subTotal\": 0,\r\n  \"mtoImpVenta\": 0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.0,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.0,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoPrecioUnitario\": 0\r\n    },\r\n    {\r\n      \"codProducto\": \"BOLSA001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"Bolsa plástica 30x40 cm\",\r\n      \"cantidad\": 10,\r\n      \"mtoValorUnitario\": 0.50,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.0,\r\n      \"tipAfeIgv\": 30,\r\n       \"mtoDescuento\": 0.0,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"icbper\": 0.50\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Notas de credito",
+					"item": [
+						{
+							"name": "Descuento por item",
+							"item": [
+								{
+									"name": "Nota de credito descuento por item json basico",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 2,\r\n  \"fechaEmision\": \"2025-09-16T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n    \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 379\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"05\",\r\n    \"descripcion\": \"Descuento por ítem\"\r\n  },\r\n\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"descripcion\": \"Producto A\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 100,\r\n      \"mtoDescuento\": 10.0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"igv\": 0,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"totalImpuestos\": 0,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota de credito descuento por item json calculado gravado",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 2,\r\n  \"fechaEmision\": \"2025-09-16T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n     \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 313\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"05\",\r\n    \"descripcion\": \"Descuento por ítem\"\r\n  },\r\n\r\n  \"mtoOperGravadas\": 80.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 14.4,\r\n  \"subTotal\": 80.0,\r\n  \"mtoImpVenta\": 94.4,\r\n\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"descripcion\": \"Producto A\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 90.0,\r\n      \"mtoDescuento\": 10.0,\r\n      \"mtoBaseIgv\": 80,\r\n      \"porcentajeIgv\": 18,\r\n      \"igv\": 14.4,\r\n      \"mtoValorVenta\": 80.0,\r\n      \"mtoPrecioUnitario\": 94.4,\r\n      \"totalImpuestos\": 14.4,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"CIENTO SEIS con 20/100\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota de credito descuento por item json calculado exonerado",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 2,\r\n  \"fechaEmision\": \"2025-09-16T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n    \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 314\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"05\",\r\n    \"descripcion\": \"Descuento por ítem\"\r\n  },\r\n\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 80.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 80.0,\r\n  \"mtoImpVenta\": 80,\r\n\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"descripcion\": \"Producto A\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 90.0,\r\n      \"mtoDescuento\": 10.0,\r\n      \"mtoBaseIgv\": 80,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0,\r\n      \"mtoValorVenta\": 80.0,\r\n      \"mtoPrecioUnitario\": 80,\r\n      \"totalImpuestos\": 0,\r\n      \"tipAfeIgv\": 20\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"OCHENTA CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota de credito descuento por item json calculado inafecto",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 2,\r\n  \"fechaEmision\": \"2025-09-16T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n    \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 315\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"05\",\r\n    \"descripcion\": \"Descuento por ítem\"\r\n  },\r\n\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 80.0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 80.0,\r\n  \"mtoImpVenta\": 80,\r\n\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"descripcion\": \"Producto A\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 90.0,\r\n      \"mtoDescuento\": 10.0,\r\n      \"mtoBaseIgv\": 80,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0,\r\n      \"mtoValorVenta\": 80.0,\r\n      \"mtoPrecioUnitario\": 80,\r\n      \"totalImpuestos\": 0,\r\n      \"tipAfeIgv\": 30\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"OCHENTA CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "anulacion",
+							"item": [
+								{
+									"name": "Notas de credito anular operacion",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 1,\r\n  \"fechaEmision\": \"2025-09-15T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n    \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 379\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"01\",\r\n    \"descripcion\": \"Anulación de la operación\"\r\n  },\r\n \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n\r\n  \"details\": [],\r\n  \"legends\": []\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Notas de credito anulacion  por error en el ruc",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 1,\r\n  \"fechaEmision\": \"2025-09-15T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n    \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 313\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Anulación por error en el RUC\"\r\n  },\r\n \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [],\r\n  \"legends\": []\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "New Request",
+									"request": {
+										"method": "GET",
+										"header": []
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "devolucion",
+							"item": [
+								{
+									"name": "Nota de credito devoluccion total json basico",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 3,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n    \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 315\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"06\",\r\n    \"descripcion\": \"Devolución total\"\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 0,\r\n  \"mtoOperInafectas\": 0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 0,\r\n  \"mtoImpVenta\": 0,\r\n  \"details\": []\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota de credito devoluccion por item json basico",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 4,\r\n  \"fechaEmision\": \"2025-09-16T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 313 // grvada 313; exonerad: 314; inafecto: 315\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"07\",\r\n    \"descripcion\": \"Devolución por ítem\"\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoValorVenta\": 0,\r\n      \"tipAfeIgv\": 30 // 10 => gravado; 20; exonerado; 30; inafecto.\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota de credito devoluccion por item json calculado",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 4,\r\n  \"fechaEmision\": \"2025-09-16T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 315\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"07\",\r\n    \"descripcion\": \"Devolución por ítem\"\r\n  },\r\n  \"mtoOperGravadas\": 66.95,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 12.05,\r\n  \"subTotal\": 66.95,\r\n  \"mtoImpVenta\": 79.00,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoPrecioUnitario\": 79.00,\r\n      \"mtoBaseIgv\": 66.95,\r\n      \"igv\": 12.05,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 12.05,\r\n      \"mtoValorVenta\": 66.95,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"SETENTA Y NUEVE con 00/100\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota de credito devoluccion total json calculado",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"07\",\r\n  \"serie\": \"FC01\",\r\n  \"correlativo\": 3,\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n    \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 313\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"06\",\r\n    \"descripcion\": \"Devolución total\"\r\n  },\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoPrecioUnitario\": 655.00,\r\n      \"mtoBaseIgv\": 555.08,\r\n      \"igv\": 99.92,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 99.92,\r\n      \"mtoValorVenta\": 555.08,\r\n      \"tipAfeIgv\": 10\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoPrecioUnitario\": 79.00,\r\n      \"mtoBaseIgv\": 66.95,\r\n      \"igv\": 12.05,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 12.05,\r\n      \"mtoValorVenta\": 66.95,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"mtoOperGravadas\": 622.03,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 111.97,\r\n  \"subTotal\": 622.03,\r\n  \"mtoImpVenta\": 734.00,\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"SETECIENTOS TREINTA Y CUATRO con 00/100\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/credit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"credit-notes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Notas de credito Descuento Global",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"ublVersion\": \"2.1\",\r\n\t\"tipoOperacion\": \"0101\",\r\n\t\"tipoComprobante\": \"07\",\r\n\t\"serie\": \"FC01\",\r\n\t\"correlativo\": 2,\r\n\t\"fechaEmision\": \"2025-09-15T19:00:00-05:00\",\r\n\t\"tipoMoneda\": \"PEN\",\r\n    \"mtoOperGravadas\": 0.0,\r\n\t\"mtoOperExoneradas\": 0.0,\r\n\t\"mtoOperInafectas\": 0.0,\r\n\t\"mtoIGV\": 0.0,\r\n\t\"subTotal\": 0.0,\r\n\t\"mtoImpVenta\": 0.0,\r\n\t\"client\": {\r\n\t\t\"tipoDoc\": \"6\",\r\n\t\t\"numDoc\": \"20123456782\",\r\n\t\t\"rznSocial\": \"Cliente SAC\",\r\n            \"telefono\": \"\" //opcional\r\n\t},\r\n\t\"company\": {\r\n\t\t\"ruc\": \"20000000001\",\r\n\t\t\"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n\t\t\"tipoDoc\": \"6\"\r\n\t},\r\n\t\"documentoRelacionado\": {\r\n\t\t\"tipoComprobante\": \"01\",\r\n\t\t\"serie\": \"F001\",\r\n\t\t\"correlativo\": 313\r\n\t},\r\n\t\"motivo\": {\r\n\t\t\"codigo\": \"04\",\r\n\t\t\"descripcion\": \"Descuento global aplicado\"\r\n\t},\r\n    \"descuentoGlobal\": [\r\n        {\r\n        \"codigo\": \"00\",\r\n        \"descripcion\": \"Descuento por campaña\",\r\n        \"monto\": 200.0,\r\n        \"montoBase\": 0\r\n        }\r\n    ],\r\n    \"details\": [],\r\n   \"legends\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/credit-notes",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"credit-notes"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Notas debito",
+					"item": [
+						{
+							"name": "Mora",
+							"item": [
+								{
+									"name": "Recalculo por el cliente",
+									"item": [
+										{
+											"name": "Nota debito interes por mora json calculado gravada",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",  \r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 4,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64\r\n  },\r\n\r\n  \"motivo\": {\r\n    \"codigo\": \"01\",  \r\n    \"descripcion\": \"Interés por mora\"\r\n  },\r\n\r\n  \"mtoOperGravadas\": 623.55,\r\n  \"mtoOperExoneradas\": 0,\r\n  \"mtoOperInafectas\": 0,\r\n  \"mtoIGV\": 112.24,\r\n  \"subTotal\": 623.55,\r\n  \"mtoImpVenta\": 735.79,\r\n   //\"fechaPago\": \"2025-10-15\", // esto es opcional esto es la fecha del pago de la mora.\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"unidad\": \"NIU\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"tipAfeIgv\": 10,\r\n      \"porcentajeIgv\": 18,\r\n      \"mtoBaseIgv\": 555.08,\r\n      \"igv\": 99.92,\r\n      \"totalImpuestos\": 99.92,\r\n      \"mtoValorVenta\": 555.08,\r\n      \"mtoPrecioUnitario\": 654.99\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"unidad\": \"NIU\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"tipAfeIgv\": 10,\r\n      \"porcentajeIgv\": 18,\r\n      \"mtoBaseIgv\": 66.95,\r\n      \"igv\": 12.05,\r\n      \"totalImpuestos\": 12.05,\r\n      \"mtoValorVenta\": 66.95,\r\n      \"mtoPrecioUnitario\": 79.00\r\n    },\r\n        {\r\n    \"codProducto\": \"INT001\",\r\n    \"descripcion\": \"Interés por mora\",\r\n    \"unidad\": \"NIU\",\r\n    \"cantidad\": 1,\r\n    \"mtoValorUnitario\": 1.52,\r\n    \"tipAfeIgv\": 10,\r\n    \"porcentajeIgv\": 18,\r\n    \"mtoBaseIgv\": 1.52,\r\n    \"igv\": 0.27,\r\n    \"totalImpuestos\": 0.27,\r\n    \"mtoValorVenta\": 1.52,\r\n    \"mtoPrecioUnitario\": 1.49\r\n    }\r\n\r\n  ],\r\n\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"SETECIENTOS TREINTA Y CINCO CON 79/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito interes por mora json calculado exonerado",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n\t\"ublVersion\": \"2.1\",\r\n\t\"tipoOperacion\": \"0101\",\r\n\t\"tipoComprobante\": \"08\",\r\n\t\"serie\": \"FD01\",\r\n\t\"correlativo\": 4,\r\n\t\"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n\t\"tipoMoneda\": \"PEN\",\r\n\t\"client\": {\r\n\t\t\"tipoDoc\": \"6\",\r\n\t\t\"numDoc\": \"20123456782\",\r\n\t\t\"rznSocial\": \"Cliente SAC\",\r\n            \"telefono\": \"\" //opcional\r\n\t},\r\n\t\"company\": {\r\n\t\t\"ruc\": \"20000000001\",\r\n\t\t\"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n\t\t\"tipoDoc\": \"6\"\r\n\t},\r\n\t\"documentoRelacionado\": {\r\n\t\t\"tipoComprobante\": \"01\",\r\n\t\t\"serie\": \"F001\",\r\n\t\t\"correlativo\": 309\r\n\t},\r\n\t\"motivo\": {\r\n\t\t\"codigo\": \"01\",\r\n\t\t\"descripcion\": \"Interés por mora\"\r\n\t},\r\n\t\"mtoOperGravadas\": 0,\r\n\t\"mtoOperExoneradas\": 623.55,\r\n\t\"mtoOperInafectas\": 0,\r\n\t\"mtoIGV\": 0,\r\n\t\"subTotal\": 623.55,\r\n\t\"mtoImpVenta\": 623.55,\r\n\t\"details\": [\r\n\t\t{\r\n\t\t\t\"codProducto\": \"P001\",\r\n\t\t\t\"unidad\": \"NIU\",\r\n\t\t\t\"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n\t\t\t\"cantidad\": 1,\r\n\t\t\t\"mtoValorUnitario\": 555.08,\r\n\t\t\t\"mtoValorVenta\": 555.08,\r\n\t\t\t\"mtoBaseIgv\": 0.0,\r\n\t\t\t\"porcentajeIgv\": 0,\r\n\t\t\t\"igv\": 0.0,\r\n\t\t\t\"tipAfeIgv\": 20,\r\n\t\t\t\"mtoDescuento\": 0.0,\r\n\t\t\t\"totalImpuestos\": 0.0,\r\n\t\t\t\"mtoPrecioUnitario\": 555.08\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"codProducto\": \"P002\",\r\n\t\t\t\"unidad\": \"NIU\",\r\n\t\t\t\"descripcion\": \"KIT ACCESORIO DE INTALACION TANQUE ELEVADO\",\r\n\t\t\t\"cantidad\": 1,\r\n\t\t\t\"mtoValorUnitario\": 66.95,\r\n\t\t\t\"mtoValorVenta\": 66.95,\r\n\t\t\t\"porcentajeIgv\": 0,\r\n\t\t\t\"mtoBaseIgv\": 0.0,\r\n\t\t\t\"igv\": 0.0,\r\n\t\t\t\"tipAfeIgv\": 20,\r\n\t\t\t\"totalImpuestos\": 0.0,\r\n\t\t\t\"mtoPrecioUnitario\": 66.95\r\n\t\t},\r\n\t\t{\r\n\t\t\t\"codProducto\": \"INT001\",\r\n\t\t\t\"descripcion\": \"Interés por mora\",\r\n\t\t\t\"unidad\": \"NIU\",\r\n\t\t\t\"cantidad\": 1,\r\n\t\t\t\"mtoValorUnitario\": 1.52,\r\n\t\t\t\"tipAfeIgv\": 20,\r\n\t\t\t\"porcentajeIgv\": 0,\r\n\t\t\t\"mtoBaseIgv\": 0,\r\n\t\t\t\"igv\": 0,\r\n\t\t\t\"totalImpuestos\": 0,\r\n\t\t\t\"mtoValorVenta\": 1.52,\r\n\t\t\t\"mtoPrecioUnitario\": 1.49\r\n\t\t}\r\n\t],\r\n\t\"legends\": [\r\n\t\t{\r\n\t\t\t\"code\": \"1000\",\r\n\t\t\t\"value\": \"SEISCIENTOS VEINTItres CON 55/100 SOLES\"\r\n\t\t}\r\n\t]\r\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito interes por mora json calculado inafecto",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n\t\"ublVersion\": \"2.1\",\r\n\t\"tipoOperacion\": \"0101\",\r\n\t\"tipoComprobante\": \"08\",\r\n\t\"serie\": \"FD01\",\r\n\t\"correlativo\": 4,\r\n\t\"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n\t\"tipoMoneda\": \"PEN\",\r\n\t\"client\": {\r\n\t\t\"tipoDoc\": \"6\",\r\n\t\t\"numDoc\": \"20123456782\",\r\n\t\t\"rznSocial\": \"Cliente SAC\",\r\n            \"telefono\": \"\" //opcional\r\n\t},\r\n\t\"company\": {\r\n\t\t\"ruc\": \"20000000001\",\r\n\t\t\"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n\t\t\"tipoDoc\": \"6\"\r\n\t},\r\n\t\"documentoRelacionado\": {\r\n\t\t\"tipoComprobante\": \"01\",\r\n\t\t\"serie\": \"F001\",\r\n\t\t\"correlativo\": 310\r\n\t},\r\n\t\"motivo\": {\r\n\t\t\"codigo\": \"01\",\r\n\t\t\"descripcion\": \"Interés por mora\"\r\n\t},\r\n\t\"mtoOperGravadas\": 0,\r\n\t\"mtoOperExoneradas\": 0,\r\n\t\"mtoOperInafectas\": 623.55,\r\n\t\"mtoIGV\": 0,\r\n\t\"subTotal\": 623.55,\r\n\t\"mtoImpVenta\": 623.55,\r\n\t\"details\": [\r\n\t\t{\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 555.08,\r\n      \"mtoValorVenta\": 555.08,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"mtoDescuento\": 0.0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 555.08\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoValorUnitario\": 66.95,\r\n      \"mtoValorVenta\": 66.95,\r\n      \"mtoBaseIgv\": 0.00,\r\n      \"porcentajeIgv\": 0,\r\n      \"igv\": 0.00,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0.00,\r\n      \"mtoPrecioUnitario\": 66.95\r\n    },\r\n\t{\r\n\t\t\t\"codProducto\": \"INT001\",\r\n\t\t\t\"descripcion\": \"Interés por mora\",\r\n\t\t\t\"unidad\": \"NIU\",\r\n\t\t\t\"cantidad\": 1,\r\n\t\t\t\"mtoValorUnitario\": 1.52,\r\n\t\t\t\"tipAfeIgv\": 30,\r\n\t\t\t\"porcentajeIgv\": 0,\r\n\t\t\t\"mtoBaseIgv\": 0,\r\n\t\t\t\"igv\": 0,\r\n\t\t\t\"totalImpuestos\": 0,\r\n\t\t\t\"mtoValorVenta\": 1.52,\r\n\t\t\t\"mtoPrecioUnitario\": 1.49\r\n\t\t}\r\n\t],\r\n\t\"legends\": [\r\n\t\t{\r\n\t\t\t\"code\": \"1000\",\r\n\t\t\t\"value\": \"SEISCIENTOS VEINTItres CON 55/100 SOLES\"\r\n\t\t}\r\n\t]\r\n}",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								},
+								{
+									"name": "Nota debito interes por mora json simple",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 1,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64 // 64 => factura gravada; 309 => factura exonerada; 310 => exonerado.\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"01\",\r\n    \"descripcion\": \"Intereses por mora\"\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n   \"fechaPago\": \"2025-10-15\", // esto es opcional esto es la fecha del pago de la mora.\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"INT001\",\r\n      \"descripcion\": \"Interés por mora\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoValorVenta\": 0,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/debit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"debit-notes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						},
+						{
+							"name": "Aumento Valor",
+							"item": [
+								{
+									"name": "Recalculados por Facturador",
+									"item": [
+										{
+											"name": "Nota debito aumento en el valor caso global mensaje simple",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 100,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste global\"\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"AU001\",                      // código genérico de aumento\r\n      \"descripcion\": \"Ajuste adicional por operación\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 500.0,                   // monto base que manda el cliente\r\n      \"mtoPrecioUnitario\": 0.0,                    // lo calculará el facturador\r\n      \"mtoBaseIgv\": 500.0,\r\n      \"igv\": 0.0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoValorVenta\": 500.0,\r\n      \"tipAfeIgv\": 10 // 10 => gravadaS; 20 => exoneradas: 30 => infaectos\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito aumento en el valor caso por item mensaje simple",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 101,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste Producto A\"\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",                       // mismo código de la factura original\r\n      \"descripcion\": \"Producto A (ajuste de precio)\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 100.0,                   // aumento enviado por el cliente\r\n      \"mtoPrecioUnitario\": 0.0,                    // lo calculará el facturador\r\n      \"mtoBaseIgv\": 100.0,\r\n      \"igv\": 0.0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoValorVenta\": 100.0,\r\n      \"tipAfeIgv\": 10 // 10 => gravadaS; 20 => exoneradas: 30 => infaectos\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								},
+								{
+									"name": "Recalculo por el cliente",
+									"item": [
+										{
+											"name": "Nota debito aumento en el valor caso por item mensaje calculado gravado",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 101,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste Producto A\"\r\n  },\r\n  \"mtoOperGravadas\": 100.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 18.0,\r\n  \"subTotal\": 100.0,\r\n  \"mtoImpVenta\": 118.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\", \r\n      \"descripcion\": \"Producto A (ajuste de precio)\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 100.0,     // aumento base\r\n      \"mtoPrecioUnitario\": 118.0,    // base + IGV\r\n      \"mtoBaseIgv\": 100.0,\r\n      \"igv\": 18.0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 18.0,\r\n      \"mtoValorVenta\": 100.0,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"CIENTO DIECIOCHO CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito aumento en el valor caso global mensaje calculado gravado",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 100,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste global\"\r\n  },\r\n  \"mtoOperGravadas\": 500.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 90.0,\r\n  \"subTotal\": 500.0,\r\n  \"mtoImpVenta\": 590.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"AU001\",\r\n      \"descripcion\": \"Ajuste adicional por operación\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 500.0,\r\n      \"mtoPrecioUnitario\": 590.0,\r\n      \"mtoBaseIgv\": 500.0,\r\n      \"igv\": 90.0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 90.0,\r\n      \"mtoValorVenta\": 500.0,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\", \r\n      \"value\": \"QUINIENTOS NOVENTA CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito aumento en el valor caso global mensaje calculado exonerado",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 100,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 309\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste global\"\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 500.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 500.0,\r\n  \"mtoImpVenta\": 500.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"AU001\",\r\n      \"descripcion\": \"Ajuste adicional por operación\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 500.0,\r\n      \"mtoPrecioUnitario\": 500.0,\r\n      \"mtoBaseIgv\": 500.0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoValorVenta\": 500.0,\r\n      \"tipAfeIgv\": 20\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\", \r\n      \"value\": \"QUINIENTOS CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito aumento en el valor caso global mensaje calculado inafecto",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 100,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 309\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste global\"\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 500.0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 500.0,\r\n  \"mtoImpVenta\": 500.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"AU001\",\r\n      \"descripcion\": \"Ajuste adicional por operación\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 500.0,\r\n      \"mtoPrecioUnitario\": 500.0,\r\n      \"mtoBaseIgv\": 500.0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoValorVenta\": 500.0,\r\n      \"tipAfeIgv\": 30\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\", \r\n      \"value\": \"QUINIENTOS CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito aumento en el valor caso por item mensaje calculado exonerado",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 101,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 309\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste Producto A\"\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 100.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 100.0,\r\n  \"mtoImpVenta\": 100.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\", \r\n      \"descripcion\": \"Producto A (ajuste de precio)\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 100.0,     // aumento base\r\n      \"mtoPrecioUnitario\": 100.0,    // base + IGV\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoValorVenta\": 100.0,\r\n      \"tipAfeIgv\": 20\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"CIEN CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										},
+										{
+											"name": "Nota debito aumento en el valor caso por item mensaje calculado inafecto",
+											"request": {
+												"method": "POST",
+												"header": [],
+												"body": {
+													"mode": "raw",
+													"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 101,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 310\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"02\",\r\n    \"descripcion\": \"Aumento en el valor - ajuste Producto A\"\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 0,\r\n  \"mtoOperInafectas\": 100.0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 100.0,\r\n  \"mtoImpVenta\": 100.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\", \r\n      \"descripcion\": \"Producto A (ajuste de precio)\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 100.0,     // aumento base\r\n      \"mtoPrecioUnitario\": 100.0,    // base + IGV\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoValorVenta\": 100.0,\r\n      \"tipAfeIgv\": 30\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"CIEN CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+													"options": {
+														"raw": {
+															"language": "json"
+														}
+													}
+												},
+												"url": {
+													"raw": "http://localhost:3000/documents/debit-notes",
+													"protocol": "http",
+													"host": [
+														"localhost"
+													],
+													"port": "3000",
+													"path": [
+														"documents",
+														"debit-notes"
+													]
+												}
+											},
+											"response": []
+										}
+									]
+								}
+							]
+						},
+						{
+							"name": "Penalidad",
+							"item": [
+								{
+									"name": "Nota debito penalidad mensaje simple gravado",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 302,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"03\",\r\n    \"descripcion\": \"Penalidad por incumplimiento\"\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"PEN001\",\r\n      \"descripcion\": \"Penalidad por incumplimiento de contrato\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 200.0,\r\n      \"mtoPrecioUnitario\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 0.0,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/debit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"debit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota debito penalidad mensaje calculado gravado",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 303,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 64\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"03\",\r\n    \"descripcion\": \"Penalidad por incumplimiento\"\r\n  },\r\n  \"mtoOperGravadas\": 200.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 36.0,\r\n  \"subTotal\": 200.0,\r\n  \"mtoImpVenta\": 236.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"PEN001\",\r\n      \"descripcion\": \"Penalidad por incumplimiento de contrato\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 200.0,\r\n      \"mtoPrecioUnitario\": 236.0,\r\n      \"mtoBaseIgv\": 200.0,\r\n      \"igv\": 36.0,\r\n      \"porcentajeIgv\": 18,\r\n      \"totalImpuestos\": 36.0,\r\n      \"mtoValorVenta\": 200.0,\r\n      \"tipAfeIgv\": 10\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"DOSCIENTOS CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/debit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"debit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota debito penalidad mensaje calculado exonerado",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 303,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 309\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"03\",\r\n    \"descripcion\": \"Penalidad por incumplimiento\"\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 200.0,\r\n  \"mtoOperInafectas\": 0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 200.0,\r\n  \"mtoImpVenta\": 200.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"PEN001\",\r\n      \"descripcion\": \"Penalidad por incumplimiento de contrato\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 200.0,\r\n      \"mtoPrecioUnitario\": 200.0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoValorVenta\": 200.0,\r\n      \"tipAfeIgv\": 20\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"DOSCIENTOS CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/debit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"debit-notes"
+											]
+										}
+									},
+									"response": []
+								},
+								{
+									"name": "Nota debito penalidad mensaje calculado inafecto",
+									"request": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "raw",
+											"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"08\",\r\n  \"serie\": \"FD01\",\r\n  \"correlativo\": 303,\r\n  \"fechaEmision\": \"2025-09-17T18:00:00-05:00\",\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"6\",\r\n    \"numDoc\": \"20123456782\",\r\n    \"rznSocial\": \"Cliente SAC\",\r\n        \"telefono\": \"\" //opcional\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"documentoRelacionado\": {\r\n    \"tipoComprobante\": \"01\",\r\n    \"serie\": \"F001\",\r\n    \"correlativo\": 310\r\n  },\r\n  \"motivo\": {\r\n    \"codigo\": \"03\",\r\n    \"descripcion\": \"Penalidad por incumplimiento\"\r\n  },\r\n  \"mtoOperGravadas\": 0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 200.0,\r\n  \"mtoIGV\": 0,\r\n  \"subTotal\": 200.0,\r\n  \"mtoImpVenta\": 200.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"PEN001\",\r\n      \"descripcion\": \"Penalidad por incumplimiento de contrato\",\r\n      \"cantidad\": 1,\r\n      \"unidad\": \"NIU\",\r\n      \"mtoValorUnitario\": 200.0,\r\n      \"mtoPrecioUnitario\": 200.0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"igv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoValorVenta\": 200.0,\r\n      \"tipAfeIgv\": 30\r\n    }\r\n  ],\r\n  \"legends\": [\r\n    {\r\n      \"code\": \"1000\",\r\n      \"value\": \"DOSCIENTOS CON 00/100 SOLES\"\r\n    }\r\n  ]\r\n}\r\n",
+											"options": {
+												"raw": {
+													"language": "json"
+												}
+											}
+										},
+										"url": {
+											"raw": "http://localhost:3000/documents/debit-notes",
+											"protocol": "http",
+											"host": [
+												"localhost"
+											],
+											"port": "3000",
+											"path": [
+												"documents",
+												"debit-notes"
+											]
+										}
+									},
+									"response": []
+								}
+							]
+						}
+					]
+				},
+				{
+					"name": "Boletas",
+					"item": [
+						{
+							"name": "generar boleta gravada",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\",\r\n    \"medioPago\": \"Efectivo\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"1\",\r\n    \"numDoc\": \"48762828\",\r\n    \"rznSocial\": \"Deyvis Garcia Cercado\",\r\n    \"telefono\": \"\",\r\n    \"address\": {\r\n      \"direccion\": \"Jro villal del lago 121\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 555.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 18,\r\n      \"tipAfeIgv\": 10,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"mtoValorUnitario\": 66.95,      // 79 / 1.18\r\n      \"porcentajeIgv\": 18,\r\n      \"tipAfeIgv\": 10,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    }\r\n//    {\r\n//       \"codProducto\": \"BOLSA001\",\r\n//       \"unidad\": \"NIU\",\r\n//       \"descripcion\": \"Bolsa plástica 30x40 cm\",\r\n//       \"cantidad\": 2,\r\n//       \"mtoValorUnitario\": 0.70,\r\n//       \"mtoValorVenta\": 0,\r\n//       \"mtoBaseIgv\": 0,\r\n//       \"porcentajeIgv\": 18,\r\n//       \"mtoDescuento\": 0.0,\r\n//       \"igv\": 0,\r\n//       \"tipAfeIgv\": 10,\r\n//       \"totalImpuestos\": 0,\r\n//       \"mtoPrecioUnitario\": 0,\r\n//       \"icbper\": 0.70\r\n//     }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "generar boleta exonerada",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\",\r\n    \"medioPago\": \"Efectivo\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"1\",\r\n    \"numDoc\": \"48762828\",\r\n    \"rznSocial\": \"Deyvis Garcia Cercado\",\r\n    \"telefono\": \"\",\r\n    \"address\": {\r\n      \"direccion\": \"Jro villal del lago 121\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 555.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 20,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"mtoValorUnitario\": 66.95,      // 79 / 1.18\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 20,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "generar boleta inafecto",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\",\r\n    \"medioPago\": \"Efectivo\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"1\",\r\n    \"numDoc\": \"48762828\",\r\n    \"rznSocial\": \"Deyvis Garcia Cercado\",\r\n    \"telefono\": \"\",\r\n    \"address\": {\r\n      \"direccion\": \"Jro villal del lago 121\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 555.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 30,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"mtoValorUnitario\": 66.95,      // 79 / 1.18\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 30,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "generar boleta mixta",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\",\r\n    \"medioPago\": \"Efectivo\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"1\",\r\n    \"numDoc\": \"48762828\",\r\n    \"rznSocial\": \"Deyvis Garcia Cercado\",\r\n    \"telefono\": \"\",\r\n    \"address\": {\r\n      \"direccion\": \"Jro villal del lago 121\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 555.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 18,\r\n      \"tipAfeIgv\": 10,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 500.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 30,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P002\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"KIT ACCESORIO DE INSTALACION TANQUE ELEVADO\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"mtoValorUnitario\": 10.95,      // 79 / 1.18\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 20,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "generar boleta gravada con icbper",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\",\r\n    \"medioPago\": \"Efectivo\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"1\",\r\n    \"numDoc\": \"48762828\",\r\n    \"rznSocial\": \"Deyvis Garcia Cercado\",\r\n    \"telefono\": \"\",\r\n    \"address\": {\r\n      \"direccion\": \"Jro villal del lago 121\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 555.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 18,\r\n      \"tipAfeIgv\": 10,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 500.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 18.00,\r\n      \"tipAfeIgv\": 10,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n     {\r\n      \"codProducto\": \"BOLSA001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"Bolsa plástica 30x40 cm\",\r\n      \"cantidad\": 2,\r\n      \"mtoValorUnitario\": 0.70,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 18,\r\n      \"mtoDescuento\": 0.0,\r\n      \"igv\": 0,\r\n      \"tipAfeIgv\": 10,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"icbper\": 0.70\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "generar boleta exonerada con icbper",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\",\r\n    \"medioPago\": \"Efectivo\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"1\",\r\n    \"numDoc\": \"48762828\",\r\n    \"rznSocial\": \"Deyvis Garcia Cercado\",\r\n    \"telefono\": \"\",\r\n    \"address\": {\r\n      \"direccion\": \"Jro villal del lago 121\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 555.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 20,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 500.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 20,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n     {\r\n      \"codProducto\": \"BOLSA001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"Bolsa plástica 30x40 cm\",\r\n      \"cantidad\": 2,\r\n      \"mtoValorUnitario\": 0.70,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"mtoDescuento\": 0.0,\r\n      \"igv\": 0,\r\n      \"tipAfeIgv\": 20,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"icbper\": 0.70\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "generar boleta inafecto con icbper",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ublVersion\": \"2.1\",\r\n  \"tipoOperacion\": \"0101\",\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"fechaEmision\": \"2025-09-11T14:26:13-05:00\",\r\n  \"formaPago\": {\r\n    \"tipoMoneda\": \"PEN\",\r\n    \"tipo\": \"Contado\",\r\n    \"medioPago\": \"Efectivo\"\r\n  },\r\n  \"tipoMoneda\": \"PEN\",\r\n  \"client\": {\r\n    \"tipoDoc\": \"1\",\r\n    \"numDoc\": \"48762828\",\r\n    \"rznSocial\": \"Deyvis Garcia Cercado\",\r\n    \"telefono\": \"\",\r\n    \"address\": {\r\n      \"direccion\": \"Jro villal del lago 121\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\",\r\n    \"address\": {\r\n      \"direccion\": \"Av. Principal 456\",\r\n      \"provincia\": \"Puno\",\r\n      \"departamento\": \"Puno\",\r\n      \"distrito\": \"Puno\",\r\n      \"ubigueo\": \"210101\"\r\n    }\r\n  },\r\n  \"mtoOperGravadas\": 0.0,\r\n  \"mtoOperExoneradas\": 0.0,\r\n  \"mtoOperInafectas\": 0.0,\r\n  \"mtoIGV\": 0.0,\r\n  \"subTotal\": 0.0,\r\n  \"mtoImpVenta\": 0.0,\r\n  \"details\": [\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 555.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 30,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n    {\r\n      \"codProducto\": \"P001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"TANQUE PLUS 1100 LITROS ARENA - ROTOPLAS\",\r\n      \"cantidad\": 1,\r\n      \"mtoPrecioUnitario\": 0,    // precio con IGV\r\n      \"mtoValorUnitario\": 500.08,     // base imponible sin IGV (655 / 1.18)\r\n      \"porcentajeIgv\": 0,\r\n      \"tipAfeIgv\": 30,\r\n      \"mtoValorVenta\": 0.0,\r\n      \"mtoBaseIgv\": 0.0,\r\n      \"igv\": 0.0,\r\n      \"totalImpuestos\": 0.0\r\n    },\r\n     {\r\n      \"codProducto\": \"BOLSA001\",\r\n      \"unidad\": \"NIU\",\r\n      \"descripcion\": \"Bolsa plástica 30x40 cm\",\r\n      \"cantidad\": 2,\r\n      \"mtoValorUnitario\": 0.70,\r\n      \"mtoValorVenta\": 0,\r\n      \"mtoBaseIgv\": 0,\r\n      \"porcentajeIgv\": 0,\r\n      \"mtoDescuento\": 0.0,\r\n      \"igv\": 0,\r\n      \"tipAfeIgv\": 30,\r\n      \"totalImpuestos\": 0,\r\n      \"mtoPrecioUnitario\": 0,\r\n      \"icbper\": 0.70\r\n    }\r\n  ],\r\n  \"legends\": []\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/invoices",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"invoices"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Validar CPE",
+					"item": [
+						{
+							"name": "validar documentos cpe",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"cpes\": [\r\n    {\r\n      \"ruc\": \"20600887735\",\r\n      \"tipo\": \"01\",\r\n      \"serieNumero\": \"F001-1437\",\r\n      \"fechaEmisionCpe\": \"2025-09-22\",\r\n      \"monto\": 92.00\r\n    },  \r\n    {\r\n      \"ruc\": \"20654321987\",\r\n      \"tipo\": \"01\",\r\n      \"serieNumero\": \"F001-0000413\",\r\n      \"fechaEmisionCpe\": \"2025-09-20\",\r\n      \"monto\": 250.00\r\n    },\r\n    {\r\n      \"ruc\": \"20654321987\",\r\n      \"tipo\": \"01\",\r\n      \"serieNumero\": \"F001-0000417\",\r\n      \"fechaEmisionCpe\": \"2025-09-20\",\r\n      \"monto\": 250.00\r\n    }\r\n  ]\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/validate-cpe",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"validate-cpe"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "validar cdr y get status",
+					"item": [
+						{
+							"name": "validar cdr",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n      \"ruc\": \"20600887735\",\r\n      \"tipo\": \"01\",\r\n      \"serieNumero\": \"F001-1438\",\r\n      \"fechaEmisionCpe\": \"2025-09-22\",\r\n      \"monto\": 92.00\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/validate-cdr",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"validate-cdr"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "validar status comprobantes  facturas y notas de crédito y debito, que inicien con “F”(solo eso) Copy",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n      \"ruc\": \"20600887735\",\r\n      \"tipo\": \"01\",\r\n      \"serieNumero\": \"F001-1438\",\r\n      \"fechaEmisionCpe\": \"2025-09-22\",\r\n      \"monto\": 92.00\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/documents/validate-cpe-status",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"documents",
+										"validate-cpe-status"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Generar PDF",
+					"item": [
+						{
+							"name": "Generar Pdf",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "http://localhost:3000/exportar/comprobantes/994/pdf",
+									"protocol": "http",
+									"host": [
+										"localhost"
+									],
+									"port": "3000",
+									"path": [
+										"exportar",
+										"comprobantes",
+										"994",
+										"pdf"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Serie",
+			"item": [
+				{
+					"name": "save",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"empresaId\": 1,\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/serie",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"serie"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "obtener",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/serie/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"serie",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"empresaId\": 1,\r\n  \"tipoComprobante\": \"01\",\r\n  \"serie\": \"F001\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/serie/1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"serie",
+								"1"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "actuañiar correlativo",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"usuarioId\": 1,\r\n  \"motivo\": \"ERROR DE DTA\",\r\n  \"newCorrelativo\": 1\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/serie/1/correlativo",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"serie",
+								"1",
+								"correlativo"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Resumen Diario",
+			"item": [
+				{
+					"name": "consultat estado resumen",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/summaries/status/1758817465672",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"summaries",
+								"status",
+								"1758817465672"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "crear resumen",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n\t\"ublVersion\": \"2.0\",\r\n\t\"customizationID\": \"1.1\",\r\n\t//\"fecGeneracion\": \"2025-09-11T14:26:13-05:00\", //fecha en que se genera el archivo.\r\n\t\"fecReferencia\": \"2025-09-11T12:26:13-05:00\", //fecha de los comprobantes que se están resumiendo.\r\n    \"serieResumen\": \"RC\",\r\n\t\"company\": {\r\n\t\t\"ruc\": \"20000000001\",\r\n\t\t\"tipoDoc\": \"6\",\r\n\t\t\"razonSocial\": \"GRUPO R & D INVERSIONES E.I.R.L.\"\r\n\t}\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/summaries/daily",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"summaries",
+								"daily"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Anular Boleta",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"tipoComprobante\": \"03\",\r\n  \"serie\": \"B001\",\r\n  \"correlativo\": 6,\r\n  \"motivo\": \"Error en la emisión\",\r\n  \"empresaId\": 18\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/documents/cancel/boleta",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"documents",
+								"cancel",
+								"boleta"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Comunicacion Baja",
+			"item": [
+				{
+					"name": "comunicar baja",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"ublVersion\": \"2.0\",\r\n  \"customizationId\": \"1.0\",\r\n  \"tipoDocumento\": \"RA\",\r\n  \"fecReferencia\": \"2025-09-11T14:26:13-05:00\",   // fecha de los comprobantes anulados\r\n  \"company\": {\r\n    \"ruc\": \"20000000001\",\r\n    \"razonSocial\": \"MI EMPRESA S.A.C.\",\r\n    \"nombreComercial\": \"MI EMPRESA\",\r\n    \"tipoDoc\": \"6\"\r\n  },\r\n  \"detalles\": [\r\n    {\r\n      \"comprobanteId\": 937,  \r\n      \"tipoComprobante\": \"01\",        // 01 = Factura\r\n      \"serie\": \"F001\",\r\n      \"correlativo\": 451,\r\n      \"motivo\": \"Error en el RUC\"\r\n    },\r\n    {\r\n      \"comprobanteId\": 977,\r\n      \"tipoComprobante\": \"01\",\r\n      \"serie\": \"F001\",\r\n      \"correlativo\": 450,\r\n      \"motivo\": \"Error en el importe\"\r\n    }\r\n  ]\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/voided-documents",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"voided-documents"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "consultat estado baja",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/voided-documents/status/1758817569293",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"voided-documents",
+								"status",
+								"1758817569293"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

@@ -37,7 +37,7 @@ import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.inte
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoComprobantesUseCase';
+import { GetByComprobanteAceptadoUseCase } from '../query/GetByComprobanteAceptadoUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
@@ -80,7 +80,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
     protected readonly findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
-    protected readonly findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
+    protected readonly findComprobanteAceptadoUseCase: GetByComprobanteAceptadoUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
     protected readonly comprobanteRepo: ComprobanteRepositoryImpl,
@@ -88,23 +88,26 @@ export abstract class CreateNotaCreditoBaseUseCase {
     protected readonly findCatalogosUseCase: FindCatalogosUseCase,
   ) {}
 
-  protected abstract buildXml(data: any,
+  protected abstract buildXml(
+    data: any,
     tipoAfectacionGravadas: number[],
     tipoAfectacionExoneradas: number[],
-    tipoAfectacionInafectas: number[]): string;
+    tipoAfectacionInafectas: number[],
+  ): string;
   private readonly tiposCatalogos = [
     TipoCatalogoEnum.TIPO_AFECTACION,
     TipoCatalogoEnum.UNIDAD_MEDIDA,
   ];
-  private readonly tasasVigentes = [
-    MAP_TRIBUTOS.IGV.id
-  ];
+  private readonly tasasVigentes = [MAP_TRIBUTOS.IGV.id];
   async execute(
     data: CreateNotaDto,
-    empresaId:number,
+    empresaId: number,
     sucursalId: number,
   ): Promise<IResponseSunat> {
-    const sucursal = await this.sucurSalRepo.findSucursalInterna(empresaId, sucursalId );
+    const sucursal = await this.sucurSalRepo.findSucursalInterna(
+      empresaId,
+      sucursalId,
+    );
     if (!sucursal) {
       throw new BadRequestException(
         `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
@@ -112,7 +115,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     }
     const empresa = await this.validarCatalogOyObtenerCertificado(
       data,
-      sucursal
+      sucursal,
     );
 
     let comprobanteId = 0;
@@ -127,12 +130,17 @@ export abstract class CreateNotaCreditoBaseUseCase {
         motivosAnulacionTotal,
       );
 
-      const catalogos = (await this.findCatalogosUseCase.execute(this.tiposCatalogos)) ?? [];
+      const catalogos =
+        (await this.findCatalogosUseCase.execute(this.tiposCatalogos)) ?? [];
       const tiposAfectacion = obtenerTiposAfectacion(catalogos);
-      const tributosTasa = (await this.findTasaByCodeUseCase.execute(this.tasasVigentes)) ?? [];
+      const tributosTasa =
+        (await this.findTasaByCodeUseCase.execute(this.tasasVigentes)) ?? [];
       const tasaIgv = tributosTasa.get(CodigoSunatTasasEnum.IGV);
       data.porcentajeIgv = tasaIgv == null ? 0.18 : tasaIgv / 100;
-      let comprobanteOriginal = await this.obtenerComprobanteAceptado(data, sucursalId );
+      let comprobanteOriginal = await this.obtenerComprobanteAceptado(
+        data,
+        sucursalId,
+      );
 
       const mtoCalculados: any = await this.buildCreditNoteAmountsJson(
         data,
@@ -143,8 +151,15 @@ export abstract class CreateNotaCreditoBaseUseCase {
       );
       let jsonFinal: any;
       if (data.motivo.codigo == NotaCreditoMotivo.DESCUENTO_GLOBAL) {
-        const mtoFinales = buildMtoGlobales(mtoCalculados);
+        const detalleComprobanteOriginal: DetailDto[] =  comprobanteOriginal?.payloadJson?.details ?? [];
+        const mtoFinales = buildMtoGlobales(
+          mtoCalculados,
+          tiposAfectacion?.tipoAfectacionGravada,
+          tiposAfectacion?.tipoAfectacionExoneradas,
+          tiposAfectacion?.tipoAfectacionInafectas,
+        );
         jsonFinal = this.aplicarDescuentoGlobal(
+          detalleComprobanteOriginal,
           data.descuentoGlobal,
           mtoFinales,
           data,
@@ -186,15 +201,11 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
       const comprobante = await this.registrarComprobante(
         jsonFinal,
-        empresa.empresaId,
+        sucursalId,
       );
       comprobanteId = comprobante.response?.comprobanteId ?? 0;
       jsonFinal.correlativo =
         comprobante.response?.correlativo ?? jsonFinal.correlativo;
-      const sucursal = await this.sucurSalRepo.findSucursalInterna(
-        empresa.empresaId,
-        sucursalId,
-      );
       ((jsonFinal.correoEmpresa = empresa.correo),
         (jsonFinal.telefonoEmpresa = empresa.telefono));
       jsonFinal.signatureId = sucursal?.signatureId ?? '';
@@ -209,8 +220,9 @@ export abstract class CreateNotaCreditoBaseUseCase {
         empresa.claveCertificado,
         tiposAfectacion.tipoAfectacionGravada,
         tiposAfectacion.tipoAfectacionExoneradas,
-        tiposAfectacion.tipoAfectacionInafectas
+        tiposAfectacion.tipoAfectacionInafectas,
       );
+      console.log(xmlFirmado);
       xmlFirmadoError = xmlFirmado;
       const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt(
@@ -255,7 +267,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     }
   }
 
-
   private async validarCatalogOyObtenerCertificado(
     data: CreateNotaDto,
     sucursal: SucursalResponseDto,
@@ -276,7 +287,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
       );
     }
     const certificado = new GetCertificadoDto(
-      empresa.empresaId,
       empresa.certificadoDigital,
       empresa.claveCertificado ?? '',
       empresa.usuarioSolSecundario ?? '',
@@ -286,17 +296,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     );
     return certificado;
   }
-
-
-
-
-
-
-
-
-
-
-
   private async registrarComprobante(data: any, sucursalId: number) {
     const objComprobante: ICreateComprobante = {
       sucursalId,
@@ -325,7 +324,12 @@ export abstract class CreateNotaCreditoBaseUseCase {
     tipoAfectacionInafectas: number[],
   ) {
     const passwordDecrypt = CryptoUtil.decrypt(claveCertificado);
-    const xml = this.buildXml(data, tipoAfectacionGravadas, tipoAfectacionExoneradas, tipoAfectacionInafectas);
+    const xml = this.buildXml(
+      data,
+      tipoAfectacionGravadas,
+      tipoAfectacionExoneradas,
+      tipoAfectacionInafectas,
+    );
     const xmlFirmado = await this.firmaService.firmarXml(
       xml,
       certificadoDigital,
@@ -386,7 +390,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       ((obj.intentos = 0), // esto cambiar cuando este ok
         (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
       obj.fechaRespuesta = new Date();
-      obj.fechaEnvio = new Date()
+      obj.fechaEnvio = new Date();
       await this.sunatLogRepo.save(obj);
       // 4. Actualizar comprobante con CDR, Hash y estado
       responseSunat = {
@@ -446,7 +450,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         return { details: this.generarDummyItems(data.motivo.descripcion) };
       case NotaCreditoMotivo.DESCUENTO_GLOBAL:
         const mtosGlobales = this.calcularMtosGlobales(
-          comprobante?.payloadJson?.details,
+          detalleComprobanteOriginal,
           tipoAfectacionGravadas,
           tipoAfectacionExoneradas,
           tipoAfectacionInafectas,
@@ -463,7 +467,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
           ...mtosGlobales,
           mtoIGV,
           subTotal: +subTotal.toFixed(2),
-          mtoImpVenta: +mtoImpVenta.toFixed(2),
+          mtoImpVenta: +mtoImpVenta.toFixed(2)
         };
 
       case NotaCreditoMotivo.DESCUENTO_POR_ITEM:
@@ -585,7 +589,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       mtoIGV,
       subTotal,
       mtoImpVenta,
-      details,
+      details: this.generarDummyItems("anulacion de operaciones"),
       legends: generateLegends(mtoImpVenta),
       origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
     };
@@ -653,7 +657,8 @@ export abstract class CreateNotaCreditoBaseUseCase {
     };
   }
   private aplicarDescuentoGlobal(
-    descuentos: DescuentoGlobales[], // ahora siempre es array
+    detalle: DetailDto[],
+    descuentos: DescuentoGlobales[],
     mtoGlobales: IMtoGloables[],
     data: CreateNotaDto,
     tipoAfectacionGravadas: number[],
@@ -1522,7 +1527,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       );
     }
     // 1. Buscar comprobante original
-    const comprobante = await this.findCorrelativoUseCase.execute(
+    const comprobante = await this.findComprobanteAceptadoUseCase.execute(
       sucursalId,
       numCorrelativoRelacionado,
       serie?.serieId,

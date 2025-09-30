@@ -4,7 +4,7 @@ import { ComprobanteResponseDto } from "src/domain/comprobante/dto/ConprobanteRe
 import { ComprobanteRepositoryImpl } from "src/infrastructure/persistence/comprobante/comprobante.repository.impl";
 
 @Injectable()
-export class GetByCorrelativoComprobantesUseCase {
+export class GetByComprobanteAceptadoUseCase {
   constructor(private readonly comprobante: ComprobanteRepositoryImpl) {}
 
   async execute(sucursalId: number, numCorrelativo: number, serieId: number): Promise<ComprobanteResponseDto | null> {

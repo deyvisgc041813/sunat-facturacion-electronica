@@ -2,9 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import {
   CodigoProductoNotaDebito,
   LegendCodeEnum,
-  TIPO_AFECTACION_EXONERADAS,
-  TIPO_AFECTACION_GRAVADAS,
-  TIPO_AFECTACION_INAFECTAS,
   TipoAumentoNotaDebito,
   TipoCatalogoEnum,
   TipoComprobanteEnum,
@@ -242,20 +239,21 @@ export function setobjectUpdateComprobante(
   return objectUpdate;
 }
 
-export function buildMtoGlobales(mto: any): IMtoGloables[] {
+export function buildMtoGlobales(mto: any, tipoAfectacionGravadas: number[],
+    tipoAfectacionExoneradas: number[], tipoAfectacionInafectas: number[]): IMtoGloables[] {
   const iMtoGlobalesGravadas: IMtoGloables = {
     mtoOperacion: mto?.mtoOperGravadas ?? 0,
-    tipo: TIPO_AFECTACION_GRAVADAS,
+    tipo: tipoAfectacionGravadas,
   };
 
   const iMtoGlobalesExoneradas: IMtoGloables = {
     mtoOperacion: mto?.mtoOperExoneradas ?? 0,
-    tipo: TIPO_AFECTACION_EXONERADAS,
+    tipo: tipoAfectacionExoneradas,
   };
 
   const iMtoGlobalesInafectas: IMtoGloables = {
     mtoOperacion: mto?.mtoOperInafectas ?? 0,
-    tipo: TIPO_AFECTACION_INAFECTAS,
+    tipo: tipoAfectacionInafectas,
   };
 
   return [iMtoGlobalesGravadas, iMtoGlobalesExoneradas, iMtoGlobalesInafectas];

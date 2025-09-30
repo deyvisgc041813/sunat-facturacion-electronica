@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from '../../Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoComprobantesUseCase';
+import { GetByComprobanteAceptadoUseCase } from '../query/GetByComprobanteAceptadoUseCase';
 import { FindTasaByCodeUseCase } from '../../Tasa/FindTasaByCodeUseCase';
 
 import { CreateNotaDebitoBaseUseCase } from '../base/CreateNotaDebitoBaseUseCase';
@@ -27,7 +27,7 @@ export class CreateNotaDebitoUseCase extends CreateNotaDebitoBaseUseCase {
     useUpdateCaseComprobante: UpdateComprobanteUseCase,
     sunatLogRepo: SunatLogRepositoryImpl,
     findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
-    findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
+    findComprobanteAceptadoUseCase: GetByComprobanteAceptadoUseCase,
     findTasaByCodeUseCase: FindTasaByCodeUseCase,
     findCatalogosUseCase: FindCatalogosUseCase,
     protected readonly sucurSalRepo: SucursalRepositoryImpl,
@@ -42,7 +42,7 @@ export class CreateNotaDebitoUseCase extends CreateNotaDebitoBaseUseCase {
       useUpdateCaseComprobante,
       sunatLogRepo,
       findSerieUseCase,
-      findCorrelativoUseCase,
+      findComprobanteAceptadoUseCase,
       findTasaByCodeUseCase,
       findCatalogosUseCase,
       sucurSalRepo,

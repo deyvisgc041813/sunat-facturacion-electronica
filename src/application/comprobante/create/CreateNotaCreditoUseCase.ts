@@ -7,7 +7,7 @@ import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from '../../Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoComprobantesUseCase';
+import { GetByComprobanteAceptadoUseCase } from '../query/GetByComprobanteAceptadoUseCase';
 import { FindTasaByCodeUseCase } from '../../Tasa/FindTasaByCodeUseCase';
 import { CreateNotaCreditoBaseUseCase } from '../base/CreateNotaCreditoBaseUseCase';
 import { ValidarAnulacionComprobanteUseCase } from '../validate/ValidarAnulacionComprobanteUseCase';
@@ -28,7 +28,7 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
     useUpdateCaseComprobante: UpdateComprobanteUseCase,
     sunatLogRepo: SunatLogRepositoryImpl,
     findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
-    findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
+    findComprobanteAceptadoUseCase: GetByComprobanteAceptadoUseCase,
     findTasaByCodeUseCase: FindTasaByCodeUseCase,
     validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,
     repoComprobante: ComprobanteRepositoryImpl,
@@ -45,7 +45,7 @@ export class CreateNotaCreditoUseCase extends CreateNotaCreditoBaseUseCase {
       useUpdateCaseComprobante,
       sunatLogRepo,
       findSerieUseCase,
-      findCorrelativoUseCase,
+      findComprobanteAceptadoUseCase,
       findTasaByCodeUseCase,
       validarAnulacionComprobanteUseCase,
       repoComprobante,

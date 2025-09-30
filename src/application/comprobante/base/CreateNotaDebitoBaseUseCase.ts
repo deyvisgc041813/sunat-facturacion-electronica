@@ -42,7 +42,7 @@ import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
-import { GetByCorrelativoComprobantesUseCase } from '../query/GetByCorrelativoComprobantesUseCase';
+import { GetByComprobanteAceptadoUseCase } from '../query/GetByComprobanteAceptadoUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
@@ -67,7 +67,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
     protected readonly findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
-    protected readonly findCorrelativoUseCase: GetByCorrelativoComprobantesUseCase,
+    protected readonly findComprobanteAceptadoUseCase: GetByComprobanteAceptadoUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly findCatalogosUseCase: FindCatalogosUseCase,
     protected readonly sucurSalRepo: SucursalRepositoryImpl,
@@ -144,10 +144,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const comprobante = await this.registrarComprobante(data, sucursalId);
       comprobanteId = comprobante.response?.comprobanteId ?? 0;
       data.correlativo = comprobante.response?.correlativo ?? data.correlativo;
-      const sucursal = await this.sucurSalRepo.findSucursalInterna(
-        empresa.empresaId,
-        sucursalId,
-      );
       ((data.correoEmpresa = empresa.correo),
         (data.telefonoEmpresa = empresa.telefono));
       data.signatureId = sucursal?.signatureId ?? '';
@@ -218,7 +214,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
       );
     }
     const certificado = new GetCertificadoDto(
-      empresa.empresaId,
       empresa.certificadoDigital,
       empresa.claveCertificado ?? '',
       empresa.usuarioSolSecundario ?? '',
@@ -457,7 +452,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       );
     }
     // 1. Buscar comprobante original
-    const comprobante = await this.findCorrelativoUseCase.execute(
+    const comprobante = await this.findComprobanteAceptadoUseCase.execute(
       sucursalId,
       numCorrelativoRelacionado,
       serie?.serieId,

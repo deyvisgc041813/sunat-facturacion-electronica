@@ -65,7 +65,6 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
       );
     }
     const certificado = new GetCertificadoDto(
-      empresa.empresaId,
       empresa.certificadoDigital,
       empresa.claveCertificado ?? '',
       empresa.usuarioSolSecundario ?? '',

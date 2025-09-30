@@ -727,7 +727,7 @@ export class SunatService {
 </soapenv:Envelope>`;
 
     try {
-      console.log('envelope ', envelope);
+      
       const { data } = await axios.post(
         'https://e-factura.sunat.gob.pe/ol-it-wsconscpegem/billConsultService', //
         envelope,
