@@ -10,7 +10,6 @@ import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   CodigoSunatTasasEnum,
-  MAP_TRIBUTOS,
   NotaCreditoMotivo,
   ProcesoNotaCreditoEnum,
   TipoCatalogoEnum,
@@ -45,6 +44,7 @@ import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteRe
 import { ValidarAnulacionComprobanteUseCase } from '../validate/ValidarAnulacionComprobanteUseCase';
 import {
   validarComprobante,
+  validarItemsNotaCredito,
   validarProductoYTipoAfectacion,
 } from 'src/util/notas-credito-debito.validator';
 import { DescuentoGlobales } from 'src/domain/comprobante/dto/notasComprobante/DescuentoGlobales';
@@ -56,18 +56,12 @@ import { FindCatalogosUseCase } from 'src/application/catalogo/FindCatalogosUseC
 import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
+import { ComprobantesHelper } from 'src/util/comprobante-helpers';
+import { COD_PRUCTO_ANULACION, MAP_TRIBUTOS, MTO_CERO_NUMBER, TIPO_AFECTACION_GRAVADAS, UNIDAD_MEDIDAD_DEFAULT } from 'src/util/constantes';
 const motivosAnulacionTotal = [
   NotaCreditoMotivo.ANULACION_OPERACION,
   NotaCreditoMotivo.ANULACION_ERROR_RUC,
   NotaCreditoMotivo.DEVOLUCION_TOTAL,
-];
-const motivosActualizacionBP = [
-  NotaCreditoMotivo.CORRECCION_DESCRIPCION,
-  NotaCreditoMotivo.DESCUENTO_GLOBAL,
-  NotaCreditoMotivo.DESCUENTO_POR_ITEM,
-  NotaCreditoMotivo.DEVOLUCION_POR_ITEM,
-  NotaCreditoMotivo.BONIFICACION,
-  NotaCreditoMotivo.DISMINUCION_VALOR,
 ];
 export abstract class CreateNotaCreditoBaseUseCase {
   constructor(
@@ -104,6 +98,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     empresaId: number,
     sucursalId: number,
   ): Promise<IResponseSunat> {
+    ComprobantesHelper.validarDetallesGeneralesPorComprobante(data);
     const sucursal = await this.sucurSalRepo.findSucursalInterna(
       empresaId,
       sucursalId,
@@ -151,7 +146,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
       );
       let jsonFinal: any;
       if (data.motivo.codigo == NotaCreditoMotivo.DESCUENTO_GLOBAL) {
-        const detalleComprobanteOriginal: DetailDto[] =  comprobanteOriginal?.payloadJson?.details ?? [];
         const mtoFinales = buildMtoGlobales(
           mtoCalculados,
           tiposAfectacion?.tipoAfectacionGravada,
@@ -159,7 +153,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
           tiposAfectacion?.tipoAfectacionInafectas,
         );
         jsonFinal = this.aplicarDescuentoGlobal(
-          detalleComprobanteOriginal,
           data.descuentoGlobal,
           mtoFinales,
           data,
@@ -198,7 +191,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
         }
         jsonFinal = data;
       }
-
       const comprobante = await this.registrarComprobante(
         jsonFinal,
         sucursalId,
@@ -206,8 +198,8 @@ export abstract class CreateNotaCreditoBaseUseCase {
       comprobanteId = comprobante.response?.comprobanteId ?? 0;
       jsonFinal.correlativo =
         comprobante.response?.correlativo ?? jsonFinal.correlativo;
-      ((jsonFinal.correoEmpresa = empresa.correo),
-        (jsonFinal.telefonoEmpresa = empresa.telefono));
+      jsonFinal.correoEmpresa = empresa?.correo ?? '';
+      jsonFinal.telefonoEmpresa = empresa?.telefono ?? '';
       jsonFinal.signatureId = sucursal?.signatureId ?? '';
       jsonFinal.signatureNote = sucursal?.signatureNote ?? '';
       jsonFinal.codigoEstablecimientoSunat =
@@ -222,7 +214,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
         tiposAfectacion.tipoAfectacionExoneradas,
         tiposAfectacion.tipoAfectacionInafectas,
       );
-      console.log(xmlFirmado);
       xmlFirmadoError = xmlFirmado;
       const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt(
@@ -347,7 +338,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     xmlFirmado: string,
     responseSunat: IResponseSunat,
   ) {
-    //const cdr = responseSunat.cdr?.toString('base64') ?? null;
     const hash = (await extraerHashCpe(xmlFirmado)) ?? '';
     const motivo = responseSunat?.observaciones
       ? JSON.stringify(responseSunat.observaciones)
@@ -467,7 +457,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
           ...mtosGlobales,
           mtoIGV,
           subTotal: +subTotal.toFixed(2),
-          mtoImpVenta: +mtoImpVenta.toFixed(2)
+          mtoImpVenta: +mtoImpVenta.toFixed(2),
         };
 
       case NotaCreditoMotivo.DESCUENTO_POR_ITEM:
@@ -513,6 +503,19 @@ export abstract class CreateNotaCreditoBaseUseCase {
           );
         }
       case NotaCreditoMotivo.DEVOLUCION_POR_ITEM:
+        // MODO SIMPLE → calculamos todo
+        const errores = validarItemsNotaCredito(
+          data.details,
+          detalleComprobanteOriginal,
+          NotaCreditoMotivo.DEVOLUCION_POR_ITEM,
+        );
+        // Si hay errores, se devuelven todos juntos
+        if (errores.length > 0) {
+          throw new BadRequestException({
+            message: 'Se encontraron inconsistencias en los ítems',
+            detalles: errores,
+          });
+        }
         const esEntradaSinTotalesDev = sonMontosCero(
           data.mtoOperGravadas,
           data.mtoOperExoneradas,
@@ -552,15 +555,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     const { mtoOperGravadas, mtoOperExoneradas, mtoOperInafectas, mtoIGV } =
       details?.reduce(
         (acc, d) => {
-          // if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
-          //   acc.mtoOperGravadas += d.mtoBaseIgv;
-          //   acc.mtoIGV += d.igv;
-          // } else if (TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)) {
-          //   acc.mtoOperExoneradas += d.mtoValorVenta;
-          // } else if (TIPO_AFECTACION_INAFECTAS.includes(d.tipAfeIgv)) {
-          //   acc.mtoOperInafectas += d.mtoValorVenta;
-          // }
-          // return acc;
           if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
             acc.mtoOperGravadas += d.mtoBaseIgv;
             acc.mtoIGV += d.igv;
@@ -589,7 +583,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       mtoIGV,
       subTotal,
       mtoImpVenta,
-      details: this.generarDummyItems("anulacion de operaciones"),
+      details: this.generarDummyItems('anulacion de operaciones'),
       legends: generateLegends(mtoImpVenta),
       origen: ProcesoNotaCreditoEnum.GENERADA_DESDE_DATOS_SIMPLES,
     };
@@ -630,14 +624,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
   ) {
     const { gravadas, exoneradas, inafectas } = details.reduce(
       (acc: any, { tipAfeIgv, mtoValorVenta }) => {
-        // if (TIPO_AFECTACION_GRAVADAS.includes(tipAfeIgv)) {
-        //   acc.gravadas += mtoValorVenta;
-        // } else if (TIPO_AFECTACION_EXONERADAS.includes(tipAfeIgv)) {
-        //   acc.exoneradas += mtoValorVenta;
-        // } else if (TIPO_AFECTACION_INAFECTAS.includes(tipAfeIgv)) {
-        //   acc.inafectas += mtoValorVenta;
-        // }
-        // return acc;
+  
         if (tipoAfectacionGravadas.includes(tipAfeIgv)) {
           acc.gravadas += mtoValorVenta;
         } else if (tipoAfectacionExoneradas.includes(tipAfeIgv)) {
@@ -657,7 +644,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
     };
   }
   private aplicarDescuentoGlobal(
-    detalle: DetailDto[],
     descuentos: DescuentoGlobales[],
     mtoGlobales: IMtoGloables[],
     data: CreateNotaDto,
@@ -750,6 +736,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
               codigo: d.codigo,
             }))
           : [],
+          
       mtoOperGravadas: obj.mtoOperGravadas,
       mtoOperExoneradas: obj.mtoOperExoneradas,
       mtoOperInafectas: obj.mtoOperInafectas,
@@ -780,34 +767,27 @@ export abstract class CreateNotaCreditoBaseUseCase {
     tipoAfectacionInafectas: number[],
   ) {
     // MODO SIMPLE → calculamos todo
+    const errores = validarItemsNotaCredito(
+      details,
+      detComOriginal,
+      NotaCreditoMotivo.DESCUENTO_POR_ITEM,
+    );
+    // Si hay errores, se devuelven todos juntos
+    if (errores.length > 0) {
+      throw new BadRequestException({
+        message: 'Se encontraron inconsistencias en los ítems',
+        detalles: errores,
+      });
+    }
 
     const detallesCalculados = details?.map((d: DetailDto) => {
-      const existComprobante = detComOriginal?.find(
-        (f) => f.codProducto === d.codProducto,
-      );
-
-      if (!existComprobante) {
-        throw new BadRequestException(
-          `El producto con código ${d.codProducto} no existe en el comprobante original. Debe enviar el mismo código del ítem al que se aplicará el descuento.`,
-        );
-      }
-
-      if (existComprobante.tipAfeIgv !== d.tipAfeIgv) {
-        throw new BadRequestException(
-          `El ítem ${d.codProducto} tiene tipo de afectación IGV distinto al comprobante original.  Enviado: ${d.tipAfeIgv}, Original: ${existComprobante.tipAfeIgv}`,
-        );
-      }
       const precioBase = d.mtoValorUnitario - (d.mtoDescuento || 0);
-
       const mtoBaseIgv = precioBase * d.cantidad;
-
       const igv = tipoAfectacionGravadas.includes(d.tipAfeIgv)
         ? mtoBaseIgv * (d.porcentajeIgv / 100)
         : 0;
-
       const mtoValorVenta = mtoBaseIgv;
       const mtoPrecioUnitario = precioBase * (1 + d.porcentajeIgv / 100);
-
       return {
         ...d,
         mtoBaseIgv,
@@ -889,9 +869,6 @@ export abstract class CreateNotaCreditoBaseUseCase {
       }
 
       const mtoBaseIgv = Number((precioBase * d.cantidad).toFixed(2));
-      // const igvCalc = TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)
-      //   ? Number((mtoBaseIgv * (d.porcentajeIgv / 100)).toFixed(2))
-      //   : 0;
       const igvCalc = tipoAfectacionGravadas.includes(d.tipAfeIgv)
         ? Number((mtoBaseIgv * (d.porcentajeIgv / 100)).toFixed(2))
         : 0;
@@ -1475,20 +1452,20 @@ export abstract class CreateNotaCreditoBaseUseCase {
   private generarDummyItems(descripcion: string): DetailDto[] {
     return [
       {
-        codProducto: 'ANUL',
-        unidad: 'NIU',
+        codProducto: COD_PRUCTO_ANULACION,
+        unidad: UNIDAD_MEDIDAD_DEFAULT,
         descripcion: descripcion,
         cantidad: 1,
-        mtoValorUnitario: 0.0,
-        mtoValorVenta: 0.0,
-        mtoBaseIgv: 0.0,
-        porcentajeIgv: 0,
-        igv: 0.0,
-        tipAfeIgv: 10,
-        mtoDescuento: 0.0,
-        totalImpuestos: 0.0,
-        mtoPrecioUnitario: 0.0,
-        icbper: 0,
+        mtoValorUnitario: MTO_CERO_NUMBER,
+        mtoValorVenta: MTO_CERO_NUMBER,
+        mtoBaseIgv: MTO_CERO_NUMBER,
+        porcentajeIgv: MTO_CERO_NUMBER,
+        igv: MTO_CERO_NUMBER,
+        tipAfeIgv: TIPO_AFECTACION_GRAVADAS[0],
+        mtoDescuento: MTO_CERO_NUMBER,
+        totalImpuestos: MTO_CERO_NUMBER,
+        mtoPrecioUnitario: MTO_CERO_NUMBER,
+        icbper: MTO_CERO_NUMBER,
       },
     ];
   }

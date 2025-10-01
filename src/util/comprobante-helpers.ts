@@ -2,15 +2,14 @@ import { BadRequestException } from '@nestjs/common';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { generateLegends } from './Helpers';
 import {
-  MAP_TRIBUTOS,
-  TIPO_AFECTACION_EXONERADAS,
-  TIPO_AFECTACION_GRAVADAS,
-  TIPO_AFECTACION_INAFECTAS,
   TipoCatalogoEnum,
+  TipoComprobanteEnum,
 } from './catalogo.enum';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
 import { TributoTasaResponseDto } from 'src/domain/tributo-tasa/dto/TributoTasaResponseDto';
+import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
+import { MAP_TRIBUTOS, TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRAVADAS, TIPO_AFECTACION_INAFECTAS } from './constantes';
 interface ValidationError {
   index: number; // índice del detalle
   field: string; // campo validado
@@ -30,7 +29,8 @@ export class ComprobantesHelper {
       const valorVenta = item.cantidad * item.mtoValorUnitario; // sin redondeo aún
       const baseIgv = valorVenta;
 
-      const igv = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)  ? valorVenta * (item.porcentajeIgv / 100) // full precision
+      const igv = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)
+        ? valorVenta * (item.porcentajeIgv / 100) // full precision
         : 0;
       // calcular icbper si viene definido en el ítem
       const icbper = item.icbper ? item.icbper * item.cantidad : 0;
@@ -50,8 +50,9 @@ export class ComprobantesHelper {
     // acumular totales con los valores originales (sin redondeo)
     data.details.forEach((item) => {
       const valorVentaRaw = item.cantidad * item.mtoValorUnitario;
-      const igvRaw = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv) ? valorVentaRaw * (item.porcentajeIgv / 100)
-        : 0;  
+      const igvRaw = TIPO_AFECTACION_GRAVADAS.includes(item.tipAfeIgv)
+        ? valorVentaRaw * (item.porcentajeIgv / 100)
+        : 0;
       subTotal += valorVentaRaw;
       totalIGV += igvRaw;
       totalICBPER += item.icbper; // acumular ICBPER
@@ -101,6 +102,7 @@ export class ComprobantesHelper {
       }
     });
   }
+
   private static round(num: number, places: number = 2): number {
     const factor = 10 ** places;
     return Math.round((num + Number.EPSILON) * factor) / factor;
@@ -243,5 +245,31 @@ export class ComprobantesHelper {
     if (tipoAfectacionInafectas.includes(code)) return MAP_TRIBUTOS.INA;
     if (code === 40) return MAP_TRIBUTOS.EXP; // tributo de exportacion
     return MAP_TRIBUTOS.IGV;
+  }
+  static validarDetallesGeneralesPorComprobante(
+    dto: CreateNotaDto | CreateInvoiceDto,
+  ) {
+    const errores: string[] = [];
+    dto.details.forEach((d, index) => {
+      if (dto.tipoComprobante === TipoComprobanteEnum.NOTA_DEBITO) {
+        if (d.mtoValorUnitario < 0) {
+          errores.push(
+            `Item ${index + 1}: En nota de débito el valor unitario no puede ser negativo`,
+          );
+        }
+      } else {
+        if (d.mtoValorUnitario <= 0) {
+          errores.push(
+            `Item ${index + 1}: El valor unitario debe ser mayor a 0`,
+          );
+        }
+      }
+    });
+    if (errores.length > 0) {
+      throw new BadRequestException({
+        message: 'Errores en detalles',
+        errors: errores,
+      });
+    }
   }
 }

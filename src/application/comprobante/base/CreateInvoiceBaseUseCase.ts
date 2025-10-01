@@ -9,7 +9,7 @@ import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException } from '@nestjs/common';
 import {
-  MAP_TRIBUTOS,
+  CodigoSunatTasasEnum,
   TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
@@ -30,6 +30,8 @@ import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/
 import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { MAP_TRIBUTOS } from 'src/util/constantes';
+import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
 
 export abstract class CreateInvoiceBaseUseCase {
   constructor(
@@ -43,8 +45,9 @@ export abstract class CreateInvoiceBaseUseCase {
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
     protected readonly tributoRepo: ITributoTasaRepository,
+    protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
   ) {}
-
+  private readonly tasasVigentes = [MAP_TRIBUTOS.IGV.id];
   protected abstract buildXml(data: CreateInvoiceDto): string;
 
   async execute(
@@ -52,6 +55,7 @@ export abstract class CreateInvoiceBaseUseCase {
     empresaId: number,
     surcursalId: number,
   ): Promise<IResponseSunat> {
+    ComprobantesHelper.validarDetallesGeneralesPorComprobante(data);
     const sucursal = await this.sucurSalRepo.findSucursalInterna(
       empresaId,
       surcursalId,
@@ -63,7 +67,7 @@ export abstract class CreateInvoiceBaseUseCase {
     }
     const empresa = await this.validarCatalogOyObtenerCertificado(
       data,
-      sucursal
+      sucursal,
     );
 
     // Centralizamos las variables necesarias para manejar errores
@@ -86,6 +90,9 @@ export abstract class CreateInvoiceBaseUseCase {
         (await this.tributoRepo.findByCodigosSunat(tasasTributos)) ?? [];
       // 1. Validar item de la factura
       ComprobantesHelper.validarDetallesCliente(data);
+      const tributosTasa = (await this.findTasaByCodeUseCase.execute(this.tasasVigentes)) ?? [];
+      const tasaIgv = tributosTasa.get(CodigoSunatTasasEnum.IGV);
+      data.porcentajeIgv = tasaIgv == null ? 0.18 : tasaIgv / 100;
       const errores = ComprobantesHelper.validarDetalleInvoice(
         data.details,
         catologo,
@@ -119,7 +126,7 @@ export abstract class CreateInvoiceBaseUseCase {
         empresa.claveCertificado,
       );
       contextoError.xmlFirmado = xmlFirmado;
-      contextoError.sucursalId = surcursalId
+      contextoError.sucursalId = surcursalId;
       const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt(
         empresa.claveSolSecundario ?? '',
@@ -204,7 +211,7 @@ export abstract class CreateInvoiceBaseUseCase {
       totalIgv: data.mtoIGV ?? 0,
       mtoImpVenta: data.mtoImpVenta ?? 0,
       payloadJson: JSON.stringify(data),
-      mtoIcbper: data.icbper
+      mtoIcbper: data.icbper,
     };
     return this.useCreateComprobanteCase.execute(objComprobante, data);
   }
@@ -275,9 +282,9 @@ export abstract class CreateInvoiceBaseUseCase {
       obj.sucursalId = sucursalId;
       obj.serie = `${data.serie}-${data.correlativo}`;
       obj.intentos = 0;
-      obj.usuarioEnvio = 'DEYVISGC'
+      obj.usuarioEnvio = 'DEYVISGC';
       obj.fechaRespuesta = new Date();
-      obj.fechaEnvio = new Date()
+      obj.fechaEnvio = new Date();
       await this.sunatLogRepo.save(obj);
       responseSunat = {
         mensaje: obj.response || 'Error SUNAT',

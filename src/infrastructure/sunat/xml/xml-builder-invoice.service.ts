@@ -1,14 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
-import {
-  MAP_TIPO_AFECTACION_TRIBUTO,
-  MAP_TRIBUTOS,
-  TIPO_AFECTACION_EXONERADAS,
-  TIPO_AFECTACION_GRATUITAS,
-  TIPO_AFECTACION_GRAVADAS,
-} from 'src/util/catalogo.enum';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
+import { MAP_TIPO_AFECTACION_TRIBUTO, MAP_TRIBUTOS, TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRATUITAS, TIPO_AFECTACION_GRAVADAS } from 'src/util/constantes';
+import { PriceTypeCode } from 'src/util/catalogo.enum';
 
 @Injectable()
 export class XmlBuilderInvoiceService {
@@ -84,7 +79,8 @@ export class XmlBuilderInvoiceService {
     this.addTotalesImpuestos(
       root,
       totalesPorTributo,
-      dto.tipoMoneda
+      dto.tipoMoneda,
+      dto.porcentajeIgv
     );
     // Totales monetarios
     const mtoOperacion =
@@ -120,8 +116,8 @@ export class XmlBuilderInvoiceService {
         .txt(d.mtoPrecioUnitario.toFixed(6))
         .up();
       const priceTypeCode = TIPO_AFECTACION_GRATUITAS.includes(d.tipAfeIgv)
-        ? '02'
-        : '01';
+        ? PriceTypeCode.GRATUITA
+        : PriceTypeCode.CON_IGV;
       altPrice.ele('cbc:PriceTypeCode').txt(priceTypeCode).up();
 
       // Impuestos por línea
@@ -147,7 +143,7 @@ export class XmlBuilderInvoiceService {
             MAP_TRIBUTOS.IGV,
           );
         } else {
-          // Agrega el tributo IGV requerido por SUNAT en operaciones exoneradas o inafectas
+          // Agregar el tributo IGV requerido por SUNAT en operaciones exoneradas o inafectas
           // (SUNAT exige siempre un TaxSubtotal con IGV, incluso si la línea solo tiene ICBPER)
           const mapTributo = TIPO_AFECTACION_EXONERADAS.includes(d.tipAfeIgv)
             ? MAP_TRIBUTOS.EXO
@@ -204,8 +200,9 @@ export class XmlBuilderInvoiceService {
       line.ele('cac:Item').ele('cbc:Description').dat(d.descripcion);
       let precioUnitario = d.mtoPrecioUnitario;
       if (TIPO_AFECTACION_GRAVADAS.includes(d.tipAfeIgv)) {
-        // factura Grabada se necesita precio sin igv
-        precioUnitario = d.mtoPrecioUnitario / 1.18;
+        // factura Grabada se necesita precio sin 
+        const factorIgv = 1 + (d.porcentajeIgv / 100);
+        precioUnitario = d.mtoPrecioUnitario / factorIgv;
       }
       line
         .ele('cac:Price')
@@ -251,7 +248,8 @@ export class XmlBuilderInvoiceService {
   private addTotalesImpuestos(
     root: any,
     totalesPorTributo: any,
-    tipoMoneda: string
+    tipoMoneda: string,
+    porcentajeIgv:number
   ) {
     const taxTotal = root.ele('cac:TaxTotal');
     const taxtoTal:any = Object.values(totalesPorTributo)
@@ -282,9 +280,8 @@ export class XmlBuilderInvoiceService {
         .ele('cbc:TaxAmount', { currencyID: tipoMoneda })
         .txt(tax.toFixed(2))
         .up();
-        
       const taxCat = taxSub.ele('cac:TaxCategory');
-      taxCat.ele('cbc:Percent').txt(18.00.toFixed(2)).up();
+      taxCat.ele('cbc:Percent').txt((porcentajeIgv * 100).toFixed(2)).up();
       taxCat.ele('cbc:TaxExemptionReasonCode').txt(info.taxTypeCode).up();
       const taxScheme = taxCat.ele('cac:TaxScheme');
       taxScheme.ele('cbc:ID').txt(info.id).up();

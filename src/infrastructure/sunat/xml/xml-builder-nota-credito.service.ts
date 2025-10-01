@@ -2,15 +2,13 @@ import { Injectable } from '@nestjs/common';
 
 import {
   ChargeIndicatorEnum,
-  MAP_TIPO_AFECTACION_TRIBUTO,
-  MAP_TRIBUTOS,
   NotaCreditoMotivo,
-  TIPO_AFECTACION_EXONERADAS,
 } from 'src/util/catalogo.enum';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
+import { CANTIDAD_DEFAULT, MAP_TIPO_AFECTACION_TRIBUTO, MAP_TRIBUTOS, MTO_CERO_NUMBER, TAX_EXEPTION_REASONCODE_ICBPER, TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRAVADAS, TIPO_AFECTACION_INAFECTAS, UNIDAD_MEDIDAD_DEFAULT } from 'src/util/constantes';
 /**
  *  Tipos de Nota de Crédito SUNAT (ResponseCode)
  *
@@ -228,6 +226,7 @@ export class XmlBuilderNotaCreditoService {
   }
 
   private addItemDetalle(root: any, dto: CreateNotaDto) {
+    console.log(dto?.details)
     dto?.details?.forEach((d, i) => {
       const line = root.ele('cac:CreditNoteLine'); // cada ítem de la Nota de Crédito
 
@@ -253,15 +252,14 @@ export class XmlBuilderNotaCreditoService {
       // Precio de referencia (obligatorio: unitario con IGV)
       // Es el precio unitario bruto (sin descuento) con IGV incluido
       // Fórmula: mtoValorUnitario * (1 + IGV/100)
-      // Ejemplo: 100.00 * 1.18 = 118.000000
       const pricingRef = line.ele('cac:PricingReference');
       const altPrice = pricingRef.ele('cac:AlternativeConditionPrice');
       altPrice
         .ele('cbc:PriceAmount', { currencyID: dto.tipoMoneda })
         .txt((d.mtoValorUnitario * (1 + d.porcentajeIgv / 100)).toFixed(6)) // ej: 118.000000
         .up();
-      altPrice.ele('cbc:PriceTypeCode').txt('01').up(); // 01 = precio de referencia con IGV
-
+      let priceTypeCode = [21, 31, 37].includes(d.tipAfeIgv) ? "02" : "01"; // precio de referencia con IGV  
+      altPrice.ele('cbc:PriceTypeCode').txt(priceTypeCode).up();
       let tributo: any;
       let taxExemptionReasonCode = '';
       let mtoValorVenta = 0;
@@ -408,12 +406,12 @@ export class XmlBuilderNotaCreditoService {
           : 'Anulación de la operación';
       tipos = [
         {
-          monto: 0,
-          igv: 0,
-          percent: 0,
-          exemption: '10',
-          unitCode: 'NIU',
-          CreditedQuantity: '1.0000',
+          monto: MTO_CERO_NUMBER,
+          igv: MTO_CERO_NUMBER,
+          percent: MTO_CERO_NUMBER,
+          exemption: TIPO_AFECTACION_GRAVADAS[0],
+          unitCode: UNIDAD_MEDIDAD_DEFAULT,
+          CreditedQuantity: CANTIDAD_DEFAULT,
           map: MAP_TRIBUTOS.IGV,
           description,
         },
@@ -424,21 +422,21 @@ export class XmlBuilderNotaCreditoService {
           monto: dto.mtoOperGravadas,
           igv: dto.mtoIGV,
           percent: (dto.porcentajeIgv || 0) * 100,
-          exemption: '10', // Gravado
+          exemption: TIPO_AFECTACION_GRAVADAS[0], // Gravado
           map: MAP_TRIBUTOS.IGV,
         },
         {
           monto: dto.mtoOperExoneradas,
-          igv: 0,
-          percent: 0,
-          exemption: '20', // Exonerado
+          igv: MTO_CERO_NUMBER,
+          percent: MTO_CERO_NUMBER,
+          exemption: TIPO_AFECTACION_EXONERADAS[0], // Exonerado
           map: MAP_TRIBUTOS.EXO,
         },
         {
           monto: dto.mtoOperInafectas,
-          igv: 0,
-          percent: 0,
-          exemption: '30', // Inafecto
+          igv: MTO_CERO_NUMBER,
+          percent: MTO_CERO_NUMBER,
+          exemption: TIPO_AFECTACION_INAFECTAS[0], // Inafecto
           map: MAP_TRIBUTOS.INA,
         },
       ].filter((t) => t.monto > 0);
@@ -467,30 +465,26 @@ export class XmlBuilderNotaCreditoService {
         )
         .reduce((sum, d) => sum + d.mtoValorVenta, 0);
 
-      // const totalBolsa = dto.details
-      //   .filter((d) => d.icbper && d.icbper > 0)
-      //   .reduce((sum, d) => sum + d.icbper, 0);
-
       tipos = [
         {
           monto: totalGravadas,
           igv: dto.mtoIGV || 0,
           percent: (dto.porcentajeIgv || 0) * 100,
-          exemption: '10',
+          exemption: TIPO_AFECTACION_GRAVADAS[0],
           map: MAP_TRIBUTOS.IGV,
         },
         {
           monto: totalExoneradas,
-          igv: 0,
-          percent: 0,
-          exemption: '20',
+          igv: MTO_CERO_NUMBER,
+          percent: MTO_CERO_NUMBER,
+          exemption: TIPO_AFECTACION_EXONERADAS[0],
           map: MAP_TRIBUTOS.EXO,
         },
         {
           monto: totalInafectas,
-          igv: 0,
-          percent: 0,
-          exemption: '30',
+          igv: MTO_CERO_NUMBER,
+          percent: MTO_CERO_NUMBER,
+          exemption: TIPO_AFECTACION_INAFECTAS[0],
           map: MAP_TRIBUTOS.INA,
         },
       ].filter((t) => t.monto > 0);
@@ -498,9 +492,10 @@ export class XmlBuilderNotaCreditoService {
       const totalBolsa = dto.details
         .filter((d) => d.icbper && d.icbper > 0)
         .reduce((sum, d) => {
-          if (d.tipAfeIgv === 10) {
+          if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
             // Gravada → ICBPER + IGV de esa base
-            const igv = d.mtoValorVenta * 0.18;
+            console.log("dto.porcentajeIgv ", dto.porcentajeIgv)
+            const igv = d.mtoValorVenta * dto.porcentajeIgv;
             return sum + d.icbper + igv;
           }
           // Otras afectaciones → solo ICBPER
@@ -509,10 +504,10 @@ export class XmlBuilderNotaCreditoService {
 
       if (totalBolsa > 0) {
         tipos.push({
-          monto: 0, // no aporta a taxableAmount
-          igv: totalBolsa, // aquí ya va 5.90
+          monto: 0,
+          igv: totalBolsa,
           percent: 0,
-          exemption: '9996',
+          exemption: TAX_EXEPTION_REASONCODE_ICBPER,
           map: MAP_TRIBUTOS.ICBPER,
         });
       }
@@ -606,7 +601,7 @@ export class XmlBuilderNotaCreditoService {
     if (!dto.descuentoGlobal || dto.descuentoGlobal.length === 0) {
       return; // nada que agregar
     }
-    for (const d of dto.descuentoGlobal) {
+    for (const d of dto.descuentosGlobales) {
       const allowanceCharge = root.ele('cac:AllowanceCharge');
       allowanceCharge
         .ele('cbc:ChargeIndicator')
@@ -619,7 +614,7 @@ export class XmlBuilderNotaCreditoService {
         .up();
       allowanceCharge
         .ele('cbc:BaseAmount', { currencyID: dto.tipoMoneda })
-        .txt((632.03).toFixed(2))
+        .txt((d.montoBase).toFixed(2))
         .up();
     }
   }

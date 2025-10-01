@@ -125,5 +125,5 @@ function numeroALetras(num: number): string {
     return 'NÚMERO FUERA DE RANGO';
   }
 
-  return convertir(num).trim();
+  return convertir(num)?.trim();
 }

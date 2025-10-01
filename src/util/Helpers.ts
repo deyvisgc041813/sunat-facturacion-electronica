@@ -6,8 +6,7 @@ import {
   TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
-  TipoDocumentoLetras,
-  TRIBUTOS_RESUMEN,
+  TipoDocumentoLetras
 } from './catalogo.enum';
 import { CreateClienteDto } from '../domain/cliente/dto/CreateRequestDto';
 import { UpdateClienteDto } from '../domain/cliente/dto/UpdateClienteDto';
@@ -30,6 +29,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
+import { TRIBUTOS_RESUMEN } from './constantes';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -335,8 +335,8 @@ export function validateLegends(
   const montoEnLetrasEsperado = convertirMontoEnLetras(mtoImpVentaEsperado);
 
   if (
-    legendMonto.value.trim().toUpperCase() !==
-    montoEnLetrasEsperado.trim().toUpperCase()
+    legendMonto?.value?.trim().toUpperCase() !==
+    montoEnLetrasEsperado?.trim().toUpperCase()
   ) {
     throw new BadRequestException(
       `La leyenda de monto en letras no coincide con el total calculado. 
@@ -394,19 +394,19 @@ export function validateCodigoProductoNotaDebito(
  *
  * @throws BadRequestException si existen múltiples tipos de afectación en la factura original
  */
-export function validarTipoAfectacionUnico(details: DetailDto[]): any {
-  const tiposAfeOriginales = [...new Set(details.map((d) => d.tipAfeIgv))];
+// export function validarTipoAfectacionUnico(details: DetailDto[]): any {
+//   const tiposAfeOriginales = [...new Set(details.map((d) => d.tipAfeIgv))];
 
-  if (tiposAfeOriginales.length > 1) {
-    throw new BadRequestException(
-      `El comprobante original contiene ítems con diferentes tipos de afectación IGV (${tiposAfeOriginales.join(
-        ', ',
-      )}). No es posible generar una Nota de Débito global.`,
-    );
-  }
+//   if (tiposAfeOriginales.length > 1) {
+//     throw new BadRequestException(
+//       `El comprobante original contiene ítems con diferentes tipos de afectación IGV (${tiposAfeOriginales.join(
+//         ', ',
+//       )}). No es posible generar una Nota de Débito global.`,
+//     );
+//   }
 
-  return tiposAfeOriginales[0];
-}
+//   return tiposAfeOriginales[0];
+// }
 
 export function buildMensajeRecalculo(tipo: TipoDocumentoLetras): string {
   return `La ${tipo} debe enviarse con los montos correctos o, en su defecto, envíe con los montos en cero para que el sistema los recalcule.`;
@@ -432,7 +432,7 @@ export function generateLegends(mtoImpVenta: number) {
   ];
 }
 export function generarTributosRC(boleta: IDocumento) {
-  return TRIBUTOS_RESUMEN.filter((t) => (boleta as any)[t.key] > 0) // solo los montos > 0
+  return TRIBUTOS_RESUMEN.filter((t) => (boleta as any)[t.key] > 0) // se filtra por el nombre del mto: gravado, exonerado e inafecto solo los montos > 0
     .map((t) => ({
       billingPayment: {
         amount: (boleta as any)[t.key],

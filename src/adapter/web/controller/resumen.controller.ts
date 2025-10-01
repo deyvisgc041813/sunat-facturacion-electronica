@@ -53,7 +53,7 @@ export class ResumenController {
       throw new BadRequestException('El ticket es obligatorio');
     }
     const empresalId = 18;
-    const sucursalId = 18;
+    const sucursalId = 1;
     const useCase = new GetStatusResumenUseCase(
       this.sunatService,
       this.reposiResumen,

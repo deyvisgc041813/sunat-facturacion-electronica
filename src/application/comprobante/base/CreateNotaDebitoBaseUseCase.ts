@@ -1,4 +1,3 @@
-
 import { ErrorLogRepositoryImpl } from 'src/infrastructure/persistence/error-log/error-log.repository.impl';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { CreateComprobanteUseCase } from './CreateComprobanteUseCase';
@@ -13,7 +12,6 @@ import {
   CodigoProductoNotaDebito,
   CodigoSunatTasasEnum,
   LegendCodeEnum,
-  MAP_TRIBUTOS,
   NotaDebitoMotivo,
   ProcesoNotaCreditoEnum,
   TipoAumentoNotaDebito,
@@ -34,7 +32,6 @@ import {
   setobjectUpdateComprobante,
   sonMontosCero,
   validarNumeroDocumentoCliente,
-  validarTipoAfectacionUnico,
   validateCodigoProductoNotaDebito,
   validateLegends,
 } from 'src/util/Helpers';
@@ -55,6 +52,9 @@ import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/
 import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
+import { ComprobantesHelper } from 'src/util/comprobante-helpers';
+import { validarTipoAfectacionNotaDebito } from 'src/util/notas-credito-debito.validator';
+import { MAP_TRIBUTOS } from 'src/util/constantes';
 
 export abstract class CreateNotaDebitoBaseUseCase {
   constructor(
@@ -89,7 +89,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     empresaId: number,
     sucursalId: number,
   ): Promise<IResponseSunat> {
-    //const empresa = await this.validarCatalogOyObtenerCertificado(data);
+     ComprobantesHelper.validarDetallesGeneralesPorComprobante(data)
     const sucursal = await this.sucurSalRepo.findSucursalInterna(
       empresaId,
       sucursalId,
@@ -120,7 +120,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
         data,
         sucursalId,
       );
-      const mtoCalculados: any = await this.buildCreditNoteAmountsJson(
+      // 1. Validar cliente
+      validarNumeroDocumentoCliente(
+        TipoDocumentoLetras.NOTA_DEBITO,
+        data.client.numDoc,
+        comprobanteOriginal.cliente?.numeroDocumento ?? '',
+      );
+      const mtoCalculados: any = await this.buildDebitNoteAmountsJson(
         data,
         comprobanteOriginal,
         tasaAnual,
@@ -144,12 +150,11 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const comprobante = await this.registrarComprobante(data, sucursalId);
       comprobanteId = comprobante.response?.comprobanteId ?? 0;
       data.correlativo = comprobante.response?.correlativo ?? data.correlativo;
-      ((data.correoEmpresa = empresa.correo),
-        (data.telefonoEmpresa = empresa.telefono));
+      data.correoEmpresa = empresa?.correo ?? '';
+      data.telefonoEmpresa = empresa?.telefono ?? "";
       data.signatureId = sucursal?.signatureId ?? '';
       data.signatureNote = sucursal?.signatureNote ?? '';
-      data.codigoEstablecimientoSunat =
-        sucursal?.codigoEstablecimientoSunat ?? '';
+      data.codigoEstablecimientoSunat = sucursal?.codigoEstablecimientoSunat ?? '';
 
       // 2. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
@@ -166,6 +171,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const claveSecundaria = CryptoUtil.decrypt(
         empresa.claveSolSecundario ?? '',
       );
+      console.log(xmlFirmado)
       const responseSunat = await this.sunatService.sendBill(
         `${fileName}.zip`,
         zipBuffer,
@@ -318,7 +324,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       ((obj.intentos = 0), // esto cambiar cuando este ok
         (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
       obj.fechaRespuesta = new Date();
-      obj.fechaEnvio = new Date()
+      obj.fechaEnvio = new Date();
       await this.sunatLogRepo.save(obj);
       // 4. Actualizar comprobante con CDR, Hash y estado
       responseSunat = {
@@ -351,9 +357,9 @@ export abstract class CreateNotaDebitoBaseUseCase {
       );
     }
   }
-  protected async buildCreditNoteAmountsJson(
+  protected async buildDebitNoteAmountsJson(
     data: CreateNotaDto,
-    comprobante: ComprobanteResponseDto,
+    comprobanteOriginal: ComprobanteResponseDto,
     tasaAnual: number,
     tipoAfectacionGravadas: number[],
     tipoAfectacionExoneradas: number[],
@@ -372,8 +378,8 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo simple: calular los montos
           return this.generarMontosNotaDebitoMora(
             data,
-            comprobante,
-            comprobante.fechaEmision,
+            comprobanteOriginal,
+            comprobanteOriginal.fechaEmision,
             tasaAnual,
             tipoAfectacionGravadas,
             tipoAfectacionExoneradas,
@@ -383,7 +389,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo calculado: ya se envian los montos calculados
           return this.validarNotaDebitoMora(
             data,
-            comprobante,
+            comprobanteOriginal,
             new Date(data.fechaPago ?? new Date()),
             tasaAnual,
             tipoAfectacionGravadas,
@@ -396,7 +402,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo simple: calular los montos
           return this.generarAumentoValor(
             data,
-            comprobante,
+            comprobanteOriginal,
             tipoAfectacionGravadas,
             tipoAfectacionExoneradas,
             tipoAfectacionInafectas,
@@ -405,7 +411,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo calculado: ya se envian los montos calculados
           return this.validateNotaDebitoCalculadaAumentoValor(
             data,
-            comprobante,
+            comprobanteOriginal,
             tipoAfectacionGravadas,
             tipoAfectacionExoneradas,
             tipoAfectacionInafectas,
@@ -416,7 +422,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo simple: calular los montos
           return this.generarPenalidad(
             data,
-            comprobante,
+            comprobanteOriginal,
             tipoAfectacionGravadas,
             tipoAfectacionExoneradas,
             tipoAfectacionInafectas,
@@ -425,7 +431,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
           // Modo calculado: ya se envian los montos calculados
           return this.validateNotaDebitoCalculadaPenalidad(
             data,
-            comprobante,
+            comprobanteOriginal,
             tipoAfectacionGravadas,
             tipoAfectacionExoneradas,
             tipoAfectacionInafectas,
@@ -433,7 +439,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
         }
     }
   }
-
   async obtenerComprobanteAceptado(
     data: CreateNotaDto,
     sucursalId: number,
@@ -481,15 +486,8 @@ export abstract class CreateNotaDebitoBaseUseCase {
     tipoAfectacionExoneradas: number[],
     tipoAfectacionInafectas: number[],
   ) {
-    // 1. Validar cliente
-    validarNumeroDocumentoCliente(
-      TipoDocumentoLetras.NOTA_DEBITO,
-      data.client.numDoc,
-      comprobanteOriginal.cliente?.numeroDocumento ?? '',
-    );
-    const detailsComprobante = comprobanteOriginal?.payloadJson
-      ?.details as DetailDto[];
-    const tipAfeigv = validarTipoAfectacionUnico(detailsComprobante);
+    const detailsComprobanteOriginal = comprobanteOriginal?.payloadJson   ?.details as DetailDto[];
+    validarTipoAfectacionNotaDebito(detailsComprobanteOriginal, data.details[0].tipAfeIgv);
 
     const totales = {
       mtoOperGravadas: 0,
@@ -499,12 +497,12 @@ export abstract class CreateNotaDebitoBaseUseCase {
     };
 
     // Clonamos ítems originales del comprobante
-    const detallesNotaDebito: DetailDto[] = [...detailsComprobante];
+    const detallesNotaDebito: DetailDto[] = [...detailsComprobanteOriginal];
 
     /**
      * 1. Calcular el monto pendiente sobre el cual se aplica la mora
      */
-    const montoPendiente = detailsComprobante.reduce(
+    const montoPendiente = detailsComprobanteOriginal.reduce(
       (sum, d) => sum + (d.mtoValorVenta ?? 0),
       0,
     );
@@ -576,13 +574,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
         NotaDebitoMotivo.INTERECES_MORA,
         nuevo.codProducto,
       );
-      // Validar que el tipo de afectación de ND coincida con el de la factura original
-      if (nuevo.tipAfeIgv !== tipAfeigv) {
-        throw new BadRequestException(
-          `El tipo de afectación IGV del ítem ${nuevo.codProducto} (${nuevo.tipAfeIgv}) no coincide con el de la factura original (${tipAfeigv}). 
-           La Nota de Débito por Mora debe mantener la misma naturaleza tributaria que el comprobante original.`,
-        );
-      }
+      // // Validar que el tipo de afectación de ND coincida con el de la factura original
+      // if (nuevo.tipAfeIgv !== tipAfeigv) {
+      //   throw new BadRequestException(
+      //     `El tipo de afectación IGV del ítem ${nuevo.codProducto} (${nuevo.tipAfeIgv}) no coincide con el de la factura original (${tipAfeigv}). 
+      //      La Nota de Débito por Mora debe mantener la misma naturaleza tributaria que el comprobante original.`,
+      //   );
+      // }
 
       // Evitar duplicar el ítem de mora (ya se calculó en el bloque anterior)
       if (nuevo.codProducto === CodigoProductoNotaDebito.INTERES_POR_MORA)
@@ -658,20 +656,13 @@ export abstract class CreateNotaDebitoBaseUseCase {
   ): boolean {
     const original = comprobante.payloadJson;
 
-    // 1. Validar cliente
-    validarNumeroDocumentoCliente(
-      TipoDocumentoLetras.NOTA_DEBITO,
-      data.client.numDoc,
-      comprobante.cliente?.numeroDocumento ?? '',
-    );
-
-    // 2. Calcular monto pendiente (base del original)
+    // 1. Calcular monto pendiente (base del original)
     const montoPendiente =
       (original.mtoOperGravadas ?? 0) +
       (original.mtoOperExoneradas ?? 0) +
       (original.mtoOperInafectas ?? 0);
 
-    // 3. Calcular mora esperada
+    // 2. Calcular mora esperada
     const fechaVencimiento = new Date(original?.fechaEmision);
     const montoMora = calcularMora(
       montoPendiente,
@@ -680,10 +671,10 @@ export abstract class CreateNotaDebitoBaseUseCase {
       fechaPago,
     );
 
-    // 4. Determinar el tipo de afectación único del comprobante
-    const tipAfeigv = validarTipoAfectacionUnico(original.details);
+    // 3. Determinar el tipo de afectación único del comprobante
+    const tipAfeigv = validarTipoAfectacionNotaDebito(original.details, data.details[0].tipAfeIgv);
 
-    // 5. Inicializar valores esperados
+    // 4. Inicializar valores esperados
     let mtoOperGravadasEsperado = original.mtoOperGravadas ?? 0;
     let mtoOperExoneradasEsperado = original.mtoOperExoneradas ?? 0;
     let mtoOperInafectasEsperado = original.mtoOperInafectas ?? 0;
@@ -691,7 +682,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
     let igvMora = 0;
 
-    // 6. Sumar la mora en la categoría correspondiente
+    // 5. Sumar la mora en la categoría correspondiente
     if (tipoAfectacionGravadas.includes(tipAfeigv)) {
       igvMora = +(montoMora * data.porcentajeIgv).toFixed(2);
       mtoOperGravadasEsperado += montoMora;
@@ -709,7 +700,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
     const mtoImpVentaEsperado = subTotalEsperado + mtoIGVEsperado;
 
-    // 7. Validar ítems
+    // 6. Validar ítems
     for (const d of data.details) {
       const existeEnOriginal = original.details.find(
         (o) => o.codProducto === d.codProducto,
@@ -754,7 +745,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       }
     }
 
-    // 8. Validaciones de totales
+    // 7. Validaciones de totales
     if (data.mtoOperGravadas !== mtoOperGravadasEsperado) {
       throw new BadRequestException(
         `El monto gravado (${data.mtoOperGravadas}) no coincide con el esperado (${mtoOperGravadasEsperado}). 
@@ -797,7 +788,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       );
     }
 
-    // 9. Validar leyendas
+    // 8. Validar leyendas
     validateLegends(data.legends, mtoImpVentaEsperado);
 
     return true;
@@ -827,12 +818,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
     tipoAfectacionExoneradas: number[],
     tipoAfectacionInafectas: number[],
   ) {
-    // 1. Validar cliente
-    validarNumeroDocumentoCliente(
-      TipoDocumentoLetras.NOTA_DEBITO,
-      data.client.numDoc,
-      comprobanteOriginal.cliente?.numeroDocumento ?? '',
-    );
     const totales = {
       mtoOperGravadas: 0,
       mtoOperExoneradas: 0,
@@ -961,13 +946,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     tipoAfectacionExoneradas: number[],
     tipoAfectacionInafectas: number[],
   ): boolean {
-    // 1. Validar cliente
-    validarNumeroDocumentoCliente(
-      TipoDocumentoLetras.NOTA_DEBITO,
-      data.client.numDoc,
-      comprobanteOriginal.cliente?.numeroDocumento ?? '',
-    );
-    // 2. Validar totales de cabecera
+    // 1. Validar totales de cabecera
     const subTotalEsperado =
       (data.mtoOperGravadas ?? 0) +
       (data.mtoOperExoneradas ?? 0) +
@@ -1259,12 +1238,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
       mtoOperInafectas: 0,
       mtoIGV: 0,
     };
-    validarNumeroDocumentoCliente(
-      TipoDocumentoLetras.NOTA_DEBITO,
-      data.client.numDoc,
-      comprobanteOriginal.cliente?.numeroDocumento ?? '',
-    );
-
     const detallesCalculados: DetailDto[] = [];
     for (const d of data.details) {
       // Penalidad = siempre nuevo ítem (PEN001) enviado por el cliente
@@ -1346,14 +1319,8 @@ export abstract class CreateNotaDebitoBaseUseCase {
     tipoAfectacionExoneradas: number[],
     tipoAfectacionInafectas: number[],
   ): boolean {
-    // 1. Validar cliente
-    validarNumeroDocumentoCliente(
-      TipoDocumentoLetras.NOTA_DEBITO,
-      data.client.numDoc,
-      comprobanteOriginal.cliente?.numeroDocumento ?? '',
-    );
 
-    // 2. Validar que exista un solo detalle
+    // 1. Validar que exista un solo detalle
     if (data.details.length !== 1) {
       throw new BadRequestException(
         `La ND por penalidad debe contener exactamente un (1) ítem de detalle.`,
@@ -1362,7 +1329,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
 
     const d = data.details[0];
 
-    // 3. Validar código de producto fijo (PEN001)
+    // 2. Validar código de producto fijo (PEN001)
     validateCodigoProductoNotaDebito(
       NotaDebitoMotivo.PENALIDADES,
       d.codProducto,

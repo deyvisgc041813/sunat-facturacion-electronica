@@ -1,5 +1,6 @@
+import { NotaCreditoMotivo } from 'src/util/catalogo.enum';
 import { BadRequestException } from '@nestjs/common';
-import { NotaCreditoMotivo, TipoComprobanteEnum } from './catalogo.enum';
+import { TipoComprobanteEnum } from './catalogo.enum';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 
 export function validarComprobante(comprobante: any): void {
@@ -44,6 +45,125 @@ export function validarProductoYTipoAfectacion(
     );
   }
   return true;
+}
+
+
+
+// detailsOriginal = ítems del comprobante original
+// tipAfeNotaDebito = tipo de afectación enviado en el detail de la ND
+export function validarTipoAfectacionNotaDebito(
+  detailsOriginal: DetailDto[],
+  tipAfeNotaDebito: number,
+): number {
+  const tiposAfeOriginales = [...new Set(detailsOriginal.map((d) => d.tipAfeIgv))];
+
+  if (tiposAfeOriginales.length === 0) {
+    throw new BadRequestException(
+      'El comprobante original no contiene ítems con tipo de afectación válido.',
+    );
+  }
+
+  if (!tiposAfeOriginales.includes(tipAfeNotaDebito)) {
+    throw new BadRequestException(
+      `El tipo de afectación enviado en la Nota de Débito (${tipAfeNotaDebito}) ` +
+      `no corresponde a ninguno de los tipos del comprobante original (${tiposAfeOriginales.join(', ')}).`,
+    );
+  }
+
+  return tipAfeNotaDebito; // válido
+}
+
+export function validarItemsNotaCredito(
+  details: DetailDto[],
+  detComOriginal: DetailDto[],
+  motivoCodigo: string
+): string[] {
+  const errores: string[] = [];
+
+  for (const d of details) {
+    const existComprobante = detComOriginal?.find(
+      (f) => f.codProducto === d.codProducto,
+    );
+
+    if (!existComprobante) {
+      errores.push(
+        `El ítem ${d.codProducto} no existe en el comprobante original. Debe enviar el mismo código del ítem.`
+      );
+      continue;
+    }
+
+    // ---- Validaciones comunes ----
+    if (existComprobante.tipAfeIgv !== d.tipAfeIgv) {
+      errores.push(
+        `El ítem ${d.codProducto} tiene tipo de afectación IGV ${d.tipAfeIgv}, pero en el comprobante original es ${existComprobante.tipAfeIgv}.`
+      );
+    }
+
+    if (existComprobante.unidad !== d.unidad) {
+      errores.push(
+        `El ítem ${d.codProducto} tiene unidad ${d.unidad}, pero en el comprobante original es ${existComprobante.unidad}.`
+      );
+    }
+
+    if (
+      Number(d.mtoValorUnitario).toFixed(2) !==
+      Number(existComprobante.mtoValorUnitario).toFixed(2)
+    ) {
+      errores.push(
+        `El ítem ${d.codProducto} tiene valor unitario ${d.mtoValorUnitario}, pero en el comprobante original es ${existComprobante.mtoValorUnitario}.`
+      );
+    }
+
+    const totalLineaOriginal =
+      Number(existComprobante.mtoValorUnitario) *
+      Number(existComprobante.cantidad);
+
+    // ---- Lógica específica por motivo ----
+    if (NotaCreditoMotivo.DESCUENTO_POR_ITEM === motivoCodigo) {
+      // Descuento por ítem
+      if (Number(d.cantidad) !== Number(existComprobante.cantidad)) {
+        errores.push(
+          `El ítem ${d.codProducto} tiene cantidad ${d.cantidad}, pero en el comprobante original es ${existComprobante.cantidad}.`
+        );
+      }
+
+      if (Number(d.mtoDescuento) <= 0) {
+        errores.push(
+          `El descuento del ítem ${d.codProducto} (${d.mtoDescuento}) debe ser mayor que 0.`
+        );
+      }
+
+      if (Number(d.mtoDescuento) === totalLineaOriginal) {
+        errores.push(
+          `El ítem ${d.codProducto} tiene un descuento igual al valor original. Debe emitirse una Nota de Crédito de devolución/anulación (motivo 01 o 02).`
+        );
+      }
+
+      if (Number(d.mtoDescuento) > totalLineaOriginal) {
+        errores.push(
+          `El descuento del ítem ${d.codProducto} (${d.mtoDescuento}) no puede ser mayor al valor original de la línea (${totalLineaOriginal}).`
+        );
+      }
+    }
+
+    if (NotaCreditoMotivo.DEVOLUCION_POR_ITEM ===  motivoCodigo) {
+      // Devolución por ítem
+      if (Number(d.cantidad) <= 0) {
+        errores.push(
+          `La cantidad devuelta del ítem ${d.codProducto} (${d.cantidad}) debe ser mayor que 0.`
+        );
+      }
+
+      if (Number(d.cantidad) > Number(existComprobante.cantidad)) {
+        errores.push(
+          `La cantidad devuelta del ítem ${d.codProducto} (${d.cantidad}) no puede ser mayor a la cantidad original (${existComprobante.cantidad}).`
+        );
+      }
+      // Nota: cantidadDevuelta == cantidadOriginal => devolución total válida
+    }
+  }
+
+  return errores;
 }
 
 function validarNotaCredito(comprobante: any): void {
@@ -191,4 +311,3 @@ function validarFacturaBoleta(comprobante: any): void {
     throw new BadRequestException('El importe total debe ser mayor a 0.');
   }
 }
-

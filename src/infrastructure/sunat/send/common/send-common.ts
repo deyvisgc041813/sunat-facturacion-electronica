@@ -87,7 +87,7 @@ export class SendCommon {
     } = await worker.recognize(tempFile);
     await worker.terminate();
 
-    return text.trim();
+    return text?.trim();
   }
 
   /** Mapear mensaje portal SUNAT */

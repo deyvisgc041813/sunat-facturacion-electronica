@@ -8,7 +8,6 @@ import {
   Length,
   IsIn,
 } from 'class-validator';
-import { IsAfectacionIgvValida } from 'src/common/validator/validate.porcentaje.igv';
 import { buildCatalogValidator, TIPO_AFECTACION_IGV_VALIDATOR,  } from 'src/common/validator/validator.generico';
 
 const AfectacionValidator = buildCatalogValidator(TIPO_AFECTACION_IGV_VALIDATOR);
@@ -32,8 +31,7 @@ export class DetailDto {
   @IsPositive({ message: 'La cantidad debe ser mayor a 0' })
   cantidad: number;
 
-  @IsNumber({}, { message: 'El valor unitario debe ser numérico' })
-  @IsPositive({ message: 'El valor unitario debe ser mayor a 0' })
+  @Min(0, { message: 'El valor unitario no puede ser negativo' })
   mtoValorUnitario: number;
 
   @IsNumber({}, { message: 'El valor de venta debe ser numérico' })

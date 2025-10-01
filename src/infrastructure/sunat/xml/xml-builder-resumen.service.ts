@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { ISummaryDocument } from 'src/domain/resumen/interface/sunat.summary.interface';
-import { formatDateForSunat, generarTributosRC, mapEstadoRC } from 'src/util/Helpers';
+import { IDocumento, ISummaryDocument } from 'src/domain/resumen/interface/sunat.summary.interface';
+import {
+  formatDateForSunat,
+  generarTributosRC,
+  mapEstadoRC,
+} from 'src/util/Helpers';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
+import { MAP_TRIBUTOS, MTO_CERO } from 'src/util/constantes';
 
 @Injectable()
 export class XmlBuilderResumenService {
@@ -34,14 +39,14 @@ export class XmlBuilderResumenService {
       dto.customizationID,
       dto.resumenId,
     )
-    .ele('cbc:ReferenceDate')
-    .txt(formatDateForSunat(dto.fecReferencia)) // fecha de emison de las boletas
-    .up()
-    .ele('cbc:IssueDate')
-    .txt(formatDateForSunat(dto.fechaEnvio))
-    .up();
+      .ele('cbc:ReferenceDate')
+      .txt(formatDateForSunat(dto.fecReferencia)) // fecha de emison de las boletas
+      .up()
+      .ele('cbc:IssueDate')
+      .txt(formatDateForSunat(dto.fechaEnvio))
+      .up();
 
-    // 3. Firma (cac:Signature) inmediatamente después de 
+    // 3. Firma (cac:Signature) inmediatamente después de
     XmlCommonBuilder.appendSignature(root, dto);
 
     // emisor (empresa)
@@ -94,8 +99,6 @@ export class XmlBuilderResumenService {
         .txt(doc.total.toFixed(2))
         .up();
       const tributos = generarTributosRC(doc); // usa boleta o doc, pero consistente
-      // Iterar cada tributo
-      // 1. Generar todos los BillingPayment
       tributos.forEach((t) => {
         line
           .ele('sac:BillingPayment')
@@ -107,7 +110,6 @@ export class XmlBuilderResumenService {
           .up()
           .up();
       });
-
       // 2. Calcular total de impuestos
       const totalImpuestos = tributos.reduce(
         (sum, t) => sum + t.taxSubtotal.amount,
@@ -120,7 +122,7 @@ export class XmlBuilderResumenService {
         .ele('cbc:TaxAmount', { currencyID: doc.tipoMoneda })
         .txt(totalImpuestos.toFixed(2))
         .up();
-
+       this.buildDefaultTaxtolIGV(doc, taxTotal) 
       // 4. Dentro de ese TaxTotal, iterar los TaxSubtotal
       tributos.forEach((t) => {
         taxTotal
@@ -144,7 +146,32 @@ export class XmlBuilderResumenService {
           .up();
       });
     });
-
     return root.end({ prettyPrint: true });
+  }
+  private buildDefaultTaxtolIGV (doc:IDocumento, taxTotal: any) {
+      if (
+        (doc.mtoOperExoneradas > 0 || doc.mtoOperInafectas > 0) &&
+        doc.mtoOperGravadas === 0
+      ) {
+        taxTotal
+          .ele('cac:TaxSubtotal')
+          .ele('cbc:TaxAmount', { currencyID: doc.tipoMoneda })
+          .txt(MTO_CERO)
+          .up()
+          .ele('cac:TaxCategory')
+          .ele('cac:TaxScheme')
+          .ele('cbc:ID')
+          .txt(MAP_TRIBUTOS.IGV.id)
+          .up()
+          .ele('cbc:Name')
+          .txt(MAP_TRIBUTOS.IGV.name)
+          .up()
+          .ele('cbc:TaxTypeCode')
+          .txt(MAP_TRIBUTOS.IGV.taxTypeCode)
+          .up()
+          .up()
+          .up()
+          .up();
+      }
   }
 }

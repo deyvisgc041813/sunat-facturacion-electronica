@@ -2,7 +2,7 @@ import { CreateInvoiceDto } from "src/domain/comprobante/dto/invoice/CreateInvoi
 import { CreateNotaDto } from "src/domain/comprobante/dto/notasComprobante/CreateNotaDto";
 import { ComunicacionBajaDto } from "src/domain/comunicacion-baja/ComunicacionBajaDto";
 import { ISummaryDocument } from "src/domain/resumen/interface/sunat.summary.interface";
-import { MAP_TRIBUTOS } from "src/util/catalogo.enum";
+import { MAP_TRIBUTOS, MTO_CERO } from "src/util/constantes";
 
 export class XmlCommonBuilder {
   //   static buildHeader(xml: any, dto: any) {
@@ -220,7 +220,7 @@ export class XmlCommonBuilder {
         .up();
       sub
         .ele('cbc:PerUnitAmount', { currencyID: tipoMoneda })
-        .txt(extra.perUnit?.toFixed(2) ?? '0.00')
+        .txt(extra.perUnit?.toFixed(2) ?? MTO_CERO)
         .up();
     }
     const cat = sub.ele('cac:TaxCategory');

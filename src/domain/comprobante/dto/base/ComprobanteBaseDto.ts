@@ -94,4 +94,6 @@ export class ComprobanteBaseDto {
   @IsOptional()
   @IsNumber({}, { message: 'El correlativo debe ser numérico' })
   correlativo: number;
+  @IsOptional()
+  porcentajeIgv: number; // solo se usara a nivel de backend
 }

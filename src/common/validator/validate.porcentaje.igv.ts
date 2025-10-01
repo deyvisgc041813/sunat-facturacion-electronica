@@ -3,8 +3,8 @@ import {
   ValidationArguments,
   ValidationOptions,
 } from 'class-validator';
-import { TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRAVADAS, TIPO_AFECTACION_INAFECTAS } from 'src/util/catalogo.enum';
 import { TIPO_AFECTACION_IGV_VALIDATOR } from './validator.generico';
+import { TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRAVADAS, TIPO_AFECTACION_INAFECTAS } from 'src/util/constantes';
 
 export function IsAfectacionIgvValida(validationOptions?: ValidationOptions) {
   return function (object: Object, propertyName: string) {

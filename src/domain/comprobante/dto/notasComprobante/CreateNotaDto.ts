@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsNotEmptyObject,
   IsDate,
+  Validate,
 } from 'class-validator';
 import { ClienteDto } from '../base/ClienteDto';
 import { CompanyDto } from '../base/CompanyDto';
@@ -62,18 +63,19 @@ export class CreateNotaDto extends ComprobanteBaseDto {
   @Type(() => Date)
   @IsDate({ message: 'La fecha de pago debe ser una fecha válida (YYYY-MM-DD)' })
   fechaPago?: Date;
+
   @IsOptional()
   @IsArray({ message: 'Los detalles deben ser un arreglo' })
   @ValidateNested({ each: true, message: 'Los detalles no son válidos' })
   @Type(() => DetailDto)
   details: DetailDto[];
+  
   @IsOptional()
   @IsArray({ message: 'Las leyendas deben ser un arreglo' })
   @ValidateNested({ each: true, message: 'Las leyendas no son válidas' })
   @Type(() => LegendDto)
   legends: LegendDto[];
-  @IsOptional()
-  porcentajeIgv: number; // solo se usara a nivel de backend
+
 
   @IsOptional()
   telefonoEmpresa:string
@@ -85,4 +87,6 @@ export class CreateNotaDto extends ComprobanteBaseDto {
   signatureNote:string
   @IsOptional()
   codigoEstablecimientoSunat:string
+  @IsOptional()
+  descuentosGlobales: any[]
 }
