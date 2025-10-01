@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8" />
   <title>Factura {{serie}}-{{numero}}</title>
@@ -8,25 +9,32 @@
       font-family: Arial, sans-serif;
       font-size: 10px;
       margin: 0;
-      width: 260px; /* ancho típico de ticket 58/80mm */
-        padding: 6mm 5mm 8mm 5mm; /* top - right - bottom - left */
+      width: 260px;
+      /* ancho típico de ticket 58/80mm */
+      padding: 6mm 5mm 8mm 5mm;
+      /* top - right - bottom - left */
     }
 
-    .header, .footer {
+    .header,
+    .footer {
       text-align: center;
     }
+
     .logo img {
       max-width: 80px;
       margin-bottom: 5px;
     }
+
     .company-info {
       text-align: center;
       font-size: 9px;
       margin-bottom: 5px;
     }
+
     .company-info p {
       margin: 2px 0;
     }
+
     .title {
       text-align: center;
       font-size: 11px;
@@ -36,62 +44,84 @@
       margin: 5px 0;
       padding: 3px 0;
     }
+
     .info {
       font-size: 9px;
       margin-bottom: 5px;
     }
+
     .info p {
       margin: 2px 0;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       font-size: 9px;
     }
-    table th, table td {
+
+    table th,
+    table td {
       padding: 2px;
       text-align: left;
     }
+
     table th {
       border-bottom: 1px dashed #000;
       font-size: 9px;
       font-weight: bold;
     }
+
     .totales {
       margin-top: 5px;
       font-size: 9px;
       width: 100%;
     }
+
     .totales td {
       padding: 2px;
     }
+
     .importe-letras {
       margin-top: 5px;
       font-size: 9px;
       font-weight: bold;
     }
+
     .qr {
       margin-top: 10px;
       text-align: center;
     }
+
     .qr img {
-      width: 120px;
-      height: 120px;
+      width: 90px;
+      height: 90px;
     }
+
     .separator {
       border-top: 1px dashed #000;
       margin: 5px 0;
     }
-        .condiciones { margin-top: 15px; font-size: 9px; }
-        .direccion {
-  white-space: normal;   /* permite salto de línea */
-  word-wrap: break-word; /* fuerza salto si es muy largo */
-  overflow-wrap: break-word;
-  max-width: 70mm;       /* ancho máximo para que se ajuste al ticket */
-  display: block;
-}
+
+    .condiciones {
+      margin-top: 15px;
+      font-size: 9px;
+    }
+
+    .direccion {
+      white-space: normal;
+      /* permite salto de línea */
+      word-wrap: break-word;
+      /* fuerza salto si es muy largo */
+      overflow-wrap: break-word;
+      max-width: 70mm;
+      /* ancho máximo para que se ajuste al ticket */
+      display: block;
+    }
+        .footer a { color: black; font-weight: bolder; text-decoration: none; cursor: pointer; }
   </style>
 </head>
+
 <body>
 
   <!-- ENCABEZADO -->
@@ -110,7 +140,7 @@
 
   <!-- TÍTULO -->
   <div class="title">
-    {{titleComprobante}}<br/>
+    {{titleComprobante}}<br />
     {{serie}}
   </div>
 
@@ -151,21 +181,32 @@
 
   <!-- TOTALES -->
   <table class="totales">
-    <tr>
     {{#gt opGravadas 0}}
-      <td style="text-align:right; width:70%"><strong>OP. GRAVADAS:</strong></td>
+    <tr>
+      <td style="text-align:right; width:70%">
+        <strong>OP. GRAVADAS:</strong>
+      </td>
       <td style="text-align:right">S/ {{opGravadas}}</td>
-    {{/gt}}
-    {{#gt opExoneradas 0}}
-      <td style="text-align:right; width:70%"><strong>OP. EXONERADAS:</strong></td>
-      <td style="text-align:right">S/ {{opExoneradas}}</td>
-    {{/gt}}
-    {{#gt opInafectas 0}}
-      <td style="text-align:right; width:70%"><strong>OP. INAFECTAS:</strong></td>
-      <td style="text-align:right">S/ {{opInafectas}}</td>
+    </tr>
     {{/gt}}
 
+    {{#gt opExoneradas 0}}
+    <tr>
+      <td style="text-align:right; width:70%">
+        <strong>OP. EXONERADAS:</strong>
+      </td>
+      <td style="text-align:right">S/ {{opExoneradas}}</td>
     </tr>
+    {{/gt}}
+
+    {{#gt opInafectas 0}}
+    <tr>
+      <td style="text-align:right; width:70%">
+        <strong>OP. INAFECTAS:</strong>
+      </td>
+      <td style="text-align:right">S/ {{opInafectas}}</td>
+    </tr>
+    {{/gt}}
     <tr>
       <td style="text-align:right"><strong>IGV:</strong></td>
       <td style="text-align:right">S/ {{igv}}</td>
@@ -184,19 +225,24 @@
   <!-- QR -->
   <div class="qr">
     <img src="{{qrPath}}" alt="QR Code" />
-        <p>Código Hash: {{hash}}</p>
+    <p>Código Hash: {{hash}}</p>
   </div>
   <!-- Condición de pago -->
   <div class="condiciones">
-    <p><b>CONDICIÓN DE PAGO:</b> {{condicionPago}}</p>
+    {{!-- <p><b>CONDICIÓN DE PAGO:</b> {{condicionPago}}</p>
     <p><b>PAGOS:</b></p>
-    <p>• {{medioPago}} - S/ {{total}}</p>
+    <p>• {{medioPago}} - S/ {{total}}</p> --}}
     <p><b>Vendedor:</b> {{vendedor}}</p>
   </div>
 
   <div class="footer">
     <p><strong>¡Gracias por su compra!</strong></p>
+    <u ></u>
+    <p ></p>
+    <a href="{{urlConsulta}}" target="_blank">Para consultar el comprobante ingresar a {{urlConsulta}}</a>
+
   </div>
 
 </body>
+
 </html>
