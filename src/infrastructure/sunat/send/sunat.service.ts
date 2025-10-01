@@ -767,8 +767,9 @@ export class SunatService {
     usuario: string,
     passwrod: string,
   ): Promise<IResponseSunat> {
-    const url =
-      'https://e-factura.sunat.gob.pe/ol-it-wsconscpegem/billConsultService';
+    console.log(usuario)
+    console.log(passwrod)
+    const url ='https://e-factura.sunat.gob.pe/ol-it-wsconscpegem/billConsultService';
     const [serie, correlativoStr] = cp.serieNumero.split('-');
     const correlativo = parseInt(correlativoStr, 10);
     const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
@@ -801,6 +802,7 @@ export class SunatService {
           SOAPAction: 'urn:getStatus',
         },
         body: soapRequest,
+        
       });
       if (!response.ok) {
         throw SendCommon.buildSunatError(
@@ -843,6 +845,7 @@ export class SunatService {
         cdr: null,
       };
     } catch (error: any) {
+      console.log("error ", error)
       if (error instanceof HttpException) {
         throw error;
       }

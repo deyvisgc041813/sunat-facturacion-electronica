@@ -81,7 +81,7 @@ export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   ): Promise<ComprobanteResponseDto[] | null> {
     const comprobantes = await this.repo.find({
       where: { comprobanteId: In(comprobanteIds), sucursal: { sucursalId } },
-      relations: ['sucursal', 'sucursal.empresa', 'cliente', 'serie'],
+      relations: ['sucursal', 'respuestaSunat', 'sucursal.empresa', 'cliente', 'serie'],
     });
     return comprobantes.map((rsp) => ComprobanteMapper.toDomain(rsp));
   }

@@ -20,7 +20,7 @@ export class CreatePdfUseCase {
     private readonly comprobanteRepo: ConprobanteRepository,
     private readonly pdfService: IPdfService,
   ) {}
-  async execute(empresaId:number, sucursalId: number, comprobanteId: number): Promise<any> {
+  async execute(empresaId:number, sucursalId: number, comprobanteId: number, tipo: string): Promise<any> {
     try {
       const sucursal = await this.sucursalRepo.findSucursalInterna(empresaId, sucursalId);
       if (!sucursal) {
@@ -60,6 +60,7 @@ export class CreatePdfUseCase {
         dataComprobante,
         dataComprobante?.payloadJson,
       );
+
       const tipoComprobante = dataComprobante?.payloadJson?.tipoComprobante ?? '';
       const numDocCliente = dataComprobante?.payloadJson?.client?.numDoc ?? '';
       const clientePayloadJson =
@@ -80,9 +81,7 @@ export class CreatePdfUseCase {
         A: 'CÉDULA DIPLOMÁTICA',
       };
       const data: IComprobantePdfDto = {
-        logo:
-          empresa.logo ??
-          'https://i.pinimg.com/originals/67/41/47/674147e7652f6388add8b9913639c6a7.png',
+        logo: !empresa?.logo ? 'https://w7.pngwing.com/pngs/902/964/png-transparent-chicken-hot-rooster-fire-logo-thumbnail.png' : empresa.logo,
         empresa: empresa?.razonSocial,
         rucEmpresa: empresa.ruc,
         direccionEmpresa: empresa?.direccion ?? '',
@@ -111,8 +110,12 @@ export class CreatePdfUseCase {
         items: itemDetalle,
         titleComprobante: this.setTitleComprobante(tipoComprobante) ?? ""
       };
-      
-      return this.pdfService.generarBoleta(data);
+      if("A4" === tipo){
+        return this.pdfService.generarComprobanteA4(data);
+      } else {
+        return this.pdfService.generarComprobanteTicket(data);
+      }
+
     } catch (err) {
       throw err;
     }

@@ -39,7 +39,6 @@ export class ComprobanteResponseDto {
 export class ComprobanteRespuestaSunatResponseDto {
   constructor(
     public comprobanteRsptId: number, // ID autoincremental
-    public comprobanteId: number, // Relación al comprobante
     public xmlFirmado: string, // XML firmado (base64 o string largo)
     public hashCpe: string, // Hash del CPE (cadena de hasta 100)
     public cdr: Buffer, // CDR como binario (puedes devolver base64 en API)

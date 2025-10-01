@@ -1,3 +1,6 @@
+import { IComprobantePdfDto } from "../pdf.interface";
+
 export interface IPdfService {
-  generarBoleta(datos: any): Promise<Buffer>;
+  generarComprobanteA4(datos: IComprobantePdfDto): Promise<Buffer>;
+  generarComprobanteTicket(datos: IComprobantePdfDto): Promise<Buffer>;
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Res } from '@nestjs/common';
+import { Controller, Get, Param, Post, Query, Res } from '@nestjs/common';
 import { CreatePdfUseCase } from 'src/application/pdf/CreatePdfUseCase';
 import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/comprobante/comprobante.repository.impl';
 import { PdfServiceImpl } from 'src/infrastructure/adapter/PdfServiceImpl';
@@ -9,19 +9,28 @@ export class ExportarController {
   constructor(
     private readonly sucursalRepo: SucursalRepositoryImpl,
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
-    private readonly pdfImpl: PdfServiceImpl
+    private readonly pdfImpl: PdfServiceImpl,
   ) {}
 
   @Get('/comprobantes/:id/pdf')
-  async generarBoleta(@Param('id') comprobanteId: number, @Res() res: Response) {
+  async generarBoleta(
+    @Param('id') comprobanteId: number,
+    @Query('tipo') tipo: 'A4' | 'TICKET' = 'A4',
+    @Res() res: Response,
+  ) {
     const empresaId = 18;
     const sucursalId = 1;
     const useCase = new CreatePdfUseCase(
       this.sucursalRepo,
       this.comprobanteRepo,
-      this.pdfImpl
+      this.pdfImpl,
     );
-    const pdfBuffer = await useCase.execute(empresaId, sucursalId, comprobanteId);
+    const pdfBuffer = await useCase.execute(
+      empresaId,
+      sucursalId,
+      comprobanteId,
+      tipo
+    );
     res.set({
       'Content-Type': 'application/pdf',
       'Content-Disposition': 'inline; filename=boleta.pdf',
