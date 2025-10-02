@@ -5,6 +5,7 @@ import {
   IsInt,
   IsNotEmpty,
   IsNotEmptyObject,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
@@ -14,6 +15,9 @@ import {
 import { IsSunatDateTime } from 'src/util/is-sunat-datetime.decorator';
 import { CompanyDto } from '../comprobante/dto/base/CompanyDto';
 export class ComunicacionBajaDto {
+  @IsNumber({}, { message: 'El ID de la sucursal debe ser numérico' })
+  @Min(1, { message: 'El ID de la sucursal debe ser mayor a 0' })
+  sucursalId: number;
   @IsString()
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   @Matches(/^2\.0$/, { message: 'La versión UBL debe ser "2.0"' })
@@ -81,5 +85,5 @@ export class ComunicacionBajaDetalleDto {
     message:
       'Es necesario indicar el motivo de la baja para continuar con el registro',
   })
-  motivo: string
+  motivo: string;
 }

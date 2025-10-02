@@ -16,6 +16,10 @@ import { ResumenBoletasModule } from './resumen-boletas.module';
 import { ComunicacionBajaModule } from './comunicacion-baja.module';
 import { ExportarModule } from './exportar.module';
 import { SucursalModule } from './sucursal.module';
+import { AuthModule } from './auth.module';
+import { UsuarioModule } from './usuario.module';
+import { JwtAuthGuard } from './adapter/guards/jwt.auth.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -42,7 +46,9 @@ import { SucursalModule } from './sucursal.module';
    ResumenBoletasModule,
    ComunicacionBajaModule,
    ExportarModule,
-   SucursalModule
+   SucursalModule,
+   AuthModule,
+   UsuarioModule
   ],
   
   controllers: [AppController],

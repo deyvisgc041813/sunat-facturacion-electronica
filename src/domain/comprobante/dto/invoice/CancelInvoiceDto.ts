@@ -1,12 +1,22 @@
-import { IsNotEmpty, IsString, Length, IsNumber, Min, IsOptional, ValidateIf } from 'class-validator';
+import {
+  IsNotEmpty,
+  IsString,
+  Length,
+  IsNumber,
+  Min,
+  IsOptional,
+  ValidateIf,
+} from 'class-validator';
 
 export class CancelInvoiceDto {
   @IsString({ message: 'El tipo de documento debe ser texto' })
   @IsNotEmpty({ message: 'El tipo de documento es obligatorio' })
-  @Length(2, 2, { message: 'El tipo de documento debe tener exactamente 2 caracteres (ej: "03")' })
+  @Length(2, 2, {
+    message:
+      'El tipo de documento debe tener exactamente 2 caracteres (ej: "03")',
+  })
   tipoComprobante: string; // "03"
-
-  @ValidateIf(o => o.tipoComprobante === '03') // Solo aplica si es boleta
+  @ValidateIf((o) => o.tipoComprobante === '03') // Solo aplica si es boleta
   @IsString({ message: 'La serie debe ser texto' })
   @IsNotEmpty({ message: 'La serie es obligatoria' })
   @Length(4, 4, { message: 'La serie debe tener 4 caracteres (ej: "B001")' })
@@ -18,11 +28,13 @@ export class CancelInvoiceDto {
 
   @IsString({ message: 'El motivo debe ser texto' })
   @IsNotEmpty({ message: 'El motivo es obligatorio' })
-  @Length(10, 100, { message: 'El motivo de anulación debe tener entre 10 y 100 caracteres' })
+  @Length(10, 100, {
+    message: 'El motivo de anulación debe tener entre 10 y 100 caracteres',
+  })
   motivo?: string; // opcional: "Error de emisión"
   @IsNumber({}, { message: 'El ID de la sucursal debe ser numérico' })
   @Min(1, { message: 'El ID de la sucursal debe ser mayor a 0' })
-  sucursalId: number
+  sucursalId: number;
   @IsOptional()
-  serieId:number = 0
+  serieId: number = 0;
 }

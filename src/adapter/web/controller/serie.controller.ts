@@ -6,6 +6,7 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { SerieRepositoryImpl } from '../../../infrastructure/persistence/serie/serie.repository.impl';
 import { CreateSerieDto } from 'src/domain/series/dto/CreateSerieDto';
@@ -16,8 +17,11 @@ import { UpdateSerieUseCase } from 'src/application/Serie/UpdateSerieUseCase';
 import { UpdateSerieDto } from 'src/domain/series/dto/UpdateSerieDto';
 import { UpdateCorrelativoSerieUseCase } from 'src/application/Serie/UpdateCorrelativoSerieUseCase';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
+import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
+import { EmpresaSucursal } from 'src/adapter/decorator/empresa-sucursal.decorator';
 
 @Controller('serie')
+@UseGuards(JwtAuthGuard)
 export class SerieController {
   constructor(
     private readonly serieRepo: SerieRepositoryImpl,
@@ -25,7 +29,7 @@ export class SerieController {
   ) {}
 
   @Post()
-  async create(@Body() body: CreateSerieDto) {
+  async create(@Body() body: CreateSerieDto, @EmpresaSucursal() { empresaId, sucursalId }: { empresaId: number; sucursalId: number }) {
     const useCase = new CreateSerieUseCase(
       this.serieRepo,
       this.catalogoRepository,
@@ -34,9 +38,8 @@ export class SerieController {
   }
   @Get()
   async findAll() {
-    const surcursalId = 1;
     const useCase = new FindAllSerieUseCase(this.serieRepo);
-    return useCase.execute(surcursalId);
+    return useCase.execute(1);
   }
   @Get(':id')
   async findById(@Param('id', ParseIntPipe) id: number) {

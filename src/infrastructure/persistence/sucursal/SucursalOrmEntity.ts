@@ -6,6 +6,7 @@ import {
   JoinColumn,
   CreateDateColumn,
   OneToMany,
+  ManyToMany,
 } from 'typeorm';
 import { EmpresaOrmEntity } from '../empresa/EmpresaOrmEntity';
 import { ProductoOrmEntity } from '../producto/ProductoOrmEntity';
@@ -14,6 +15,7 @@ import { ComprobanteOrmEntity } from '../comprobante/ComprobanteOrmEntity';
 import { ResumenBoletasOrmEntity } from '../resumen/ResumenBoletasOrmEntity';
 import { BajaComprobanteOrmEntity } from '../comunicacion-baja/BajaComprobanteOrmEntity';
 import { SunatLogOrmEntity } from '../sunat-log/SunatLogOrmEntity';
+import { UsuariosOrmEntity } from '../auth/UsuariosOrmEntity';
 
 @Entity({ name: 'sucursal' })
 export class SucursalOrmEntity {
@@ -36,7 +38,8 @@ export class SucursalOrmEntity {
   resumenes: ResumenBoletasOrmEntity[];
   @OneToMany(() => BajaComprobanteOrmEntity, (baja) => baja.sucursal)
   comunicacionBaja: BajaComprobanteOrmEntity[];
-
+  @ManyToMany(() => UsuariosOrmEntity, (user) => user.sucursales)
+  usuarios: UsuariosOrmEntity[];
   @OneToMany(() => SunatLogOrmEntity, (logs) => logs.sucursal)
   sunatLog: SunatLogOrmEntity[];
 

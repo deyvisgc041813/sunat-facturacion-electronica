@@ -5,6 +5,8 @@ import {
   IsOptional,
   Matches,
   IsNotEmptyObject,
+  IsInt,
+  IsPositive,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { CompanyDto } from '../../comprobante/dto/base/CompanyDto';
@@ -15,7 +17,10 @@ export class SummaryDocumentDto {
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   @Matches(/^2\.0$/, { message: 'La versión UBL debe ser "2.0"' })
   ublVersion: string;
-
+  @IsNotEmpty({ message: 'El ID de la sucursal es obligatorio' })
+  @IsInt({ message: 'El ID de la sucursal debe ser un número entero' })
+  @IsPositive({ message: 'El ID de la sucursal debe ser mayor a 0' })
+  sucursalId: number;
   @IsString()
   @IsNotEmpty({ message: 'El CustomizationID es obligatorio' })
   @Matches(/^1\.1$/, { message: 'El CustomizationID debe ser "1.1"' })

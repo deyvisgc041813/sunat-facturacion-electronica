@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 import { CreateClienteUseCase } from 'src/application/Cliente/CreateClienteUseCase';
 import { FindAllClienteUseCase } from 'src/application/Cliente/FindAllClienteUseCase';
 import { FindByIdClienteUseCase } from 'src/application/Cliente/FindByIdClienteUseCase';
@@ -10,6 +11,7 @@ import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/
 import { ClienteRepositoryImpl } from 'src/infrastructure/persistence/cliente/cliente.repository.impl';
 
 @Controller('cliente')
+@UseGuards(JwtAuthGuard)
 export class ClienteController {
   constructor(private readonly clienteRepo: ClienteRepositoryImpl, private readonly catalogoRepository: CatalogoRepositoryImpl) {}
 

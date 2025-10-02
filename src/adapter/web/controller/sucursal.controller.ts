@@ -1,11 +1,12 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 import { CreateClienteDto } from 'src/domain/cliente/dto/CreateRequestDto';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
 
 @Controller('sucursal')
+@UseGuards(JwtAuthGuard)
 export class SucursalController {
   constructor(private readonly sucursalRepo: SucursalRepositoryImpl) {}
-
   @Post()
   async create(@Body() body: CreateClienteDto) {
     //const useCase = new CreateClienteUseCase(this.clienteRepo, this.catalogoRepository);

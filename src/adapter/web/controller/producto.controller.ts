@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 import { CreateProductoUseCase } from 'src/application/Producto/CreateProductoUseCase';
 import { FindAllProductoUseCase } from 'src/application/Producto/FindAllProductoUseCase';
 import { FindByIdProductoUseCase } from 'src/application/Producto/FindByIdProductoUseCase';
@@ -10,6 +11,7 @@ import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/
 import { ProductoRepositoryImpl } from 'src/infrastructure/persistence/producto/producto.repository.impl';
 
 @Controller('producto')
+@UseGuards(JwtAuthGuard)
 export class ProductoController {
   constructor(private readonly productoRepo: ProductoRepositoryImpl, private readonly catalogoRepository: CatalogoRepositoryImpl) {}
 

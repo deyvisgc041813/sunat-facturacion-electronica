@@ -171,7 +171,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
       const claveSecundaria = CryptoUtil.decrypt(
         empresa.claveSolSecundario ?? '',
       );
-      console.log(xmlFirmado)
       const responseSunat = await this.sunatService.sendBill(
         `${fileName}.zip`,
         zipBuffer,

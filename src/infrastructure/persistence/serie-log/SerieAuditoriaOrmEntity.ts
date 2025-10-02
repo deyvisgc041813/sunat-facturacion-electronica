@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { SerieOrmEntity } from '../serie/SerieOrmEntity';
-import { UsuariosOrmEntity } from '../usuario/UsuariosOrmEntity';
+import { UsuariosOrmEntity } from '../auth/UsuariosOrmEntity';
 
 @Entity('series_auditoria')
 export class SerieAuditoriaOrmEntity {

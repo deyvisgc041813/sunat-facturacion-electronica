@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseIntPipe, Post, Put, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CreateEmpresaDto } from 'src/domain/empresa/dto/CreateEmpresaDto';
 import { CreateEmpresaUseCase } from 'src/application/Empresa/CreateEmpresaUseCase';
 import { FindAllEmpresaUseCase } from 'src/application/Empresa/FindAllEmpresaUseCase';
@@ -7,8 +7,9 @@ import { UpdateEmpresaUseCase } from 'src/application/Empresa/UpdateEmpresaUseCa
 import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { EmpresaRepositoryImpl } from 'src/infrastructure/persistence/empresa/empresa.repository.impl';
+import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 
-
+@UseGuards(JwtAuthGuard)
 @Controller('empresa')
 export class EmpresaController {
   constructor(private readonly empresaRepo: EmpresaRepositoryImpl) {}

@@ -2,25 +2,11 @@ import {
   Body,
   Controller,
   Get,
-  HttpStatus,
-  Param,
   Post,
-  Query,
-  Req,
-  Res,
+  UseGuards,
 } from '@nestjs/common';
-import type { Response } from 'express'; //
 import { generarCertificadoPrueba } from 'src/certificado/generarCertificadoPrueba';
-import { GetAllComprobantesUseCase } from 'src/application/comprobante/query/GetAllComprobantesUseCase';
 import { ComprobanteRepositoryImpl } from '../../../infrastructure/persistence/comprobante/comprobante.repository.impl';
-import { GetByIdComprobantesUseCase } from 'src/application/comprobante/query/GetByIdComprobantesUseCase';
-import { EstadoEnumComprobante } from 'src/util/estado.enum';
-import { GetByEstadoComprobantesUseCase } from 'src/application/comprobante/query/GetByEstadoComprobantesUseCase';
-import { GetComprobantesBySucursalFechaUseCase } from 'src/application/comprobante/query/GetComprobantesBySucursalFechaUseCase';
-import { ExportXmlFirmadoComprobanteUseCase } from 'src/application/comprobante/export/ExportXmlFirmadoComprobanteUseCase';
-
-import { ExportZipComprobanteUseCase } from 'src/application/comprobante/export/ExportZipComprobanteUseCase';
-import { ExportCdrZipComprobanteUseCase } from 'src/application/comprobante/export/ExportCdrZipComprobanteUseCase';
 import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { CreateNotaCreditoUseCase } from 'src/application/comprobante/create/CreateNotaCreditoUseCase';
@@ -29,6 +15,7 @@ import { CreateInvoiceUseCase } from 'src/application/comprobante/create/CreateI
 import { CancelInvoiceDto } from 'src/domain/comprobante/dto/invoice/CancelInvoiceDto';
 import { AnularComprobanteUseCase } from 'src/application/comprobante/update/AnularComprobanteUseCase';
 import {
+  ConsultarCpeDto,
   ConsultarLoteCpeDto,
   CpeDto,
 } from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
@@ -38,11 +25,14 @@ import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log
 import { GetValidatedCdrUseCase } from 'src/application/comprobante/query/GetValidatedCdrUseCase';
 import { GetStatusValidateCpeUseCase } from 'src/application/comprobante/query/GetStatusValidateCpeUseCase';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
+import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
+import { EmpresaSucursal } from 'src/adapter/decorator/empresa-sucursal.decorator';
+import { User } from 'src/adapter/decorator/user.decorator';
 
 @Controller('documents')
+@UseGuards(JwtAuthGuard)
 export class ComprobanteController {
   constructor(
-    private readonly comprobanteRepository: ComprobanteRepositoryImpl,
     private readonly createInvoiceUseCase: CreateInvoiceUseCase,
     private readonly createNcUseCase: CreateNotaCreditoUseCase,
     private readonly createNdUseCase: CreateNotaDebitoUseCase,
@@ -50,35 +40,47 @@ export class ComprobanteController {
     private readonly sunatService: SunatService,
     private readonly sunatLogRep: SunatLogRepositoryImpl,
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
-    private readonly sucurSalRepo: SucursalRepositoryImpl
+    private readonly sucurSalRepo: SucursalRepositoryImpl,
   ) {}
 
   @Post('/invoices')
-  async createInvoice(@Body() body: CreateInvoiceDto) {
-    const sucursalId = 1
-    const empresaId = 18
+  async createInvoice(
+    @Body() body: CreateInvoiceDto,
+    @EmpresaSucursal()
+    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
+  ) {
     return this.createInvoiceUseCase.execute(body, empresaId, sucursalId);
   }
   @Post('/credit-notes')
-  async createNc(@Body() body: CreateNotaDto) {
-    const sucursalId = 1
-    const empresaId = 18
+  async createNc(
+    @Body() body: CreateNotaDto,
+    @EmpresaSucursal()
+    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
+  ) {
     return await this.createNcUseCase.execute(body, empresaId, sucursalId);
   }
   @Post('/debit-notes')
-  async createNd(@Body() body: CreateNotaDto) {
-    const sucursalId = 1
-    const empresaId = 18
+  async createNd(
+    @Body() body: CreateNotaDto,
+    @EmpresaSucursal()
+    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
+  ) {
     return await this.createNdUseCase.execute(body, empresaId, sucursalId);
   }
-
   @Post('cancel/boleta')
-  async cancelBoleta(@Body() dto: CancelInvoiceDto) {
+  async cancelBoleta(
+    @Body() dto: CancelInvoiceDto,
+    @EmpresaSucursal()
+    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
+  ) {
     return this.anularComprobante.execute(dto);
   }
   @Post('/validate-cpe')
-  async validarCpe(@Body() body: ConsultarLoteCpeDto) {
-    const sucursalId = 1
+  async validarCpe(
+    @Body() body: ConsultarLoteCpeDto,
+    @EmpresaSucursal()
+    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
+  ) {
     const useCase = new GetValidatedCpeUseCase(
       this.sunatService,
       this.comprobanteRepo,
@@ -86,31 +88,36 @@ export class ComprobanteController {
     return await useCase.execute(body, sucursalId);
   }
   @Post('/validate-cdr')
-  async validarCdr(@Body() body: CpeDto) {
-    const sucursalId = 1
-    const empresaId = 18
+  async validarCdr(
+    @Body() body: ConsultarCpeDto,
+    @EmpresaSucursal() { sucursalId }: { sucursalId: number } ) {
     const useCase = new GetValidatedCdrUseCase(
       this.sunatService,
       this.sunatLogRep,
       this.comprobanteRepo,
     );
-    return await useCase.execute(body, sucursalId);
+    return await useCase.execute(body.cpes, sucursalId);
   }
 
   @Post('/validate-cpe-status')
-  async validarStatusComprobante(@Body() body: CpeDto) {
-    const sucursalId = 1
-    const empresaId = 18
+  async validarStatusComprobante(
+    @Body() body: ConsultarCpeDto,
+    @EmpresaSucursal()
+    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
+  ) {
     const useCase = new GetStatusValidateCpeUseCase(
       this.sunatService,
       this.sunatLogRep,
       this.comprobanteRepo,
       this.sucurSalRepo,
     );
-    return await useCase.execute(body, empresaId, sucursalId);
+    return await useCase.execute(body.cpes, empresaId, sucursalId);
   }
   @Get('/generarcertificado')
-  async generarCerticado() {
+  async generarCerticado(
+    @EmpresaSucursal()
+    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
+  ) {
     generarCertificadoPrueba();
     return true;
   }

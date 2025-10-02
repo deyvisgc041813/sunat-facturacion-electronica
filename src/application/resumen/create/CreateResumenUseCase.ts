@@ -163,7 +163,6 @@ export class CreateResumenUseCase {
       const claveSecundaria = CryptoUtil.decrypt(
         empresa.claveSolSecundario ?? '',
       );
-      console.log(xmlFirmado)
       const ticket = await this.sunatService.sendSummary(
         `${fileName}.zip`,
         zipBuffer,
