@@ -34,6 +34,8 @@ import { TRIBUTOS_RESUMEN } from './constantes';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+
+
 export function validarSoloNumeros(
   valor: string,
   longitud: number,
@@ -493,7 +495,7 @@ export function generarTributosRC(boleta: IDocumento) {
 // }
 // 🔹 Devuelve Date ajustado a Lima
 export function getFechaHoraActualLima(): Date {
-  return dayjs().tz('America/Lima').toDate();
+  return dayjs().tz('America/Lima').startOf('day').toDate();
 }
 
 export function mapEstadoRC(estado: string): string {
@@ -507,7 +509,7 @@ export function mapEstadoRC(estado: string): string {
 export function getFechaHoyYYYYMMDD(): string {
   return dayjs().tz('America/Lima').format('YYYYMMDD');
 }
-export function formatDateForSunat(date: Date): string {
+export function formatDateForSunat(date: Date | null): string {
   return dayjs(date).format('YYYY-MM-DD'); // formato exacto que SUNAT requiere
 }
 export function mapSunatToEstado(codigo: string): EstadoEnvioSunat {

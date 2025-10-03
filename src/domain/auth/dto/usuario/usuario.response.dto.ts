@@ -10,7 +10,9 @@ export class UsuarioResponseDto {
     public readonly roles: RoleRequestDto[], // relación Many-to-Many
     public readonly sucursales:SucursalResponseDto[],
     public readonly clave?:string,
-    public readonly auditorias?: SerieAuditoriaResponseDto[]
+    public readonly auditorias?: SerieAuditoriaResponseDto[],
+    public readonly fecSelecSucursal?: Date,
+    public readonly sucursalActiva?:number,
   ) {}
 
 }

@@ -17,6 +17,7 @@ import { RolesOrmEntity } from './infrastructure/persistence/auth/RolesOrmEntity
 import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity';
 import { RefreshTokenOrmEntity } from './infrastructure/persistence/auth/RefreshTokenOrmEntity';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BranchSelectionUseCase } from './application/auth/branch-selection.usecase copy';
 
 // Entities
 @Module({
@@ -63,6 +64,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       useFactory: (authService: AuthService) => new LogoutUseCase(authService),
       inject: [AuthService],
     },
+    {
+      provide: BranchSelectionUseCase,
+      useFactory: (authService: AuthService) => new BranchSelectionUseCase(authService),
+      inject: [AuthService],
+    },
+    
 
     // Adapters
     UserRepositoryImpl,

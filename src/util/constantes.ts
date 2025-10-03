@@ -126,3 +126,5 @@ export const UNIDAD_MEDIDAD_DEFAULT = 'NIU'
 export const COD_PRUCTO_ANULACION = 'ANUL'
 export const CANTIDAD_DEFAULT = '1.0000'
 export const TAX_EXEPTION_REASONCODE_ICBPER  = '9996'
+
+

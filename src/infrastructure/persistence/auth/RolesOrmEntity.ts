@@ -1,4 +1,5 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany, OneToMany } from 'typeorm';
+import { UserRolesOrmEntity } from './UserRolesOrmEntity';
 
 @Entity('roles')
 export class RolesOrmEntity {
@@ -7,4 +8,7 @@ export class RolesOrmEntity {
 
   @Column({ unique: true })
   name: string;
+    // Relación inversa con UserRolesOrmEntity
+  @OneToMany(() => UserRolesOrmEntity, userRole => userRole.role)
+  users: UserRolesOrmEntity[];  // Relación inversa, esto representa los usuarios con ese rol
 }

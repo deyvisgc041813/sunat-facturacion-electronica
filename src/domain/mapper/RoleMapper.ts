@@ -8,6 +8,12 @@ export class RoleMapper {
       orm.name
     );
   }
+  static toDomainToOrmEntity(dto:RoleRequestDto): RolesOrmEntity {
+    const object = new RolesOrmEntity()
+    object.name = dto.nombre
+    object.roleId = dto.roleId
+    return object
+  }
   static dtoToOrmCreate(orm: any): RolesOrmEntity {
      const object = new RolesOrmEntity()
      object.name = orm.name

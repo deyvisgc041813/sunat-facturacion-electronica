@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { HttpErrorFilter } from './domain/exceptions/http-error.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { registerHandlebarsHelpers } from './common/handlebars-helpers';
+import { EliminaArraysVaciosInterceptor } from './adapter/web/interceptor/elimina-arrays-vacios.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -16,6 +17,8 @@ async function bootstrap() {
     })
   )
   // Registrar helpers antes de renderizar vistas
+    // Aplica el interceptor globalmente
+  app.useGlobalInterceptors(new EliminaArraysVaciosInterceptor());
   registerHandlebarsHelpers();
   await app.listen(process.env.PORT ?? 3000);
 }

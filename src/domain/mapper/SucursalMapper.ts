@@ -54,6 +54,53 @@ export class SucursalMapper {
       logs,
     );
   }
+  // static toDomainToOrmEntity(orm: SucursalOrmEntity): SucursalResponseDto {
+  //   const empresa = orm.empresa
+  //     ? EmpresaMapper.toDomain(orm.empresa)
+  //     : undefined;
+  //   const productos = orm.productos
+  //     ? orm.productos?.map((p) => ProductoMapper.ormToDTO(p))
+  //     : [];
+  //   const series = orm.series
+  //     ? orm.series?.map((s) => SerieMapper.toDomain(s))
+  //     : [];
+  //   const comprobantes = orm.comprobantes
+  //     ? orm.comprobantes?.map((c) => ComprobanteMapper.toDomain(c))
+  //     : [];
+  //   const resumenes = orm.resumenes
+  //     ? orm.resumenes?.map((r) => ResumenBPMaper.toDomain(r))
+  //     : [];
+  //   const bajas = orm.comunicacionBaja
+  //     ? orm.comunicacionBaja?.map((c) => ComunicacionBajaMaper.toDomain(c))
+  //     : [];
+  //   const logs = orm.sunatLog
+  //     ? orm.sunatLog?.map((l) => SunatLogMapper.toDomain(l))
+  //     : [];
+  //   return new SucursalResponseDto(
+  //     orm.sucursalId,
+  //     orm.codigo,
+  //     orm.nombre,
+  //     orm.direccion,
+  //     orm.codigoEstablecimientoSunat,
+  //     orm.ubigeo,
+  //     orm.telefono,
+  //     orm.email,
+  //     orm.signatureId,
+  //     orm.signatureNote,
+  //     orm.estado,
+  //     orm.fechaCreacion,
+  //     empresa,
+  //     productos,
+  //     series,
+  //     comprobantes,
+  //     resumenes,
+  //     bajas,
+  //     logs,
+  //   );
+  // }
+
+
+
   static toDomainInterno(orm: SucursalOrmEntity): SucursalResponseDto {
     const empresa = orm.empresa
       ? EmpresaMapper.toDomainInterno(orm.empresa)

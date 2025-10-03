@@ -32,7 +32,7 @@ export class CreateUsuarioDto {
   @IsArray({ message: 'Las sucursales deben ser un arreglo' })
   @IsInt({ each: true, message: 'Cada sucursal debe ser un número entero' })
   @Type(() => Any)
-  sucursales?: any[];
+  sucursales: any[];
 
   constructor(partial?: Partial<CreateUsuarioDto>) {
     Object.assign(this, partial);

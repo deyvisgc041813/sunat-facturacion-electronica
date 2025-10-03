@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { EstadoSystem } from 'src/util/estado.enum';
 import { SucursalOrmEntity } from './SucursalOrmEntity';
 import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
@@ -33,7 +33,14 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       where: {
         empresa: { empresaId },
       },
-      relations: ['empresa' , 'series', 'comprobantes', 'resumenes', 'comunicacionBaja', 'sunatLog'],
+      relations: [
+        'empresa',
+        'series',
+        'comprobantes',
+        'resumenes',
+        'comunicacionBaja',
+        'sunatLog',
+      ],
     });
     return result.map((sucursal) => SucursalMapper.toDomain(sucursal));
   }
@@ -48,7 +55,14 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
         empresa: { empresaId },
         estado: EstadoSystem.ACTIVO,
       },
-      relations: ['empresa' , 'series', 'comprobantes', 'resumenes', 'comunicacionBaja', 'sunatLog'],
+      relations: [
+        'empresa',
+        'series',
+        'comprobantes',
+        'resumenes',
+        'comunicacionBaja',
+        'sunatLog',
+      ],
     });
     if (!sucursal) {
       throw new NotFoundException(
@@ -88,5 +102,14 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       message: 'Actualizado correctamente',
       data: SucursalMapper.toDomain(newUpdate),
     };
+  }
+  async findByIds(sucursalesIds: number[], empresaId: number): Promise<SucursalResponseDto[]> {
+    const sucursales = await this.repo.find({
+      where: {
+        sucursalId: In(sucursalesIds),
+        empresa: {empresaId}
+      },
+    });
+    return sucursales.map((rsp) => SucursalMapper.toDomain(rsp));
   }
 }

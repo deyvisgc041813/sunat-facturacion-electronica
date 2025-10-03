@@ -38,7 +38,7 @@ export enum OperacionResumenEnum {
 }
 // Catálogo 06: Tipo de Documento de Identidad
 export enum TipoDocumentoIdentidadEnum {
-  DOC_TRIB_NO_DOM_SIN_RUC = '0',
+  DOC_TRIB_NO_DOM_SIN_RUC = '0', // cuando se paga sin dni y sin ruc. 699
   DNI = '1',
   CARNET_EXTRANJERIA = '4',
   RUC = '6',

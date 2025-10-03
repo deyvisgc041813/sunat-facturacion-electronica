@@ -23,6 +23,10 @@ export class UsuariosOrmEntity {
   nombre: string;
   @Column({ name: 'status', default: '1' })
   estado: string;
+  @Column({ name: 'branch_selection_date', type: 'date' })
+  fecSelecSucursal?: Date;
+  @Column({ name: 'branch_asset_id', type: 'int' })
+  sucursalActiva?: number;
   @OneToMany(
     () => SerieAuditoriaOrmEntity,
     (auditoria: SerieAuditoriaOrmEntity) => auditoria.usuario,
@@ -51,4 +55,5 @@ export class UsuariosOrmEntity {
     },
   })
   sucursales: SucursalOrmEntity[];
+
 }
