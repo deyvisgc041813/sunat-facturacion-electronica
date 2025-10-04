@@ -1,4 +1,5 @@
 import { ClienteResponseDto } from "src/domain/cliente/dto/ClienteResponseDto";
+import { SucursalResponseDto } from "src/domain/sucursal/dto/SucursalResponseDto";
 
 export class EmpresaResponseDto {
     constructor(
@@ -8,12 +9,15 @@ export class EmpresaResponseDto {
     public logo:string,
     public email: string,
     public telefono:string,
+    public fechaRegistro:Date,
     public nombreComercial?: string,
     public direccion?: string,
     public usuarioSolSecundario?: string,
     public modo?:string,
     public estado?:number,
-    public cliente?:ClienteResponseDto[]
+    public logoPublicId?:string,
+    public cliente?:ClienteResponseDto[],
+    public sucursales?:SucursalResponseDto[]
   ) {}
 
 }

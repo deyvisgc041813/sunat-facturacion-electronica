@@ -4,7 +4,7 @@ import { HttpErrorFilter } from './domain/exceptions/http-error.filter';
 import { ValidationPipe } from '@nestjs/common';
 import { registerHandlebarsHelpers } from './common/handlebars-helpers';
 import { EliminaArraysVaciosInterceptor } from './adapter/web/interceptor/elimina-arrays-vacios.interceptor';
-
+import { v2 as cloudinary } from 'cloudinary';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -16,6 +16,13 @@ async function bootstrap() {
       transform: true, // convierte tipos (ej. string → number)
     })
   )
+
+
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+  });
   // Registrar helpers antes de renderizar vistas
     // Aplica el interceptor globalmente
   app.useGlobalInterceptors(new EliminaArraysVaciosInterceptor());

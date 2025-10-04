@@ -21,9 +21,7 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
   async save(
     empresa: CreateEmpresaDto,
   ): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
-    const newEmpresa = await this.repo.save(
-      EmpresaMapper.dtoToOrmCreate(empresa),
-    );
+    const newEmpresa = await this.repo.save(EmpresaMapper.dtoToOrmCreate(empresa));
     return {
       status: true,
       message: 'Cliente registrado correctamente',
@@ -33,7 +31,7 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
 
   async findAll(): Promise<EmpresaResponseDto[]> {
     const result = await this.repo.find({
-      relations: ['clientes', 'productos'],
+      relations: ['clientes', 'sucursales'],
     });
     return result.map((empresa) => EmpresaMapper.toDomain(empresa));
   }
@@ -44,7 +42,7 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
   ): Promise<EmpresaResponseDto | EmpresaInternaResponseDto | null> {
     const empresa = await this.repo.findOne({
       where: { empresaId: id, estado: EstadoSystem.ACTIVO },
-      relations: ['clientes', 'productos'],
+      relations: ['clientes', 'sucursales'],
     });
     if (!empresa) {
       throw new NotFoundException(`Empresa con id ${id} no encontrado`);
@@ -70,7 +68,7 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
       empresa.usuarioSolSecundario ?? '',
       empresa.claveSolSecundario ?? '',
       empresa.email,
-      empresa.telefono
+      empresa.telefono,
     );
     return certificado;
   }

@@ -17,11 +17,13 @@ export class EmpresaInternaResponseDto extends EmpresaResponseDto {
       base.logo,
       base.email,
       base.telefono,
+      base.fechaRegistro,
       base.nombreComercial,
       base.direccion,
       base.usuarioSolSecundario,
       base.modo,
       base.estado,
+      base.logoPublicId,
       base.cliente
     );
   }

@@ -60,10 +60,16 @@ export class HttpErrorFilter implements ExceptionFilter {
           break;
       }
     } else if (exception instanceof Error) {
-      // Otros errores genéricos
       message = exception.message;
+    } else {
+      const err: any = exception;
+      if (err.http_code && err.message) {
+        status = err.http_code;
+        message = `Cloudinary error: ${err.message}`;
+      } else {
+        status = HttpStatus.INTERNAL_SERVER_ERROR;
+      }
     }
-
     response.status(status).json({
       success: false,
       statusCode: status,

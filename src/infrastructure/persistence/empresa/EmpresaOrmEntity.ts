@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Unique } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Unique, CreateDateColumn } from 'typeorm';
 import { ClienteOrmEntity } from '../cliente/ClienteOrmEntity';
 import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
+import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata.js';
 
 @Entity('empresas')
 @Unique(['ruc', 'razonSocial'])
@@ -39,11 +40,21 @@ export class EmpresaOrmEntity {
   estado: number;
   @Column({ type: 'varchar', length: 255})
   logo: string;
+  @Column({ type: 'varchar', name: 'logo_public_id', length: 100})
+  logoPublicId: string;
+  
   @Column({ type: 'varchar', length: 45})
   email: string;
   @Column({ type: 'varchar', length: 20})
   telefono:string
   // Relaciones
+  @CreateDateColumn({
+    name: 'create_at',
+    type: 'datetime',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  fechaRegistro: Date;
+  
   @OneToMany(() => ClienteOrmEntity, (cliente: ClienteOrmEntity) => cliente.empresa)
   clientes: ClienteOrmEntity[];
   @OneToMany(() => SucursalOrmEntity, (sucursal) => sucursal.empresa)

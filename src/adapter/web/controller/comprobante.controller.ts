@@ -114,10 +114,7 @@ export class ComprobanteController {
     return await useCase.execute(body.cpes, empresaId, sucursalId);
   }
   @Get('/generarcertificado')
-  async generarCerticado(
-    @EmpresaSucursal()
-    { empresaId, sucursalId }: { empresaId: number; sucursalId: number },
-  ) {
+  async generarCerticado() {
     generarCertificadoPrueba();
     return true;
   }
