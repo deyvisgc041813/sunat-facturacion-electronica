@@ -21,7 +21,9 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
   async save(
     empresa: CreateEmpresaDto,
   ): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
-    const newEmpresa = await this.repo.save(EmpresaMapper.dtoToOrmCreate(empresa));
+    const newEmpresa = await this.repo.save(
+      EmpresaMapper.dtoToOrmCreate(empresa),
+    );
     return {
       status: true,
       message: 'Cliente registrado correctamente',
@@ -74,16 +76,14 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
   }
 
   async update(
-    empresa: UpdateEmpresaDto,
     empresaId: number,
+    empresa: UpdateEmpresaDto,
   ): Promise<{ status: boolean; message: string; data?: EmpresaResponseDto }> {
     const empresaUpdate = EmpresaMapper.dtoToOrmUpdate(empresa);
-    empresaUpdate.empresaId = empresaId;
-    const clientUpdate = await this.repo.save(empresaUpdate);
+    await this.repo.update(empresaId, empresaUpdate);
     return {
       status: true,
       message: 'Actualizado correctamente',
-      data: EmpresaMapper.toDomain(clientUpdate),
     };
   }
 }

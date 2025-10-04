@@ -67,7 +67,22 @@ export class CreateEmpresaDto {
   @Matches(/^[0-9]+$/, { message: 'El teléfono solo puede contener números' })
   readonly telefono: string;
   @IsOptional()
-  logoPublicId:string
+  logoPublicId: string;
+  @IsOptional()
+  certificadoNombreArchivo: string;
+  @IsOptional()
+  certificadoHash: string;
+  @IsOptional()
+  certificadoSubject: string;
+  @IsOptional()
+  certificadoIssuer: string;
+  @IsOptional()
+  certificadoValidoDesde: string;
+  @IsOptional()
+  certificadoValidoHasta: string;
+  @IsOptional()
+  certificadoPublicId: string;
+
   constructor(partial?: Partial<CreateEmpresaDto>) {
     Object.assign(this, partial);
   }

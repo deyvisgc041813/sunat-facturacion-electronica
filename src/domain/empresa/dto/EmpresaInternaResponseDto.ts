@@ -18,12 +18,19 @@ export class EmpresaInternaResponseDto extends EmpresaResponseDto {
       base.email,
       base.telefono,
       base.fechaRegistro,
+      base.certificadoNombreArchivo,
+      base.certificadoHash,
+      base.certificadoSubject,
+      base.certificadoIssuer,
+      base.certificadoValidoDesde,
+      base.certificadoValidoHasta,
       base.nombreComercial,
       base.direccion,
       base.usuarioSolSecundario,
       base.modo,
       base.estado,
       base.logoPublicId,
+      base.certificadoPublicId,
       base.cliente
     );
   }

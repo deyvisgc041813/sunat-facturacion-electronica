@@ -25,12 +25,19 @@ export class EmpresaMapper {
       orm.email,
       orm.telefono,
       orm.fechaRegistro,
+      orm.certificadoNombreArchivo,
+      orm.certificadoHash,
+      orm.certificadoSubject,
+      orm.certificadoIssuer,
+      orm.certificadoValidoDesde,
+      orm.certificadoValidoHasta,
       orm.nombreComercial ?? '',
       orm.direccion,
       orm.usuarioSolSecundario,
       orm.modo,
       orm.estado,
       orm.logoPublicId,
+      orm.certificadoPublicId,
       clientes,
       sucursales,
     );
@@ -52,13 +59,21 @@ export class EmpresaMapper {
       orm.email,
       orm.telefono,
       orm.fechaRegistro,
+      orm.certificadoNombreArchivo,
+      orm.certificadoHash,
+      orm.certificadoSubject,
+      orm.certificadoIssuer,
+      orm.certificadoValidoDesde,
+      orm.certificadoValidoHasta,
       orm.nombreComercial ?? '',
       orm.direccion,
       orm.usuarioSolSecundario,
       orm.modo,
       orm.estado,
       orm.logoPublicId,
+      orm.certificadoPublicId,
       clientes,
+
       sucursales,
     );
     return new EmpresaInternaResponseDto(
@@ -73,20 +88,25 @@ export class EmpresaMapper {
     data: any,
     isUpdate = false,
   ): EmpresaOrmEntity {
-    object.empresaId = data.empresaId ?? 0;
-    object.ruc = data.ruc;
-    object.razonSocial = data.razonSocial;
-    object.nombreComercial = data.nombreComercial;
-    object.direccion = data.direccion;
-    object.certificadoDigital = data.certificadoDigital;
-    object.claveCertificado = data.claveCertificado;
-    object.usuarioSolSecundario = data.usuarioSolSecundario;
-    object.modo = data.modo;
-    object.claveSolSecundario = data.claveSolSecundario;
-    object.email = data.email;
-    object.telefono = data.telefono;
-    object.logo = data.logo;
-    object.logoPublicId = data.logoPublicId;
+    object.ruc = data?.ruc;
+    object.razonSocial = data?.razonSocial;
+    object.nombreComercial = data?.nombreComercial;
+    object.direccion = data?.direccion;
+    object.certificadoDigital = data?.certificadoDigital;
+    object.claveCertificado = data?.claveCertificado;
+    object.usuarioSolSecundario = data?.usuarioSolSecundario;
+    object.modo = data?.modo;
+    object.claveSolSecundario = data?.claveSolSecundario;
+    object.email = data?.email;
+    object.telefono = data?.telefono;
+    object.logo = data?.logo;
+    object.logoPublicId = data?.logoPublicId;
+    object.certificadoNombreArchivo = data?.certificadoNombreArchivo
+    object.certificadoHash = data?.certificadoHash
+    object.certificadoSubject = data?.certificadoSubject
+    object.certificadoIssuer = data?.certificadoIssuer
+    object.certificadoValidoDesde = data?.certificadoValidoDesde
+    object.certificadoValidoHasta = data?.certificadoValidoHasta
     return object;
   }
 

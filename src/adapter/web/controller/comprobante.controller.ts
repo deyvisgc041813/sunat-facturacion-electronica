@@ -113,11 +113,6 @@ export class ComprobanteController {
     );
     return await useCase.execute(body.cpes, empresaId, sucursalId);
   }
-  @Get('/generarcertificado')
-  async generarCerticado() {
-    generarCertificadoPrueba();
-    return true;
-  }
 
   // // Obtener todos los comprobantes de una empresa
   // @Get()

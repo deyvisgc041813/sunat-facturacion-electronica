@@ -10,6 +10,7 @@ import { EmpresaService } from './domain/empresa/services/empresa.service';
 import { CreateEmpresaUseCase } from './application/Empresa/create.usecase';
 import { GetAllEmpresaUseCase } from './application/Empresa/get-all.usecase';
 import { GetByIdEmpresaUseCase } from './application/Empresa/get-by-id.usecase';
+import { UpdateEmpresaUseCase } from './application/Empresa/update.usecase';
 
 @Module({
   imports: [
@@ -42,10 +43,16 @@ import { GetByIdEmpresaUseCase } from './application/Empresa/get-by-id.usecase';
         new GetAllEmpresaUseCase(empresaService),
       inject: [EmpresaService],
     },
-       {
+    {
       provide: GetByIdEmpresaUseCase,
       useFactory: (empresaService: EmpresaService) =>
         new GetByIdEmpresaUseCase(empresaService),
+      inject: [EmpresaService],
+    },
+      {
+      provide: UpdateEmpresaUseCase,
+      useFactory: (empresaService: EmpresaService) =>
+        new UpdateEmpresaUseCase(empresaService),
       inject: [EmpresaService],
     },
 

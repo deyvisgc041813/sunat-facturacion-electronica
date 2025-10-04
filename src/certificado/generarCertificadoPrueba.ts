@@ -2,7 +2,7 @@
 import forge from 'node-forge';
 import fs from 'fs';
 
-export function generarCertificadoPrueba() {
+export function generarCertificadoPrueba(rucPrueba: string, passwordPrueba: string) {
   // 1. Generar clave RSA
   const keys = forge.pki.rsa.generateKeyPair(2048);
 
@@ -21,7 +21,7 @@ export function generarCertificadoPrueba() {
     { name: 'localityName', value: 'Lima' },
     { name: 'organizationName', value: 'SUNAT' },
     { shortName: 'OU', value: 'Pruebas' },
-    { name: 'commonName', value: '20000000001' }, // RUC de prueba
+    { name: 'commonName', value: rucPrueba }, // RUC de prueba
   ];
 
   cert.setSubject(attrs);
@@ -29,7 +29,7 @@ export function generarCertificadoPrueba() {
   cert.sign(keys.privateKey, forge.md.sha256.create());
 
   // 3. Crear PKCS#12 (PFX)
-  const password = '123456'; // clave del PFX
+  const password = passwordPrueba; // clave del PFX
   const newPkcs12Asn1 = forge.pkcs12.toPkcs12Asn1(
     keys.privateKey,
     [cert],
@@ -43,5 +43,5 @@ export function generarCertificadoPrueba() {
   // 4. Guardar a disco
   fs.writeFileSync('certificadoSunat.pfx', pfxBuffer);
   console.log('✅ Certificado de prueba generado: certificadoSunat.pfx');
-  console.log('   Clave: 123456');
+  console.log('Clave: ', passwordPrueba);
 }
