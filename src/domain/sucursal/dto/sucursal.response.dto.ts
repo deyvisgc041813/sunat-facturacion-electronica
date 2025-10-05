@@ -6,6 +6,7 @@ import { ProductoResponseDto } from "src/domain/productos/dto/ProductoResponseDt
 import { ResumenResponseDto } from "src/domain/resumen/dto/ResumenResponseDto";
 import { SerieResponseDto } from "src/domain/series/dto/SerieResponseDto";
 import { SunatLogResponseDto } from "src/domain/sunat-log/interface/sunat.log.interface";
+import { UbigeoResponseDto } from "src/domain/ubigeo/dto/ubigeo.response";
 
 
 export class SucursalResponseDto {
@@ -15,19 +16,27 @@ export class SucursalResponseDto {
     public nombre: string,
     public direccion: string,
     public codigoEstablecimientoSunat:string,
+    public entorno:string,
     public ubigeo?: string,
     public telefono?: string,
     public email?: string,
     public signatureId?: string,
     public signatureNote?: string,
+
     public estado?: number,
-    public fechaCreacion?: Date,
+    public fechaRegistro?: Date,
+    public usuarioRegistro?:string,
+    public usuarioModificacion?:string,
+    public fechaModificacion?: Date,
+
     public empresa?: EmpresaResponseDto | EmpresaInternaResponseDto,
+
     public productos?: ProductoResponseDto[],
     public series?: SerieResponseDto[],
     public comprobantes?: ComprobanteResponseDto[],
     public resumenes?: ResumenResponseDto[],
     public bajas?: BajaComprobanteResponseDto[],
     public sunatLogs?: SunatLogResponseDto[],
+    public ubicacionGeografica?: UbigeoResponseDto,
   ) {}
 }

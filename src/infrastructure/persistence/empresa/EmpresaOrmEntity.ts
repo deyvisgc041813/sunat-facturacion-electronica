@@ -60,9 +60,6 @@ export class EmpresaOrmEntity {
   })
   claveSolSecundario?: string;
 
-  @Column({ name: 'modo', type: 'varchar', length: 10, default: 'BETA' })
-  modo: string;
-
   @Column({ name: 'estado', type: 'tinyint', default: 1 })
   estado: number;
   @Column({ type: 'varchar', length: 255 })

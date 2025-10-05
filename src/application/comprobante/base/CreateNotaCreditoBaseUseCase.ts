@@ -53,7 +53,7 @@ import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
 import { FindCatalogosUseCase } from 'src/application/catalogo/FindCatalogosUseCase';
-import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';

@@ -27,7 +27,7 @@ import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log
 import { ICatalogoRepository } from 'src/domain/catalogo/interface/catalogo.repository';
 import { ITributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.repository';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
-import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 import { MAP_TRIBUTOS } from 'src/util/constantes';

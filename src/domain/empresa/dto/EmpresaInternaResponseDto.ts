@@ -27,7 +27,6 @@ export class EmpresaInternaResponseDto extends EmpresaResponseDto {
       base.nombreComercial,
       base.direccion,
       base.usuarioSolSecundario,
-      base.modo,
       base.estado,
       base.logoPublicId,
       base.certificadoPublicId,

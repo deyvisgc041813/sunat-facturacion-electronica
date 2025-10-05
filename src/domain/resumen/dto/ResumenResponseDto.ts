@@ -1,5 +1,5 @@
 import { ResumenDetalleResponseDto } from './ResumenDetalleResponseDto';
-import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
 
 export class ResumenResponseDto {
   constructor(

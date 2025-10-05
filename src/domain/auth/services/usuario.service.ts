@@ -33,7 +33,7 @@ export class UsuarioService {
   ): Promise<GenericResponse<UsuarioResponseDto>> {
     try {
       const sucursalesIds = dto.sucursales.map((id) => id) ?? [];
-      const sucursales = await this.sucursalRepo.findByIds(
+      const sucursales = await this.sucursalRepo.getByIds(
         sucursalesIds,
         empresaId,
       );
@@ -92,7 +92,7 @@ export class UsuarioService {
       if (user.sucursales.length > 0) {
         const sucursalIds: number[] =
           user.sucursales.map((rsp) => rsp.sucursalId) ?? [];
-        const sucursales = await this.sucursalRepo.findByIds(
+        const sucursales = await this.sucursalRepo.getByIds(
           sucursalIds,
           empresaId,
         );

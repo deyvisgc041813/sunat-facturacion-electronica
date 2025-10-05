@@ -9,7 +9,7 @@ import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import pLimit from 'p-limit';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
-import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 export class CpeValidadoDto extends CpeDto {
   existe: boolean;
   mensaje: string;

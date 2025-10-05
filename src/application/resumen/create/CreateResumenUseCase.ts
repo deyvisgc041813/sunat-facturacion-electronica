@@ -31,7 +31,7 @@ import { ResumenBoletaDetalleDto } from 'src/domain/resumen/interface/create.sum
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
-import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { BadRequestException } from '@nestjs/common';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 

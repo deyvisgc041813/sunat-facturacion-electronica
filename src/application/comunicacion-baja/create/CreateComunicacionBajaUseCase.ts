@@ -29,7 +29,7 @@ import { IComunicacionBajaDetalle } from 'src/domain/comunicacion-baja/interface
 import { BadRequestException } from '@nestjs/common';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
-import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 
 export class CreateComunicacionBajaUseCase {

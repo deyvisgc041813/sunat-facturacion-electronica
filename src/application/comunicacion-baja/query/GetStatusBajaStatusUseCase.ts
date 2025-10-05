@@ -5,7 +5,7 @@ import { BajaComprobanteResponseDto } from 'src/domain/comunicacion-baja/Comunic
 import { IComunicacionBajaRepository } from 'src/domain/comunicacion-baja/interface/baja.repository.interface';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
-import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';

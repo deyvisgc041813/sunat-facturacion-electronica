@@ -3,10 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { EstadoSystem } from 'src/util/estado.enum';
 import { SucursalOrmEntity } from './SucursalOrmEntity';
-import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
-import { CreateSucursalDto } from 'src/domain/sucursal/dto/CreateSucursalDto';
-import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
+import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
+import { CreateSucursalDto } from 'src/domain/sucursal/dto/create.request.dto';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
 import { SucursalMapper } from 'src/domain/mapper/SucursalMapper';
+import { GenericResponse } from 'src/adapter/web/response/response.interface';
 
 @Injectable()
 export class SucursalRepositoryImpl implements ISucursalRepository {
@@ -17,18 +18,18 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
 
   async save(
     sucursal: CreateSucursalDto,
-  ): Promise<{ status: boolean; message: string; data?: SucursalResponseDto }> {
+  ): Promise<GenericResponse<SucursalResponseDto>> {
     const newSucursal = await this.repo.save(
       SucursalMapper.dtoToCreate(sucursal),
     );
     return {
       status: true,
-      message: 'Sucursal registrado correctamente',
+      message: 'La sucursal se registró correctamente.',
       data: SucursalMapper.toDomain(newSucursal),
     };
   }
 
-  async findAll(empresaId: number): Promise<SucursalResponseDto[]> {
+  async getSucursalesByEmpresa(empresaId: number): Promise<SucursalResponseDto[]> {
     const result = await this.repo.find({
       where: {
         empresa: { empresaId },
@@ -36,40 +37,22 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       relations: [
         'empresa',
         'series',
-        'comprobantes',
-        'resumenes',
-        'comunicacionBaja',
-        'sunatLog',
+        'distrito',
+        'distrito.provincia',
+        'distrito.provincia.departamento'
       ],
     });
+    if(!result) throw new NotFoundException("No se encontro sucursales para esta sesion")
     return result.map((sucursal) => SucursalMapper.toDomain(sucursal));
   }
-
-  async findSucursalExterna(
-    empresaId: number,
-    sucursalId: number,
-  ): Promise<SucursalResponseDto | null> {
-    const sucursal = await this.repo.findOne({
+  async getByIds(sucursalesIds: number[], empresaId: number): Promise<SucursalResponseDto[]> {
+    const sucursales = await this.repo.find({
       where: {
-        sucursalId,
-        empresa: { empresaId },
-        estado: EstadoSystem.ACTIVO,
+        sucursalId: In(sucursalesIds),
+        empresa: {empresaId}
       },
-      relations: [
-        'empresa',
-        'series',
-        'comprobantes',
-        'resumenes',
-        'comunicacionBaja',
-        'sunatLog',
-      ],
     });
-    if (!sucursal) {
-      throw new NotFoundException(
-        `No se encontró la sucursal con ID ${sucursalId} para la empresa con ID ${empresaId}.`,
-      );
-    }
-    return SucursalMapper.toDomain(sucursal);
+    return sucursales.map((rsp) => SucursalMapper.toDomain(rsp));
   }
   async findSucursalInterna(
     empresaId: number,
@@ -93,7 +76,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
   async update(
     sucursal: any,
     sucursalId: number,
-  ): Promise<{ status: boolean; message: string; data?: SucursalResponseDto }> {
+  ): Promise<GenericResponse<SucursalResponseDto>> {
     const sucursalUpdate = SucursalMapper.dtoToOrmUpdate(sucursal);
     sucursalUpdate.sucursalId = sucursalId;
     const newUpdate = await this.repo.save(sucursalUpdate);
@@ -103,13 +86,5 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       data: SucursalMapper.toDomain(newUpdate),
     };
   }
-  async findByIds(sucursalesIds: number[], empresaId: number): Promise<SucursalResponseDto[]> {
-    const sucursales = await this.repo.find({
-      where: {
-        sucursalId: In(sucursalesIds),
-        empresa: {empresaId}
-      },
-    });
-    return sucursales.map((rsp) => SucursalMapper.toDomain(rsp));
-  }
+
 }

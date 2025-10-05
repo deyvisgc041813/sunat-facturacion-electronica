@@ -4,7 +4,7 @@ import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
 import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
-import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/resumen/resumen.repository';

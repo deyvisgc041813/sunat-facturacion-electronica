@@ -1,4 +1,4 @@
-import { SucursalResponseDto } from '../sucursal/dto/SucursalResponseDto';
+import { SucursalResponseDto } from '../sucursal/dto/sucursal.response.dto';
 import { BajaComprobanteDetalleResponseDto } from './BajaComprobanteDetalleResponseDto';
 
 export class BajaComprobanteResponseDto {

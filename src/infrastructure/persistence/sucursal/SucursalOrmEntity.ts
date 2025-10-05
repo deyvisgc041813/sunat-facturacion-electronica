@@ -16,30 +16,46 @@ import { ResumenBoletasOrmEntity } from '../resumen/ResumenBoletasOrmEntity';
 import { BajaComprobanteOrmEntity } from '../comunicacion-baja/BajaComprobanteOrmEntity';
 import { SunatLogOrmEntity } from '../sunat-log/SunatLogOrmEntity';
 import { UsuariosOrmEntity } from '../auth/UsuariosOrmEntity';
-import { UserSucursalesOrmEntity } from '../auth/UserSucursalesOrmEntity ';
+import { DistritoOrmEntity } from '../ubigeo/distrito.orm.entity';
 
 @Entity({ name: 'sucursal' })
 export class SucursalOrmEntity {
   @PrimaryGeneratedColumn({ name: 'sucursal_id' })
   sucursalId: number;
 
-  @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.sucursales, { eager: true })
+  @ManyToOne(() => EmpresaOrmEntity, (empresa) => empresa.sucursales, {
+    eager: true,
+  })
   @JoinColumn({ name: 'empresa_id' })
   empresa: EmpresaOrmEntity;
-  @OneToMany(() => ProductoOrmEntity, (producto: ProductoOrmEntity) => producto.sucursal)
+  @ManyToOne(
+    () => DistritoOrmEntity,
+    (distrito: DistritoOrmEntity) => distrito.sucursales,
+    { eager: true },
+  )
+  @JoinColumn({ name: 'distrito_id' })
+  distrito: DistritoOrmEntity;
+
+  @OneToMany(
+    () => ProductoOrmEntity,
+    (producto: ProductoOrmEntity) => producto.sucursal,
+  )
   productos: ProductoOrmEntity[];
 
-  @OneToMany(() =>SerieOrmEntity, (serie: SerieOrmEntity) => serie.sucursal)
+  @OneToMany(() => SerieOrmEntity, (serie: SerieOrmEntity) => serie.sucursal)
   series: SerieOrmEntity[];
 
-  @OneToMany(() =>ComprobanteOrmEntity, (comprobante: ComprobanteOrmEntity) => comprobante.sucursal)
+  @OneToMany(
+    () => ComprobanteOrmEntity,
+    (comprobante: ComprobanteOrmEntity) => comprobante.sucursal,
+  )
   comprobantes: ComprobanteOrmEntity[];
-    // 🔹 Relación con ResumenBoletas
+  //Relación con ResumenBoletas
   @OneToMany(() => ResumenBoletasOrmEntity, (resumen) => resumen.sucursal)
   resumenes: ResumenBoletasOrmEntity[];
   @OneToMany(() => BajaComprobanteOrmEntity, (baja) => baja.sucursal)
   comunicacionBaja: BajaComprobanteOrmEntity[];
-  
+
   @ManyToMany(() => UsuariosOrmEntity, (user) => user.sucursales)
   usuarios: UsuariosOrmEntity[];
 
@@ -64,17 +80,39 @@ export class SucursalOrmEntity {
   @Column({ type: 'varchar', length: 100, nullable: true })
   email: string;
 
-  @Column({ name: 'signature_id', type: 'varchar', length: 50, default: 'SIGN-DEFAULT' })
+  @Column({
+    name: 'signature_id',
+    type: 'varchar',
+    length: 50,
+    default: 'SIGN-DEFAULT',
+  })
   signatureId: string;
 
-  @Column({ name: 'signature_note', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'signature_note',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   signatureNote: string;
 
   @Column({ type: 'tinyint', width: 1, default: 1 })
   estado: number;
-  @Column({ name: "codigo_establecimiento_sunat", type: 'varchar', length: 4, default:  "0000"})
+  @Column({
+    name: 'codigo_establecimiento_sunat',
+    type: 'varchar',
+    length: 4,
+    default: '0000',
+  })
   codigoEstablecimientoSunat: string;
-
-  @CreateDateColumn({ name: 'fecha_creacion', type: 'timestamp' })
-  fechaCreacion: Date;
+  @Column({ name: 'usuario_registro', type: 'varchar', length: 50 })
+  usuarioRegistro: string;
+  @Column({ name: 'usuario_modificacion', type: 'varchar', length: 50 })
+  usuarioModificacion?: string;
+  @Column({ name: 'entorno', type: 'varchar', length: 10, default: 'BETA' })
+  entorno: string;
+  @CreateDateColumn({ name: 'fecha_registro', type: 'timestamp' })
+  fechaRegistro: Date;
+  @CreateDateColumn({ name: 'fecha_modificacion', type: 'timestamp' })
+  fechaModificacion: Date;
 }

@@ -49,13 +49,6 @@ export class CreateEmpresaDto {
   @IsNotEmpty({ message: 'La clave del usuario SOL secundario es obligatoria' })
   claveSolSecundario: string;
 
-  //@ApiProperty({ example: 'BETA', description: 'Modo de operación (BETA o PRODUCCION)', default: 'BETA' })
-  @IsString({ message: 'El modo de operación debe ser un texto válido' })
-  @IsIn(['BETA', 'PRODUCCION'], {
-    message: 'El modo de operación solo puede ser BETA o PRODUCCION',
-  })
-  readonly modo: string = 'BETA';
-
   @IsString({ message: 'El correo debe ser un texto válido' })
   @IsNotEmpty({ message: 'El correo de la empresa es obligatorio' })
   @IsEmail({}, { message: 'El correo no tiene un formato válido' })

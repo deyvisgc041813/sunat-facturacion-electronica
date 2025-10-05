@@ -1,6 +1,6 @@
 import { ClienteResponseDto } from 'src/domain/cliente/dto/ClienteResponseDto';
 import { SerieResponseDto } from 'src/domain/series/dto/SerieResponseDto';
-import { SucursalResponseDto } from 'src/domain/sucursal/dto/SucursalResponseDto';
+import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
 
 export class ComprobanteResponseDto {
   constructor(

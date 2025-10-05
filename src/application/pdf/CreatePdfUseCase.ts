@@ -12,7 +12,7 @@ import { formatDateForSunat, formatDateToDDMMYYYY } from 'src/util/Helpers';
 import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
-import { ISucursalRepository } from 'src/domain/sucursal/sucursal.repository';
+import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 export class CreatePdfUseCase {
   constructor(

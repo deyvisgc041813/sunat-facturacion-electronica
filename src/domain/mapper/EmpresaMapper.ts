@@ -34,7 +34,6 @@ export class EmpresaMapper {
       orm.nombreComercial ?? '',
       orm.direccion,
       orm.usuarioSolSecundario,
-      orm.modo,
       orm.estado,
       orm.logoPublicId,
       orm.certificadoPublicId,
@@ -68,12 +67,10 @@ export class EmpresaMapper {
       orm.nombreComercial ?? '',
       orm.direccion,
       orm.usuarioSolSecundario,
-      orm.modo,
       orm.estado,
       orm.logoPublicId,
       orm.certificadoPublicId,
       clientes,
-
       sucursales,
     );
     return new EmpresaInternaResponseDto(
@@ -95,7 +92,6 @@ export class EmpresaMapper {
     object.certificadoDigital = data?.certificadoDigital;
     object.claveCertificado = data?.claveCertificado;
     object.usuarioSolSecundario = data?.usuarioSolSecundario;
-    object.modo = data?.modo;
     object.claveSolSecundario = data?.claveSolSecundario;
     object.email = data?.email;
     object.telefono = data?.telefono;
