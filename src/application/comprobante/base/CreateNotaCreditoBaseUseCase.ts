@@ -35,7 +35,6 @@ import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { XmlBuilderNotaCreditoService } from 'src/infrastructure/sunat/xml/xml-builder-nota-credito.service';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
-import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
 import { GetByComprobanteAceptadoUseCase } from '../query/GetByComprobanteAceptadoUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
@@ -58,6 +57,7 @@ import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInterna
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 import { COD_PRUCTO_ANULACION, MAP_TRIBUTOS, MTO_CERO_NUMBER, TIPO_AFECTACION_GRAVADAS, UNIDAD_MEDIDAD_DEFAULT } from 'src/util/constantes';
+import { GetBySucursalAndTipComAndSerieUseCase } from 'src/application/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
 const motivosAnulacionTotal = [
   NotaCreditoMotivo.ANULACION_OPERACION,
   NotaCreditoMotivo.ANULACION_ERROR_RUC,
@@ -73,7 +73,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     protected readonly catalogoRepo: CatalogoRepositoryImpl,
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
-    protected readonly findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
+    protected readonly findSerieUseCase: GetBySucursalAndTipComAndSerieUseCase,
     protected readonly findComprobanteAceptadoUseCase: GetByComprobanteAceptadoUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly validarAnulacionComprobanteUseCase: ValidarAnulacionComprobanteUseCase,

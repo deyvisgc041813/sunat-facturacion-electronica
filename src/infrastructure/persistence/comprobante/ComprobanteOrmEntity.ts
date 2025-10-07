@@ -13,10 +13,10 @@ import {
 } from 'src/util/estado.enum';
 import { ClienteOrmEntity } from '../cliente/ClienteOrmEntity';
 import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
-import { SerieOrmEntity } from '../serie/SerieOrmEntity';
 import { BajaComprobanteDetalleOrmEntity } from '../comunicacion-baja/BajaComprobanteDetalleOrmEntity';
 import { ComprobanteRespuestaSunatOrmEntity } from './ComprobanteRespuestaSunatOrmEntity';
 import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
+import { SerieOrmEntity } from '../serie-comprobante/SerieOrmEntity';
 
 @Entity('comprobantes')
 export class ComprobanteOrmEntity {

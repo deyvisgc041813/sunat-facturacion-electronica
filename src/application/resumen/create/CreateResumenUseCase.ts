@@ -7,7 +7,6 @@ import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { XmlBuilderResumenService } from 'src/infrastructure/sunat/xml/xml-builder-resumen.service';
 import { IResumenRepository } from 'src/domain/resumen/interface/resumen.repository.interface';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
-import { SerieRepository } from 'src/domain/series/Serie.repository';
 import {
   OperacionResumenEnum,
   TipoComprobanteEnum,
@@ -34,6 +33,7 @@ import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.inte
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { BadRequestException } from '@nestjs/common';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { ISerieComprobanteRepositoryPort } from 'src/domain/serie-comprobante/ports/serie-comprobante.port';
 
 export class CreateResumenUseCase {
   constructor(
@@ -43,7 +43,7 @@ export class CreateResumenUseCase {
     protected readonly sunatLogRepo: SunatLogRepository,
     private readonly resumenRepo: IResumenRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
-    private readonly serieRepo: SerieRepository,
+    private readonly serieRepo: ISerieComprobanteRepositoryPort,
     private readonly sucursalRepo: ISucursalRepository,
   ) {}
 
@@ -152,7 +152,7 @@ export class CreateResumenUseCase {
       detalle,
     };
     const resumenBd = await this.resumenRepo.save(resumenEntity);
-    await this.serieRepo.actualizarCorrelativo(
+    await this.serieRepo.setNextCorrelativo(
       sucursalId,
       resumen?.serieId,
       resumen?.correlativo,

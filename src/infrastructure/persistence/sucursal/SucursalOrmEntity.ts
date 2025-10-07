@@ -10,13 +10,13 @@ import {
 } from 'typeorm';
 import { EmpresaOrmEntity } from '../empresa/EmpresaOrmEntity';
 import { ProductoOrmEntity } from '../producto/ProductoOrmEntity';
-import { SerieOrmEntity } from '../serie/SerieOrmEntity';
 import { ComprobanteOrmEntity } from '../comprobante/ComprobanteOrmEntity';
 import { ResumenBoletasOrmEntity } from '../resumen/ResumenBoletasOrmEntity';
 import { BajaComprobanteOrmEntity } from '../comunicacion-baja/BajaComprobanteOrmEntity';
 import { SunatLogOrmEntity } from '../sunat-log/SunatLogOrmEntity';
 import { UsuariosOrmEntity } from '../auth/UsuariosOrmEntity';
 import { DistritoOrmEntity } from '../ubigeo/distrito.orm.entity';
+import { SerieOrmEntity } from '../serie-comprobante/SerieOrmEntity';
 
 @Entity({ name: 'sucursal' })
 export class SucursalOrmEntity {
@@ -96,8 +96,8 @@ export class SucursalOrmEntity {
   })
   signatureNote: string;
 
-  @Column({ type: 'tinyint', width: 1, default: 1 })
-  estado: number;
+  @Column({ name: "estado", type: 'char', length: 1, 'default': "1" })
+  estado: string;
   @Column({
     name: 'codigo_establecimiento_sunat',
     type: 'varchar',

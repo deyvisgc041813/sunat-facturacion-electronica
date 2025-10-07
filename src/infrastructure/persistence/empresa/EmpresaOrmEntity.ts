@@ -8,8 +8,6 @@ import {
 } from 'typeorm';
 import { ClienteOrmEntity } from '../cliente/ClienteOrmEntity';
 import { SucursalOrmEntity } from '../sucursal/SucursalOrmEntity';
-import { ColumnMetadata } from 'typeorm/metadata/ColumnMetadata.js';
-
 @Entity('empresas')
 @Unique(['ruc', 'razonSocial'])
 export class EmpresaOrmEntity {
@@ -59,9 +57,8 @@ export class EmpresaOrmEntity {
     nullable: true,
   })
   claveSolSecundario?: string;
-
-  @Column({ name: 'estado', type: 'tinyint', default: 1 })
-  estado: number;
+  @Column({ name: "estado", type: 'char', length: 1, 'default': "1" })
+  estado: string;
   @Column({ type: 'varchar', length: 255 })
   logo: string;
   @Column({ type: 'varchar', name: 'logo_public_id', length: 100 })
@@ -71,7 +68,8 @@ export class EmpresaOrmEntity {
   email: string;
   @Column({ type: 'varchar', length: 20 })
   telefono: string;
-
+  @Column({ name: "client_secret", type: 'varchar', length: 100, 'default': "1" })
+  clienteSecret: string;
   // Nombre del archivo certificado (.pfx o .pem)
   @Column({
     name: 'certificado_nombre',

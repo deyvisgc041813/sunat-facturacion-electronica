@@ -14,6 +14,7 @@ async function bootstrap() {
       whitelist: true, // quita propiedades que no estén en el DTO
       forbidNonWhitelisted: true, // lanza error si llegan propiedades que no estan en tu dto
       transform: true, // convierte tipos (ej. string → number)
+      
     })
   )
 

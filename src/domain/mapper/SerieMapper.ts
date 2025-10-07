@@ -1,8 +1,9 @@
-import { SerieResponseDto } from 'src/domain/series/dto/SerieResponseDto';
-import { CreateSerieDto } from 'src/domain/series/dto/CreateSerieDto';
-import { UpdateSerieDto } from 'src/domain/series/dto/UpdateSerieDto';
-import { SerieOrmEntity } from 'src/infrastructure/persistence/serie/SerieOrmEntity';
+
+import { SerieOrmEntity } from 'src/infrastructure/persistence/serie-comprobante/SerieOrmEntity';
 import { SucursalMapper } from './SucursalMapper';
+import { SerieResponseDto } from '../serie-comprobante/dto/reesponse.dto';
+import { CreateSerieDto } from '../serie-comprobante/dto/create.request.dto';
+import { UpdateSerieDto } from '../serie-comprobante/dto/update.request.dto';
 
 export class SerieMapper {
   static toDomain(orm: SerieOrmEntity): SerieResponseDto {
@@ -15,31 +16,34 @@ export class SerieMapper {
       orm.serie,
       orm.correlativoInicial ?? 0,
       orm.correlativoActual ?? 0,
+      orm.usuarioRegistro,
+      orm.fechaRegistro,
+      orm.usuarioModificacion,
+      orm.fechaModificacion,
       sucursal,
     );
   }
-  private static assignCommon(
-    object: SerieOrmEntity,
-    data: any,
-    isUpdate = false,
-  ): SerieOrmEntity {
-    object.serieId = data.serieId ?? 0;
-    object.tipoComprobante = data.tipoComprobante;
-    object.serie = data.serie;
-    object.correlativoInicial = data.correlativoInicial;
-
-    if (data.sucursalId) {
-      object.sucursal = { sucursalId: data.sucursalId } as any;
-    }
-
-    return object;
+  static mapCommonFields(source: any, target: SerieOrmEntity): void {
+    target.serieId = source.serieId ?? 0;
+    target.tipoComprobante = source.tipoComprobante;
+    target.serie = source.serie;
+    target.correlativoInicial = source.correlativoInicial;
+    target.sucursal = source.sucursalId  ? ({ sucursalId: source.sucursalId } as any)  : null;
   }
 
-  static dtoToOrmCreate(dto: CreateSerieDto): SerieOrmEntity {
-    return this.assignCommon(new SerieOrmEntity(), dto, false);
+  static dtoToCreate(dto: CreateSerieDto): SerieOrmEntity {
+    const entity = new SerieOrmEntity();
+    this.mapCommonFields(dto, entity);
+    entity.usuarioRegistro = dto.usuarioRegistro ?? '';
+    return entity;
   }
 
-  static dtoToOrmUpdate(dto: UpdateSerieDto): SerieOrmEntity {
-    return this.assignCommon(new SerieOrmEntity(), dto, true);
+  static dtoToOrmUpdate(dto:UpdateSerieDto, serieId:number): SerieOrmEntity {
+    const entity = new SerieOrmEntity();
+    this.mapCommonFields(dto, entity);
+    entity.serieId = serieId;
+    entity.usuarioModificacion = dto.usuarioModificacion;
+    entity.fechaModificacion = new Date();
+    return entity;
   }
 }

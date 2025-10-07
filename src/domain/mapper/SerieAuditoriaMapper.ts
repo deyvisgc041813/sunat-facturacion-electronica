@@ -20,13 +20,14 @@ export class SerieAuditoriaMapper {
     );
   }
  private static assignCommon(object: SerieAuditoriaOrmEntity, data: any, isUpdate = false): SerieAuditoriaOrmEntity {
-    object.serieAuditoriaId = data.serieAuditoriaId ?? 0;
-    //object.serieId = data.serieId;
-    object.usuarioId = data.usuarioId;
-    object.correlativoAnterior = data.correlativoAnterior;
-    object.correlativoNuevo = data.correlativoNuevo;
-    object.motivo = data.motivo;
-    object.fechaCambio = data.fechaCambio;
+    object.serieAuditoriaId = data?.serieAuditoriaId ?? 0;
+    object.usuarioId = data?.usuarioId;
+    object.correlativoAnterior = data?.correlativoAnterior;
+    object.correlativoNuevo = data?.correlativoNuevo;
+    object.motivo = data?.motivo;
+    object.fechaCambio = data?.fechaCambio;
+    object.serie  = data?.serieId  ? ({ serieId: data.serieId} as any) : null;
+    object.sucursalId = data?.sucursalId
     return object;
   }
 

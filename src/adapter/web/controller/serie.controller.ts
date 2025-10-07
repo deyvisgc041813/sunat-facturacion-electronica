@@ -8,61 +8,54 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { SerieRepositoryImpl } from '../../../infrastructure/persistence/serie/serie.repository.impl';
-import { CreateSerieDto } from 'src/domain/series/dto/CreateSerieDto';
-import { CreateSerieUseCase } from 'src/application/Serie/CreateSerieUseCase';
-import { FindAllSerieUseCase } from 'src/application/Serie/FindAllSerieUseCase';
-import { FindByIdSerieUseCase } from 'src/application/Serie/FindByIdSerieUseCase';
-import { UpdateSerieUseCase } from 'src/application/Serie/UpdateSerieUseCase';
-import { UpdateSerieDto } from 'src/domain/series/dto/UpdateSerieDto';
-import { UpdateCorrelativoSerieUseCase } from 'src/application/Serie/UpdateCorrelativoSerieUseCase';
-import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/catalogo/catalogo.repository.impl';
 import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
-import { EmpresaSucursal } from 'src/adapter/decorator/empresa-sucursal.decorator';
+import { CreateSerieComprobanteUseCase } from 'src/application/serie-comprobante/create.serie.usecase';
+import { CreateSerieDto } from 'src/domain/serie-comprobante/dto/create.request.dto';
+import type { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
+import { User } from 'src/adapter/decorator/user.decorator';
+import { GetByIdSerieComprobanteBySucursalUseCase } from 'src/application/serie-comprobante/get-by-id-serie-sucursal.usecase';
+import { GetSerieComprobanteBySucursalUseCase } from 'src/application/serie-comprobante/get.series.usecase';
+import { UpdateSerieComprobanteUseCase } from 'src/application/serie-comprobante/update.serie.usecase';
+import { UpdateSerieDto } from 'src/domain/serie-comprobante/dto/update.request.dto';
+import { AdjustCorrelativeSerieComprobanteUseCase } from 'src/application/serie-comprobante/update.serie-correlativo.usecase';
 
-@Controller('serie')
+@Controller('/v1/companies/branch/serie')
 @UseGuards(JwtAuthGuard)
 export class SerieController {
   constructor(
-    private readonly serieRepo: SerieRepositoryImpl,
-    private readonly catalogoRepository: CatalogoRepositoryImpl,
+    private readonly createUseCase: CreateSerieComprobanteUseCase,
+    private readonly getByIdUseCase: GetByIdSerieComprobanteBySucursalUseCase,
+    private readonly getAllUseCase: GetSerieComprobanteBySucursalUseCase,
+    private readonly updateUseCase: UpdateSerieComprobanteUseCase,
+    private readonly adjustCorrelativeUseCase: AdjustCorrelativeSerieComprobanteUseCase
   ) {}
 
   @Post()
-  async create(@Body() body: CreateSerieDto, @EmpresaSucursal() { empresaId, sucursalId }: { empresaId: number; sucursalId: number }) {
-    const useCase = new CreateSerieUseCase(
-      this.serieRepo,
-      this.catalogoRepository,
-    );
-    return useCase.execute(body);
+  async create(@Body() body: CreateSerieDto, @User() auth: IUserPayload) {
+    return this.createUseCase.execute(body, auth);
   }
   @Get()
-  async findAll() {
-    const useCase = new FindAllSerieUseCase(this.serieRepo);
-    return useCase.execute(1);
+  async findAll( @User() auth: IUserPayload) {
+    return this.getAllUseCase.execute(auth.sucursalActiva)
   }
   @Get(':id')
-  async findById(@Param('id', ParseIntPipe) id: number) {
-    const surcursalId = 1;
-    const useCase = new FindByIdSerieUseCase(this.serieRepo);
-    return useCase.execute(surcursalId, id);
+  async findById(@Param('id', ParseIntPipe) id: number, @User() auth: IUserPayload) {
+    return this.getByIdUseCase.execute(auth.sucursalActiva, id);
   }
   @Put(':id')
   async update(
-    @Param('id', ParseIntPipe) serieId: number,
-    @Body() body: UpdateSerieDto,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdateSerieDto, @User() auth: IUserPayload
   ) {
-    const surcursalId = 1;
-    const useCase = new UpdateSerieUseCase(this.serieRepo);
-    return useCase.execute(body, surcursalId, serieId);
+    return this.updateUseCase.execute(body, auth, id );
   }
-  @Put(':id/correlativo')
-  async updateCorrelativo(
-    @Param('id', ParseIntPipe) serieId: number,
-    @Body() body: UpdateSerieDto,
+
+  @Put(':id/adjust-correlative')
+  async adjustCorrelative(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: {motivo:string, new_correlativo: number},
+    @User() auth: IUserPayload
   ) {
-    body.sucursalId = 1
-    const useCase = new UpdateCorrelativoSerieUseCase(this.serieRepo);
-    return useCase.execute(serieId, body);
+    return this.adjustCorrelativeUseCase.execute(id, auth, body.new_correlativo ?? 0, body.motivo)
   }
 }

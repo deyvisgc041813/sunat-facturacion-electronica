@@ -1,3 +1,5 @@
+
+
 import {
   BadRequestException,
   Body,
@@ -12,7 +14,6 @@ import {
 import { FirmaService } from '../../../infrastructure/sunat/firma/firma.service';
 import { SunatService } from '../../../infrastructure/sunat/send/sunat.service';
 import { ComprobanteRepositoryImpl } from '../../../infrastructure/persistence/comprobante/comprobante.repository.impl';
-import { SerieRepositoryImpl } from '../../../infrastructure/persistence/serie/serie.repository.impl';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 import { CreateComunicacionBajaUseCase } from 'src/application/comunicacion-baja/create/CreateComunicacionBajaUseCase';
 import { XmlBuilderComunicacionBajaService } from 'src/infrastructure/sunat/xml/xml-builder-comunicacion-baja.service';
@@ -23,6 +24,7 @@ import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/
 import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 import { EmpresaSucursal } from 'src/adapter/decorator/empresa-sucursal.decorator';
 import { User } from 'src/adapter/decorator/user.decorator';
+import { SerieComprobanteRepositoryImpl } from 'src/infrastructure/persistence/serie-comprobante/serie.repository.impl';
 
 @Controller('voided-documents')
 @UseGuards(JwtAuthGuard)
@@ -34,7 +36,7 @@ export class ComunicaciomBajaController {
     private readonly sunatLogRep: SunatLogRepositoryImpl,
     private readonly bajaRepo: ComunicacionBajaRepositoryImpl,
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
-    private readonly serieRepo: SerieRepositoryImpl,
+    private readonly serieRepo: SerieComprobanteRepositoryImpl,
     private readonly sucuralRepo: SucursalRepositoryImpl,
   ) {}
   @Post()

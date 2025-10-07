@@ -34,11 +34,10 @@ export class PdfServiceImpl implements IPdfService {
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir);
     }
+    // const outputPath = path.join(outputDir, `boleta-sssss.pdf`);
+    // fs.writeFileSync(outputPath, pdfBuffer);
 
-    const outputPath = path.join(outputDir, `boleta-sssss.pdf`);
-    fs.writeFileSync(outputPath, pdfBuffer);
-
-    console.log(`✅ PDF generado en: ${outputPath}`);
+    // console.log(`✅ PDF generado en: ${outputPath}`);
 
     return pdfBuffer;
   }
@@ -74,10 +73,10 @@ async  generarComprobanteTicket(datos: any): Promise<Buffer> {
       fs.mkdirSync(outputDir);
     }
 
-    const outputPath = path.join(outputDir, `boleta-sssss.pdf`);
-    fs.writeFileSync(outputPath, pdfBuffer);
+    // const outputPath = path.join(outputDir, `boleta-sssss.pdf`);
+    // fs.writeFileSync(outputPath, pdfBuffer);
 
-    console.log(`✅ PDF generado en: ${outputPath}`);
+    // console.log(`✅ PDF generado en: ${outputPath}`);
 
     return pdfBuffer;
   }

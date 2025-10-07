@@ -17,9 +17,7 @@ import { SunatLogOrmEntity } from './infrastructure/persistence/sunat-log/SunatL
 import { XmlBuilderInvoiceService } from './infrastructure/sunat/xml/xml-builder-invoice.service';
 import { CreateNotaCreditoUseCase } from './application/comprobante/create/CreateNotaCreditoUseCase';
 import { XmlBuilderNotaCreditoService } from './infrastructure/sunat/xml/xml-builder-nota-credito.service';
-import { FindByEmpAndTipComAndSerieUseCase } from './application/Serie/FindByEmpAndTipComAndSerieUseCase';
 import { GetByComprobanteAceptadoUseCase } from './application/comprobante/query/GetByComprobanteAceptadoUseCase';
-import { SerieRepositoryImpl } from './infrastructure/persistence/serie/serie.repository.impl';
 import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity';
 import { TributoTasaOrmEntity } from './infrastructure/persistence/tasa-tributo/TributoTasaOrmEntity';
 import { TasaTributoModule } from './tasa-tributo.module';
@@ -30,13 +28,16 @@ import { CreateInvoiceUseCase } from './application/comprobante/create/CreateInv
 import { ValidarAnulacionComprobanteUseCase } from './application/comprobante/validate/ValidarAnulacionComprobanteUseCase';
 import { AnularComprobanteUseCase } from './application/comprobante/update/AnularComprobanteUseCase';
 import { SunatLogRepositoryImpl } from './infrastructure/persistence/sunat-log/sunat-log.repository.impl';
-import { SerieOrmEntity } from './infrastructure/persistence/serie/SerieOrmEntity';
 import { GetValidatedCpeUseCase } from './application/comprobante/query/GetValidatedCpeUseCase';
 import { GetStatusValidateCpeUseCase } from './application/comprobante/query/GetStatusValidateCpeUseCase';
 import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteRespuestaSunatOrmEntity';
 import { SucursalOrmEntity } from './infrastructure/persistence/sucursal/SucursalOrmEntity';
 import { SucursalRepositoryImpl } from './infrastructure/persistence/sucursal/sucursal.repository.impl';
 import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCase';
+import { SerieOrmEntity } from './infrastructure/persistence/serie-comprobante/SerieOrmEntity';
+import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/serie-comprobante/serie.repository.impl';
+import { GetBySucursalAndTipComAndSerieUseCase } from './application/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
+import { SerieModule } from './serie.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -52,7 +53,8 @@ import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCas
       SucursalOrmEntity
     ]),
     CatalogoModule,
-    TasaTributoModule
+    TasaTributoModule,
+    SerieModule
   ],
   controllers: [ComprobanteController],
   providers: [
@@ -66,13 +68,13 @@ import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCas
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
     SucursalRepositoryImpl,
-    SerieRepositoryImpl,
+    SerieComprobanteRepositoryImpl,
     CreateComprobanteUseCase,
     UpdateComprobanteUseCase,
     CreateInvoiceUseCase,
     CreateNotaCreditoUseCase,
     CreateNotaDebitoUseCase,
-    FindByEmpAndTipComAndSerieUseCase,
+    GetBySucursalAndTipComAndSerieUseCase,
     GetByComprobanteAceptadoUseCase,
     ValidarAnulacionComprobanteUseCase,
     AnularComprobanteUseCase,
@@ -92,7 +94,7 @@ import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCas
     EmpresaRepositoryImpl,
     ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
-    SerieRepositoryImpl,
+    SerieComprobanteRepositoryImpl,
     GetValidatedCpeUseCase,
     FindCatalogosUseCase
   ],

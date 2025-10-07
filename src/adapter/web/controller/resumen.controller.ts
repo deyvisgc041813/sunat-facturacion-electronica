@@ -16,13 +16,13 @@ import { SunatService } from '../../../infrastructure/sunat/send/sunat.service';
 import { XmlBuilderResumenService } from '../../../infrastructure/sunat/xml/xml-builder-resumen.service';
 import { ResumenRepositoryImpl } from '../../../infrastructure/persistence/resumen/resumen.repository';
 import { ComprobanteRepositoryImpl } from '../../../infrastructure/persistence/comprobante/comprobante.repository.impl';
-import { SerieRepositoryImpl } from '../../../infrastructure/persistence/serie/serie.repository.impl';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log/sunat-log.repository.impl';
 import { GetStatusResumenUseCase } from 'src/application/resumen/query/GetStatusResumenUseCase';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
 import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 import { EmpresaSucursal } from 'src/adapter/decorator/empresa-sucursal.decorator';
 import { User } from 'src/adapter/decorator/user.decorator';
+import { SerieComprobanteRepositoryImpl } from 'src/infrastructure/persistence/serie-comprobante/serie.repository.impl';
 
 @Controller('summaries')
 @UseGuards(JwtAuthGuard)
@@ -34,7 +34,7 @@ export class ResumenController {
     private readonly sunatLogRep: SunatLogRepositoryImpl,
     private readonly reposiResumen: ResumenRepositoryImpl,
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
-    private readonly serieRepo: SerieRepositoryImpl,
+    private readonly serieRepo: SerieComprobanteRepositoryImpl,
     private readonly sucursalRepo: SucursalRepositoryImpl,
   ) {}
   @Post('/daily')

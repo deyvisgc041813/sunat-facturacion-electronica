@@ -28,7 +28,7 @@ export interface ISucursalRepository {
   generateBranchCodeByCompany(empresaId: number): Promise<string>;
   updateBranchStatus(
     sucursalId: number,
-    nuevoEstado: number,
+    nuevoEstado: string,
     usuarioModificacion: string,
   ): Promise<GenericResponse<void>>;
 }

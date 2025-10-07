@@ -226,7 +226,6 @@ export class XmlBuilderNotaCreditoService {
   }
 
   private addItemDetalle(root: any, dto: CreateNotaDto) {
-    console.log(dto?.details)
     dto?.details?.forEach((d, i) => {
       const line = root.ele('cac:CreditNoteLine'); // cada ítem de la Nota de Crédito
 
@@ -494,7 +493,6 @@ export class XmlBuilderNotaCreditoService {
         .reduce((sum, d) => {
           if (tipoAfectacionGravadas.includes(d.tipAfeIgv)) {
             // Gravada → ICBPER + IGV de esa base
-            console.log("dto.porcentajeIgv ", dto.porcentajeIgv)
             const igv = d.mtoValorVenta * dto.porcentajeIgv;
             return sum + d.icbper + igv;
           }

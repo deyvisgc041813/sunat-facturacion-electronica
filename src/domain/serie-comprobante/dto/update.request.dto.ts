@@ -1,16 +1,14 @@
 import { PartialType } from "@nestjs/mapped-types";
 
 import { IsOptional } from "class-validator";
-import { CreateSerieDto } from "./CreateSerieDto";
+import { CreateSerieDto } from "./create.request.dto";
 
 
 export class UpdateSerieDto extends PartialType(CreateSerieDto) {
   @IsOptional()
-  serieId?: number;
-  @IsOptional()
-  usuarioId?: number;
-  @IsOptional()
-  motivo?: string;
+  usuarioModificacion:string
   @IsOptional()
   newCorrelativo?:number;
+  @IsOptional()
+  motivo:string
 }

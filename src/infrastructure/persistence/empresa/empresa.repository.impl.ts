@@ -8,7 +8,7 @@ import { EmpresaOrmEntity } from './EmpresaOrmEntity';
 import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
 import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
 import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
-import { EstadoSystem } from 'src/util/estado.enum';
+import { EEstadosGlobales } from 'src/util/estado.enum';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
 
 @Injectable()
@@ -43,7 +43,7 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
     interno: false,
   ): Promise<EmpresaResponseDto | EmpresaInternaResponseDto | null> {
     const empresa = await this.repo.findOne({
-      where: { empresaId: id, estado: EstadoSystem.ACTIVO },
+      where: { empresaId: id, estado: EEstadosGlobales.ACTIVO},
       relations: ['clientes', 'sucursales'],
     });
     if (!empresa) {

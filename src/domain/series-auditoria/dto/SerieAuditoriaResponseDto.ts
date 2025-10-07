@@ -1,4 +1,5 @@
-import { SerieResponseDto } from "src/domain/series/dto/SerieResponseDto";
+import { SerieResponseDto } from "src/domain/serie-comprobante/dto/reesponse.dto";
+
 
 export class SerieAuditoriaResponseDto {
  

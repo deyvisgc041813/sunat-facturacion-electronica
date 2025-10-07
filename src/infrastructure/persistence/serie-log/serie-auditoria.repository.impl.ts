@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UpdateSerieDto } from 'src/domain/series/dto/UpdateSerieDto';
 import { SerieAuditoriaRepository } from 'src/domain/series-auditoria/Serie.repository';
 import { CreateSerieAuditoriaDto } from 'src/domain/series-auditoria/dto/CreateSerieAuditoriaDto';
 import { SerieAuditoriaResponseDto } from 'src/domain/series-auditoria/dto/SerieAuditoriaResponseDto';
 import { SerieAuditoriaOrmEntity } from './SerieAuditoriaOrmEntity';
 import { SerieAuditoriaMapper } from 'src/domain/mapper/SerieAuditoriaMapper';
+import { UpdateSerieDto } from 'src/domain/serie-comprobante/dto/update.request.dto';
 
 @Injectable()
 export class SerieAuditoriaRepositoryImpl implements SerieAuditoriaRepository {
@@ -42,12 +42,11 @@ export class SerieAuditoriaRepositoryImpl implements SerieAuditoriaRepository {
     return SerieAuditoriaMapper.toDomain(serie)
   }
   async update(serie: UpdateSerieDto, serieId:number): Promise<{ status: boolean; message: string; data?: SerieAuditoriaResponseDto }> {
-    serie.serieId = serieId
-    const update = await this.repo.save(SerieAuditoriaMapper.dtoToOrmUpdate(serie));
+   
+    const update = await this.repo.update(serieId, SerieAuditoriaMapper.dtoToOrmUpdate(serie));
     return {
       status: true,
-      message: 'Actualizado correctamente',
-      data: SerieAuditoriaMapper.toDomain(update),
+      message: 'Actualizado correctamente'
     };
   }
 }

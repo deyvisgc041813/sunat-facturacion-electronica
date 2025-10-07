@@ -1,7 +1,7 @@
 
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { SerieOrmEntity } from '../serie/SerieOrmEntity';
 import { UsuariosOrmEntity } from '../auth/UsuariosOrmEntity';
+import { SerieOrmEntity } from '../serie-comprobante/SerieOrmEntity';
 
 @Entity('series_auditoria')
 export class SerieAuditoriaOrmEntity {
@@ -9,6 +9,8 @@ export class SerieAuditoriaOrmEntity {
   serieAuditoriaId: number;
   @Column({ name: 'usuario_id' })
   usuarioId: number;
+  @Column({ name: 'sucursal_id' })
+  sucursalId: number;
   @Column({ name: "correlativo_anterior" })
   correlativoAnterior: number;
   @Column({ name: "correlativo_nuevo" })

@@ -4,7 +4,7 @@ import { EmpresaInternaResponseDto } from "src/domain/empresa/dto/EmpresaInterna
 import { EmpresaResponseDto } from "src/domain/empresa/dto/EmpresaResponseDto";
 import { ProductoResponseDto } from "src/domain/productos/dto/ProductoResponseDto";
 import { ResumenResponseDto } from "src/domain/resumen/dto/ResumenResponseDto";
-import { SerieResponseDto } from "src/domain/series/dto/SerieResponseDto";
+import { SerieResponseDto } from "src/domain/serie-comprobante/dto/reesponse.dto";
 import { SunatLogResponseDto } from "src/domain/sunat-log/interface/sunat.log.interface";
 import { UbigeoResponseDto } from "src/domain/ubigeo/dto/ubigeo.response";
 
@@ -23,7 +23,7 @@ export class SucursalResponseDto {
     public signatureId?: string,
     public signatureNote?: string,
 
-    public estado?: number,
+    public estado?: string,
     public fechaRegistro?: Date,
     public usuarioRegistro?:string,
     public usuarioModificacion?:string,

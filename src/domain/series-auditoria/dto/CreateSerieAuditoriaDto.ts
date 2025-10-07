@@ -1,6 +1,7 @@
 export class CreateSerieAuditoriaDto {
   serieId: number;
   usuarioId: number;
+  sucursalId:number;
   correlativoAnterior: number;
   correlativoNuevo?: number;
   motivo: string;

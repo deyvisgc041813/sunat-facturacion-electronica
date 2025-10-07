@@ -1,5 +1,5 @@
 import { ClienteResponseDto } from 'src/domain/cliente/dto/ClienteResponseDto';
-import { SerieResponseDto } from 'src/domain/series/dto/SerieResponseDto';
+import { SerieResponseDto } from 'src/domain/serie-comprobante/dto/reesponse.dto';
 import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
 
 export class ComprobanteResponseDto {

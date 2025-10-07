@@ -19,7 +19,7 @@ export class EmpresaResponseDto {
     public nombreComercial?: string,
     public direccion?: string,
     public usuarioSolSecundario?: string,
-    public estado?:number,
+    public estado?:string,
     public logoPublicId?:string,
     public certificadoPublicId?:string,
     public cliente?:ClienteResponseDto[],

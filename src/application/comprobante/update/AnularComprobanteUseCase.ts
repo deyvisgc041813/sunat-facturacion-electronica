@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { CancelInvoiceDto } from 'src/domain/comprobante/dto/invoice/CancelInvoiceDto';
 import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/comprobante/comprobante.repository.impl';
-import { SerieRepositoryImpl } from 'src/infrastructure/persistence/serie/serie.repository.impl';
+import { SerieComprobanteRepositoryImpl } from 'src/infrastructure/persistence/serie-comprobante/serie.repository.impl';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
 
 @Injectable()
 export class AnularComprobanteUseCase {
   constructor(
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
-    private readonly repoSerie: SerieRepositoryImpl,
+    private readonly repoSerie: SerieComprobanteRepositoryImpl,
   ) {}
 
   async execute(

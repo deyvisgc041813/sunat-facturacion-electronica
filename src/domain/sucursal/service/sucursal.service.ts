@@ -131,7 +131,7 @@ export class SucursalService {
   }
   async branchStatus(
     sucursalId: number,
-    nuevoEstado: number,
+    nuevoEstado: any,
     auth: IUserPayload,
   ): Promise<GenericResponse<void>> {
     if (

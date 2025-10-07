@@ -39,6 +39,7 @@ export class SucursalMapper {
     const logs = orm.sunatLog
       ? orm.sunatLog?.map((l) => SunatLogMapper.toDomain(l))
       : [];
+    const ubicacionGeografica = orm?.distrito ? SucursalMapper.setUbigeo(orm?.distrito) : undefined  
     return new SucursalResponseDto(
       orm.sucursalId,
       orm.codigo,
@@ -63,7 +64,7 @@ export class SucursalMapper {
       resumenes,
       bajas,
       logs,
-      SucursalMapper.setUbigeo(orm.distrito),
+      ubicacionGeografica,
     );
   }
 

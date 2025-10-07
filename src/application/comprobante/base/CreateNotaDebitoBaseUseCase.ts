@@ -38,7 +38,6 @@ import {
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
-import { FindByEmpAndTipComAndSerieUseCase } from 'src/application/Serie/FindByEmpAndTipComAndSerieUseCase';
 import { GetByComprobanteAceptadoUseCase } from '../query/GetByComprobanteAceptadoUseCase';
 import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
@@ -55,6 +54,7 @@ import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 import { validarTipoAfectacionNotaDebito } from 'src/util/notas-credito-debito.validator';
 import { MAP_TRIBUTOS } from 'src/util/constantes';
+import { GetBySucursalAndTipComAndSerieUseCase } from 'src/application/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
 
 export abstract class CreateNotaDebitoBaseUseCase {
   constructor(
@@ -66,7 +66,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
     protected readonly catalogoRepo: CatalogoRepositoryImpl,
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
-    protected readonly findSerieUseCase: FindByEmpAndTipComAndSerieUseCase,
+    protected readonly findSerieUseCase: GetBySucursalAndTipComAndSerieUseCase,
     protected readonly findComprobanteAceptadoUseCase: GetByComprobanteAceptadoUseCase,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly findCatalogosUseCase: FindCatalogosUseCase,

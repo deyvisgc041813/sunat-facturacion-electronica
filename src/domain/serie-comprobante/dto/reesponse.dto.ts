@@ -8,6 +8,10 @@ export class SerieResponseDto {
     public serie: string,
     public correlativoInicial: number,
     public correlativoActual: number,
+    public usuarioRegistro:string,
+    public fechaRegistro:Date,
+    public usuarioModificacion?:string,
+    public fechaModificacion?:Date,
     public sucursal?: SucursalResponseDto
   ) {}
 

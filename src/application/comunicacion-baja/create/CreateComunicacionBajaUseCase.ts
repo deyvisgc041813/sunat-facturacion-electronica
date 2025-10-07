@@ -4,7 +4,6 @@ import { CryptoUtil } from 'src/util/CryptoUtil';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
-import { SerieRepository } from 'src/domain/series/Serie.repository';
 import {
   extraerHashCpe,
   getFechaHoraActualLima,
@@ -31,6 +30,7 @@ import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteRe
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { ISerieComprobanteRepositoryPort } from 'src/domain/serie-comprobante/ports/serie-comprobante.port';
 
 export class CreateComunicacionBajaUseCase {
   constructor(
@@ -40,7 +40,7 @@ export class CreateComunicacionBajaUseCase {
     protected readonly sunatLogRepo: SunatLogRepository,
     private readonly bajaRepo: IComunicacionBajaRepository,
     private readonly comprobanteRepo: ConprobanteRepository,
-    private readonly serieRepo: SerieRepository,
+    private readonly serieRepo: ISerieComprobanteRepositoryPort,
     private readonly sucurSalRepo: ISucursalRepository,
   ) {}
 
@@ -137,7 +137,7 @@ export class CreateComunicacionBajaUseCase {
       detalle: detalles,
     };
     const newBaja = await this.bajaRepo.save(objectBaja);
-    await this.serieRepo.actualizarCorrelativo(
+    await this.serieRepo.setNextCorrelativo(
       sucursalId,
       comunicacion?.serieId,
       comunicacion?.correlativo,

@@ -85,7 +85,6 @@ export class AuthService {
     }
     await this.userRepo.activarSucursal(auth.userId, sucursalId, new Date());
     // Generar nuevo token JWT con la sucursal activa
-    console.log(auth)
     const payload = {
       sub: auth.userId,
       username: auth.correo,

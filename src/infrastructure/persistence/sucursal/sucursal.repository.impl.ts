@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
-import { EstadoSystem } from 'src/util/estado.enum';
+import { EEstadosGlobales, EstadoSystem } from 'src/util/estado.enum';
 import { SucursalOrmEntity } from './SucursalOrmEntity';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { CreateSucursalDto } from 'src/domain/sucursal/dto/create.request.dto';
@@ -81,7 +81,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
     const sucursales = await this.repo.find({
       where: {
         sucursalId: In(sucursalesIds),
-        estado: EstadoSystem.ACTIVO,
+        estado: EEstadosGlobales.ACTIVO,
         empresa: { empresaId },
       },
     });
@@ -95,7 +95,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       where: {
         sucursalId,
         empresa: { empresaId },
-        estado: EstadoSystem.ACTIVO,
+        estado:  EEstadosGlobales.ACTIVO,
       },
       relations: ['empresa'],
     });
@@ -128,7 +128,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
   }
   async updateBranchStatus(
     sucursalId: number,
-    nuevoEstado: number,
+    nuevoEstado: string,
     usuarioModificacion: string,
   ): Promise<GenericResponse<void>> {
     const sucursal = await this.repo.findOne({
@@ -145,7 +145,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
     });
     return {
       status: true,
-      message: 'La sucursal se elimino correctamente.',
+      message: 'El estado se actualizó correctamente.',
     };
   }
 }

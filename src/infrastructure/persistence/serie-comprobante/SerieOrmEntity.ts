@@ -21,10 +21,15 @@ export class SerieOrmEntity {
   correlativoActual?: number;
   @Column({ name: "estado", type: 'char', length: 1, 'default': "1" })
   estado: string;
-  @CreateDateColumn({ name: "fecha_creacion",  type: 'timestamp' })
-  fechaCreacion: Date;
-  @UpdateDateColumn({ name: "fecha_actualizacion",  type: 'timestamp' })
-  fechaActualizacion: Date;
+
+  @Column({ name: "usuario_registro", type: 'varchar', length: 50})
+  usuarioRegistro: string;
+  @Column({ name: "usuario_modificacion", type: 'varchar', length: 50})
+  usuarioModificacion: string;
+  @CreateDateColumn({ name: "fecha_registro",  type: 'timestamp' })
+  fechaRegistro: Date;
+  @UpdateDateColumn({ name: "fecha_modificacion",  type: 'timestamp' })
+  fechaModificacion: Date;
 
   @ManyToOne(() => SucursalOrmEntity, (sucursal: SucursalOrmEntity) => sucursal.series, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sucursal_id' })

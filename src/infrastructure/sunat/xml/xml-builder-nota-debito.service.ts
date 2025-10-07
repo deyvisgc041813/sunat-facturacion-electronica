@@ -211,7 +211,6 @@ export class XmlBuilderNotaDebitoService {
   //   }
   // }
   private addItemDetalle(root: any, dto: CreateNotaDto) {
-    console.log(dto.details)
     dto?.details?.forEach((d, i) => {
       const line = root.ele('cac:DebitNoteLine'); // cada ítem de la Nota de Crédito
 
