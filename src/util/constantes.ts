@@ -127,4 +127,4 @@ export const COD_PRUCTO_ANULACION = 'ANUL'
 export const CANTIDAD_DEFAULT = '1.0000'
 export const TAX_EXEPTION_REASONCODE_ICBPER  = '9996'
 
-
+export const APLICACION_ORIGEN = 'facturacion-electronica';

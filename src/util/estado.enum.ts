@@ -16,7 +16,11 @@ export enum EstadoComprobanteEnumSunat {
   PENDIENTE = '1',
   ANULADO = '3',
 }
-
+export enum EEstadosGlobales {
+  ACTIVO = 1, // ACTIVO
+  INACTIVO = 0, // INACTIVO
+  ELIMINADO = 99, // ELIMINAR
+}
 export enum EstadoEnvioSunat {
   PENDIENTE = 'PENDIENTE',         // Registrado pero aún no enviado
   ENVIADO = 'ENVIADO',             // Enviado a SUNAT, en espera

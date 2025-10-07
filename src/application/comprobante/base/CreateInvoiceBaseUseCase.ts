@@ -117,8 +117,8 @@ export abstract class CreateInvoiceBaseUseCase {
         (invoice.telefonoEmpresa = empresa.telefono));
       invoice.signatureId = sucursal?.signatureId ?? '';
       invoice.signatureNote = sucursal?.signatureNote ?? '';
-      invoice.codigoEstablecimientoSunat =
-        sucursal?.codigoEstablecimientoSunat ?? '';
+      invoice.codigoEstablecimiento =
+        sucursal?.codigoEstablecimiento ?? '';
       // 4. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
         invoice,

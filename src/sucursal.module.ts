@@ -10,6 +10,10 @@ import { SucursalService } from './domain/sucursal/service/sucursal.service';
 import { CreateSucursalUseCase } from './application/sucursal/create.sucursal.usecase';
 import { GetSucursalByEmpresaUseCase } from './application/sucursal/get-sucursales-by-empresa.usecase';
 import { GetSucursalByEmpresaIdUseCase } from './application/sucursal/get-sucursal-by-empresa.usecase';
+import { UpdateSucursalUseCase } from './application/sucursal/update.sucursal.usecase';
+import { AuditoriaService } from './domain/core/logs/service/auditoria.logs.service';
+import { DeleteSucursalUseCase } from './application/sucursal/delete.sucursal.usecase';
+import { BranchStatusSucursalUseCase } from './application/sucursal/update-status.sucursal.usecase';
 
 @Module({
   imports: [TypeOrmModule.forFeature([EmpresaOrmEntity, ComprobanteOrmEntity, SucursalOrmEntity]), UbigeoModule],
@@ -17,9 +21,9 @@ import { GetSucursalByEmpresaIdUseCase } from './application/sucursal/get-sucurs
   providers: [
     {
       provide: SucursalService,
-      useFactory: (sucuralRepo: SucursalRepositoryImpl) =>
-        new SucursalService(sucuralRepo),
-      inject: [SucursalRepositoryImpl],
+      useFactory: (sucuralRepo: SucursalRepositoryImpl, auditoriaService: AuditoriaService) =>
+        new SucursalService(sucuralRepo, auditoriaService),
+      inject: [SucursalRepositoryImpl, AuditoriaService],
     },
 
     // Casos de uso
@@ -35,12 +39,28 @@ import { GetSucursalByEmpresaIdUseCase } from './application/sucursal/get-sucurs
         new GetSucursalByEmpresaUseCase(sucuralService),
       inject: [SucursalService],
     },
-      {
+    {
       provide: GetSucursalByEmpresaIdUseCase,
       useFactory: (sucuralService: SucursalService) =>
         new GetSucursalByEmpresaIdUseCase(sucuralService),
       inject: [SucursalService],
     },
+    {
+      provide: UpdateSucursalUseCase,
+      useFactory: (sucuralService: SucursalService) => new UpdateSucursalUseCase(sucuralService),
+      inject: [SucursalService],
+    },
+    {
+      provide: DeleteSucursalUseCase,
+      useFactory: (sucuralService: SucursalService) => new DeleteSucursalUseCase(sucuralService),
+      inject: [SucursalService],
+    },
+    {
+      provide: BranchStatusSucursalUseCase,
+      useFactory: (sucuralService: SucursalService) => new BranchStatusSucursalUseCase(sucuralService),
+      inject: [SucursalService],
+    },
+    
     SucursalRepositoryImpl,
   ],
   exports: [

@@ -86,7 +86,7 @@ export class CreateNotaDto extends ComprobanteBaseDto {
   @IsOptional()
   signatureNote:string
   @IsOptional()
-  codigoEstablecimientoSunat:string
+  codigoEstablecimiento:string
   @IsOptional()
   descuentosGlobales: any[]
 }

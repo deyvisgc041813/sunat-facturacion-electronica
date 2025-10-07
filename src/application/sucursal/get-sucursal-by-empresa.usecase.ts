@@ -6,7 +6,7 @@ export class GetSucursalByEmpresaIdUseCase {
   async execute(
     sucursalId: number,
     empresaId: number,
-  ): Promise<SucursalResponseDto[]> {
+  ): Promise<SucursalResponseDto | undefined> {
     if (!empresaId || empresaId <= 0) {
       throw new UnauthorizedException(
         'Tu sesión no tiene una empresa asociada. Vuelve a iniciar sesión para continuar.',

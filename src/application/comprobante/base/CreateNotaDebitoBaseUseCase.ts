@@ -154,7 +154,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       data.telefonoEmpresa = empresa?.telefono ?? "";
       data.signatureId = sucursal?.signatureId ?? '';
       data.signatureNote = sucursal?.signatureNote ?? '';
-      data.codigoEstablecimientoSunat = sucursal?.codigoEstablecimientoSunat ?? '';
+      data.codigoEstablecimiento = sucursal?.codigoEstablecimiento ?? '';
 
       // 2. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(

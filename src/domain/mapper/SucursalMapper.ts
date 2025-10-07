@@ -14,6 +14,7 @@ import {
   ProvinciaResponseDto,
   UbigeoResponseDto,
 } from '../ubigeo/dto/ubigeo.response';
+import { UpdateSucursalDto } from '../sucursal/dto/update.request.dto';
 
 export class SucursalMapper {
   static toDomain(orm: SucursalOrmEntity): SucursalResponseDto {
@@ -43,7 +44,7 @@ export class SucursalMapper {
       orm.codigo,
       orm.nombre,
       orm.direccion,
-      orm.codigoEstablecimientoSunat,
+      orm.codigoEstablecimiento,
       orm.entorno,
       orm.ubigeo,
       orm.telefono,
@@ -75,7 +76,7 @@ export class SucursalMapper {
       orm.codigo,
       orm.nombre,
       orm.direccion,
-      orm.codigoEstablecimientoSunat,
+      orm.codigoEstablecimiento,
       orm.entorno,
       orm.ubigeo,
       orm.telefono,
@@ -100,7 +101,7 @@ export class SucursalMapper {
     target.email = source.email ?? '';
     target.signatureNote = source.signatureNote ?? '';
     target.entorno = source.entorno ?? '';
-    target.codigoEstablecimientoSunat = source.codigoEstablecimientoSunat ?? '';
+    target.codigoEstablecimiento = source.codigoEstablecimiento ?? '';
     target.distrito = source.distritoId
       ? ({ distritoId: source.distritoId } as any)
       : null;
@@ -116,12 +117,12 @@ export class SucursalMapper {
     return entity;
   }
 
-  static dtoToOrmUpdate(dto: Partial<SucursalOrmEntity>): SucursalOrmEntity {
+  static dtoToOrmUpdate(dto:UpdateSucursalDto, sucursalId:number): SucursalOrmEntity {
     const entity = new SucursalOrmEntity();
     this.mapCommonFields(dto, entity);
-    entity.sucursalId = dto.sucursalId!;
-    entity.usuarioModificacion = dto.usuarioModificacion ?? '';
-    entity.fechaModificacion = dto.fechaModificacion ?? new Date();
+    entity.sucursalId = sucursalId;
+    entity.usuarioModificacion = dto.usuarioModificacion;
+    entity.fechaModificacion = new Date();
     return entity;
   }
   static setUbigeo(ubicacionGeografica: any): UbigeoResponseDto {

@@ -21,6 +21,7 @@ import { UsuarioModule } from './usuario.module';
 import { JwtAuthGuard } from './adapter/guards/jwt.auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { UbigeoModule } from './ubigeo.module';
+import { CoreModuleModule } from './core-module.module';
 
 @Module({
   imports: [
@@ -50,7 +51,8 @@ import { UbigeoModule } from './ubigeo.module';
    SucursalModule,
    AuthModule,
    UsuarioModule,
-   UbigeoModule
+   UbigeoModule,
+   CoreModuleModule
   ],
   
   controllers: [AppController],

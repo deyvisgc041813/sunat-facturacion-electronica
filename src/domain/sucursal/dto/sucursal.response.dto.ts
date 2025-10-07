@@ -15,7 +15,7 @@ export class SucursalResponseDto {
     public codigo: string,
     public nombre: string,
     public direccion: string,
-    public codigoEstablecimientoSunat:string,
+    public codigoEstablecimiento:string,
     public entorno:string,
     public ubigeo?: string,
     public telefono?: string,

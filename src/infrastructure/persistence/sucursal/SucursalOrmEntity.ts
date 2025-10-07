@@ -62,7 +62,7 @@ export class SucursalOrmEntity {
   @OneToMany(() => SunatLogOrmEntity, (logs) => logs.sucursal)
   sunatLog: SunatLogOrmEntity[];
 
-  @Column({ type: 'varchar', length: 10 })
+  @Column({ type: 'varchar', length: 30 })
   codigo: string;
 
   @Column({ type: 'varchar', length: 100 })
@@ -104,7 +104,7 @@ export class SucursalOrmEntity {
     length: 4,
     default: '0000',
   })
-  codigoEstablecimientoSunat: string;
+  codigoEstablecimiento: string;
   @Column({ name: 'usuario_registro', type: 'varchar', length: 50 })
   usuarioRegistro: string;
   @Column({ name: 'usuario_modificacion', type: 'varchar', length: 50 })

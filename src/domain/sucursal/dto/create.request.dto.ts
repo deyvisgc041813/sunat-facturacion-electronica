@@ -71,7 +71,7 @@ export class CreateSucursalDto {
   @IsNotEmpty({
     message: 'El codigo de establecimiento de la sucursal es obligatorio',
   })
-  codigoEstablecimientoSunat: string;
+  codigoEstablecimiento: string;
   @IsNotEmpty({ message: 'El campo entorno es obligatorio' })
   @IsString({ message: 'El campo entorno debe ser un texto válido' })
   @IsIn(['BETA', 'PRODUCCION'], {

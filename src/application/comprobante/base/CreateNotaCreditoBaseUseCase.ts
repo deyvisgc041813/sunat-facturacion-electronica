@@ -202,8 +202,8 @@ export abstract class CreateNotaCreditoBaseUseCase {
       jsonFinal.telefonoEmpresa = empresa?.telefono ?? '';
       jsonFinal.signatureId = sucursal?.signatureId ?? '';
       jsonFinal.signatureNote = sucursal?.signatureNote ?? '';
-      jsonFinal.codigoEstablecimientoSunat =
-        sucursal?.codigoEstablecimientoSunat ?? '';
+      jsonFinal.codigoEstablecimiento =
+        sucursal?.codigoEstablecimiento ?? '';
 
       // 2. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(

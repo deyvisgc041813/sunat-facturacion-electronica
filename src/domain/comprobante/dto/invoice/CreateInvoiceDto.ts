@@ -50,5 +50,5 @@ export class CreateInvoiceDto extends ComprobanteBaseDto {
   @IsOptional()
   signatureNote:string
   @IsOptional()
-  codigoEstablecimientoSunat:string
+  codigoEstablecimiento:string
 }

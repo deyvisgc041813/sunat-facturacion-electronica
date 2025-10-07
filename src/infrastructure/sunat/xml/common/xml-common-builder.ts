@@ -88,7 +88,7 @@ export class XmlCommonBuilder {
       dto.company?.address?.distrito,
       dto.company?.address?.direccion,
       true,
-      dto.codigoEstablecimientoSunat
+      dto.codigoEstablecimiento
     );
     const contact = supplier.ele('cac:Contact');
     contact.ele('cbc:Telephone').txt(`(051)${dto.telefonoEmpresa}`).up();
@@ -113,7 +113,7 @@ export class XmlCommonBuilder {
       dto.client?.address?.distrito,
       dto.client?.address?.direccion,
       false,
-      dto.codigoEstablecimientoSunat
+      dto.codigoEstablecimiento
     );
   }
   static addAddres(
@@ -124,11 +124,11 @@ export class XmlCommonBuilder {
     distrito: string,
     direccion: string,
     isSupplier: any = false,
-    codigoEstablecimientoSunat:string
+    codigoEstablecimiento:string
   ) {
     const supAddr = supLegal.ele('cac:RegistrationAddress');
     supAddr.ele('cbc:ID').txt(ubigeo).up();
-    if (isSupplier) supAddr.ele('cbc:AddressTypeCode').txt(codigoEstablecimientoSunat); // validar
+    if (isSupplier) supAddr.ele('cbc:AddressTypeCode').txt(codigoEstablecimiento); // validar
     supAddr.ele('cbc:CityName').txt(provincia).up();
     supAddr.ele('cbc:CountrySubentity').txt(departamento).up();
     supAddr.ele('cbc:District').txt(distrito).up();
