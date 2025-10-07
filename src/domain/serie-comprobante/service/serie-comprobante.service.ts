@@ -142,16 +142,13 @@ export class SerieComprobanteService {
       throw error;
     }
   }
-  async branchStatus(
+  async serieStatus(
     serieId: number,
     nuevoEstado: any,
     auth: IUserPayload,
   ): Promise<GenericResponse<void>> {
-    if (
-      ![EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO].includes(
-        nuevoEstado,
-      )
-    ) {
+    console.log(nuevoEstado)
+    if ( ![EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO].includes( nuevoEstado)) {
       throw new BadRequestException(
         'El estado solo puede ser 1 (activo) o 0 (inactivo)',
       );

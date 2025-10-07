@@ -1,9 +1,11 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -18,6 +20,8 @@ import { GetSerieComprobanteBySucursalUseCase } from 'src/application/serie-comp
 import { UpdateSerieComprobanteUseCase } from 'src/application/serie-comprobante/update.serie.usecase';
 import { UpdateSerieDto } from 'src/domain/serie-comprobante/dto/update.request.dto';
 import { AdjustCorrelativeSerieComprobanteUseCase } from 'src/application/serie-comprobante/update.serie-correlativo.usecase';
+import { UpdateStatusSerieComprobanteUseCase } from 'src/application/serie-comprobante/update-status.series.usecase';
+import { DeleteSeriesComprobanteUseCase } from 'src/application/serie-comprobante/delete.sucursal.usecase';
 
 @Controller('/v1/companies/branch/serie')
 @UseGuards(JwtAuthGuard)
@@ -27,7 +31,9 @@ export class SerieController {
     private readonly getByIdUseCase: GetByIdSerieComprobanteBySucursalUseCase,
     private readonly getAllUseCase: GetSerieComprobanteBySucursalUseCase,
     private readonly updateUseCase: UpdateSerieComprobanteUseCase,
-    private readonly adjustCorrelativeUseCase: AdjustCorrelativeSerieComprobanteUseCase
+    private readonly adjustCorrelativeUseCase: AdjustCorrelativeSerieComprobanteUseCase,
+    private readonly updateStatusUseCase: UpdateStatusSerieComprobanteUseCase,
+        private readonly deleteUseCase: DeleteSeriesComprobanteUseCase
   ) {}
 
   @Post()
@@ -58,4 +64,19 @@ export class SerieController {
   ) {
     return this.adjustCorrelativeUseCase.execute(id, auth, body.new_correlativo ?? 0, body.motivo)
   }
+    @Delete(':id')
+    async deleteSerie(
+      @Param('id') id: number,
+      @User() auth: IUserPayload,
+    ): Promise<any> {
+      return await this.deleteUseCase.execute(id, auth);
+    }
+    @Patch(':id/status/:estado')
+    async toggleSerieStatus(
+      @Param('id') id: number,
+      @Param('estado') estado: string,
+      @User() auth: IUserPayload,
+    ) {
+      return await this.updateStatusUseCase.execute(id, estado, auth);
+    }
 }

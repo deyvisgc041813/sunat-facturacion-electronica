@@ -66,7 +66,7 @@ export class SucursalController {
   @Patch(':id/status/:estado')
   async toggleBranchStatus(
     @Param('id') id: number,
-    @Param('estado') estado: number,
+    @Param('estado') estado: string,
     @User() auth: IUserPayload,
   ) {
     return await this.branchStatusUseCase.execute(id, estado, auth);

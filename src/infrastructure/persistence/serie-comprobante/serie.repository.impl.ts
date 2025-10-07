@@ -15,7 +15,6 @@ import { SerieResponseDto } from 'src/domain/serie-comprobante/dto/reesponse.dto
 import { UpdateSerieDto } from 'src/domain/serie-comprobante/dto/update.request.dto';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { EEstadosGlobales } from 'src/util/estado.enum';
-import { AuditoriaLogsMapper } from 'src/domain/mapper/auditoria-logs.mapper';
 import { SerieAuditoriaMapper } from 'src/domain/mapper/SerieAuditoriaMapper';
 
 @Injectable()
@@ -93,52 +92,6 @@ export class SerieComprobanteRepositoryImpl
     if (!rsp) return null;
     return SerieMapper.toDomain(rsp);
   }
-
-  // async adjustCorrelative(
-  //   sucursalId: number,
-  //   serieId: number,
-  //   usuarioId: number,
-  //   newCorrelativo: number,
-  //   motivo: string,
-  // ): Promise<GenericResponse<SerieResponseDto>> {
-  //   try {
-  //     const serieOrm = await this.repo.findOne({
-  //       where: { serieId, sucursal: { sucursalId } },
-  //       relations: ['sucursal'],
-  //     });
-  //     if (!serieOrm) {
-  //       return {
-  //         status: false,
-  //         message: `No se encontró la serie con ID ${serieId}`,
-  //       };
-  //     }
-  //     serieOrm.correlativoActual = newCorrelativo
-  //     serieOrm.serieId = serieId
-  //     const updatedSerie = await this.repo.save(serieOrm);
-  //     const serieDto = SerieMapper.toDomain(updatedSerie);
-  //     const auditoria = new CreateSerieAuditoriaDto();
-  //     auditoria.serieId = serieId;
-  //     auditoria.usuarioId = usuarioId;
-  //     auditoria.correlativoAnterior = serieOrm.correlativoInicial ?? 0;
-  //     auditoria.correlativoNuevo = newCorrelativo;
-  //     auditoria.motivo = motivo;
-  //     serieOrm.correlativoInicial = newCorrelativo;
-
-  //     await this.auditoriaRepo.save(auditoria);
-
-  //     return {
-  //       status: true,
-  //       message: 'Correlativo actualizado correctamente',
-  //       data: serieDto,
-  //     };
-  //   } catch (error) {
-  //     console.error('Error en updateCorrelativoAndLog:', error);
-  //     return {
-  //       status: false,
-  //       message: 'Ocurrió un error al actualizar el correlativo',
-  //     };
-  //   }
-  // }
 
   async adjustCorrelative(
     sucursalId: number,
@@ -254,7 +207,7 @@ export class SerieComprobanteRepositoryImpl
         `La serie con ID ${serieId} no existe o no pertenece a la sucursal ${sucursalId}.`,
       );
     }
-    await this.repo.update(sucursalId, {
+    await this.repo.update(serieId, {
       estado: nuevoEstado,
       usuarioModificacion,
       fechaModificacion: new Date(),

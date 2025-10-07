@@ -1987,7 +1987,7 @@
 							"response": []
 						},
 						{
-							"name": "Eliminado Sucursal",
+							"name": "Eliminar Sucursal",
 							"request": {
 								"auth": {
 									"type": "bearer",
