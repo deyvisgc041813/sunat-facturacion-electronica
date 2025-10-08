@@ -5,7 +5,7 @@ import { ITributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.rep
 import { CreateTributoTasaDto } from 'src/domain/tributo-tasa/dto/CreateTributoTasaDto';
 import { TributoTasaResponseDto } from 'src/domain/tributo-tasa/dto/TributoTasaResponseDto';
 import { TributoTasaOrmEntity } from './TributoTasaOrmEntity';
-import { TributoTasaMapper } from 'src/domain/mapper/TributoTasaMapper';
+import { TributoTasaMapper } from 'src/domain/mapper/tributo-tasa.mapper';
 
 @Injectable()
 export class TributoTasaRepositoryImpl  implements ITributoTasaRepository {

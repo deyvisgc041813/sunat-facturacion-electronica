@@ -5,7 +5,7 @@ import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { BajaComprobanteOrmEntity } from './BajaComprobanteOrmEntity';
 import { IComunicacionBajaRepository } from 'src/domain/comunicacion-baja/interface/baja.repository.interface';
 import { BajaComprobanteResponseDto } from 'src/domain/comunicacion-baja/ComunicacionBajaResponseDto';
-import { ComunicacionBajaMaper } from 'src/domain/mapper/ComunicacionBajaMaper';
+import { ComunicacionBajaMaper } from 'src/domain/mapper/comunicacion-baja.mapper';
 import { CreateComunicacionBajaDto } from 'src/domain/comunicacion-baja/interface/create.comunicacion.interface';
 
 @Injectable()

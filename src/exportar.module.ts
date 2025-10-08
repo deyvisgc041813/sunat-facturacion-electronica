@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteOrmEntity';
 import { CreatePdfUseCase } from './application/pdf/CreatePdfUseCase';
 import { ExportarController } from './adapter/web/controller/exportar.controller';

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SerieController } from './adapter/web/controller/serie.controller';
+import { SerieController } from './adapter/web/controller/serie-comprobante.controller';
 import { SerieAuditoriaModule } from './serie-auditoria.module';
 import { CatalogoModule } from './catalogo.module';
 import { SerieOrmEntity } from './infrastructure/persistence/serie-comprobante/SerieOrmEntity';
@@ -94,4 +94,4 @@ import { DeleteSeriesComprobanteUseCase } from './application/serie-comprobante/
 
   exports: [SerieComprobanteRepositoryImpl, SerieComprobanteService],
 })
-export class SerieModule {}
+export class SerieComprobanteModule {}

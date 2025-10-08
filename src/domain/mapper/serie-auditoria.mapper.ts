@@ -2,7 +2,7 @@ import { SerieAuditoriaResponseDto } from "src/domain/series-auditoria/dto/Serie
 import { CreateSerieAuditoriaDto } from "src/domain/series-auditoria/dto/CreateSerieAuditoriaDto";
 import { UpdateSerieAuditoriaDto } from "src/domain/series-auditoria/dto/UpdateSerieAuditoriaDto";
 import { SerieAuditoriaOrmEntity } from "src/infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity";
-import { SerieMapper } from "./SerieMapper";
+import { SerieMapper } from "./serie-comprobante.mapper";
 
 export class SerieAuditoriaMapper {
   static toDomain (orm: SerieAuditoriaOrmEntity): SerieAuditoriaResponseDto {

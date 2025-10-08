@@ -5,7 +5,7 @@ import { SerieAuditoriaRepository } from 'src/domain/series-auditoria/Serie.repo
 import { CreateSerieAuditoriaDto } from 'src/domain/series-auditoria/dto/CreateSerieAuditoriaDto';
 import { SerieAuditoriaResponseDto } from 'src/domain/series-auditoria/dto/SerieAuditoriaResponseDto';
 import { SerieAuditoriaOrmEntity } from './SerieAuditoriaOrmEntity';
-import { SerieAuditoriaMapper } from 'src/domain/mapper/SerieAuditoriaMapper';
+import { SerieAuditoriaMapper } from 'src/domain/mapper/serie-auditoria.mapper';
 import { UpdateSerieDto } from 'src/domain/serie-comprobante/dto/update.request.dto';
 
 @Injectable()

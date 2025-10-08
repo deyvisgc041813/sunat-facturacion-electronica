@@ -1,4 +1,4 @@
-import { EmpresaResponseDto } from "../../empresa/dto/EmpresaResponseDto";
+import { EmpresaResponseDto } from "../../empresa/dto/external.response.dto";
 
 export class ClienteResponseDto {
  

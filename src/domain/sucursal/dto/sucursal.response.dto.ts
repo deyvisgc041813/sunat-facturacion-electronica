@@ -1,7 +1,7 @@
 import { ComprobanteResponseDto } from "src/domain/comprobante/dto/ConprobanteResponseDto";
 import { BajaComprobanteResponseDto } from "src/domain/comunicacion-baja/ComunicacionBajaResponseDto";
-import { EmpresaInternaResponseDto } from "src/domain/empresa/dto/EmpresaInternaResponseDto";
-import { EmpresaResponseDto } from "src/domain/empresa/dto/EmpresaResponseDto";
+import { EmpresaInternaResponseDto } from "src/domain/empresa/dto/internal.response.dto";
+import { EmpresaResponseDto } from "src/domain/empresa/dto/external.response.dto";
 import { ProductoResponseDto } from "src/domain/productos/dto/ProductoResponseDto";
 import { ResumenResponseDto } from "src/domain/resumen/dto/ResumenResponseDto";
 import { SerieResponseDto } from "src/domain/serie-comprobante/dto/reesponse.dto";

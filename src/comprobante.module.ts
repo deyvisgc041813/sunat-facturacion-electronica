@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
 import { FirmaService } from './infrastructure/sunat/firma/firma.service';
 import { EmpresaRepositoryImpl } from './infrastructure/persistence/empresa/empresa.repository.impl';
 import { ComprobanteController } from './adapter/web/controller/comprobante.controller';
@@ -37,7 +37,7 @@ import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCas
 import { SerieOrmEntity } from './infrastructure/persistence/serie-comprobante/SerieOrmEntity';
 import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/serie-comprobante/serie.repository.impl';
 import { GetBySucursalAndTipComAndSerieUseCase } from './application/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
-import { SerieModule } from './serie.module';
+import { SerieComprobanteModule } from './serie-comprobante.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -54,7 +54,7 @@ import { SerieModule } from './serie.module';
     ]),
     CatalogoModule,
     TasaTributoModule,
-    SerieModule
+    SerieComprobanteModule
   ],
   controllers: [ComprobanteController],
   providers: [

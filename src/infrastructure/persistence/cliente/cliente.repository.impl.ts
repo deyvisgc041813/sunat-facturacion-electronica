@@ -6,7 +6,7 @@ import { ClienteOrmEntity } from './ClienteOrmEntity';
 import { ClienteResponseDto } from 'src/domain/cliente/dto/ClienteResponseDto';
 import { CreateClienteDto } from 'src/domain/cliente/dto/CreateRequestDto';
 import { UpdateClienteDto } from 'src/domain/cliente/dto/UpdateClienteDto';
-import { ClienteMapper } from 'src/domain/mapper/ClienteMapper';
+import { ClienteMapper } from 'src/domain/mapper/cliente.mapper';
 
 @Injectable()
 export class ClienteRepositoryImpl implements ClienteRepository {

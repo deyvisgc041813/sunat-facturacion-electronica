@@ -68,8 +68,6 @@ export class EmpresaOrmEntity {
   email: string;
   @Column({ type: 'varchar', length: 20 })
   telefono: string;
-  @Column({ name: "client_secret", type: 'varchar', length: 100, 'default': "1" })
-  clienteSecret: string;
   // Nombre del archivo certificado (.pfx o .pem)
   @Column({
     name: 'certificado_nombre',
@@ -115,8 +113,13 @@ export class EmpresaOrmEntity {
   certificadoValidoHasta: Date;
   @Column({ name: 'certificado_public_id', type: 'date', nullable: true })
   certificadoPublicId: string;
+  @Column({ name: "client_secret", type: 'varchar', length: 100, 'default': "1" })
+  clienteSecret: string;
+  @Column({ type: 'varchar', nullable: true })
+  plan:string
+  @Column({name:"client_id", type: 'varchar', nullable: true })
+  clienteId:string
 
-  
   // Relaciones
   @CreateDateColumn({
     name: 'create_at',

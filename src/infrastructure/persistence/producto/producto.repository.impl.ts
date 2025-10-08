@@ -5,9 +5,9 @@ import { ProductoRepository } from 'src/domain/productos/Producto.repository';
 import { CreateProductoDto } from 'src/domain/productos/dto/CreateProductoDto';
 import { ProductoResponseDto } from 'src/domain/productos/dto/ProductoResponseDto';
 import { UpdateProductoDto } from 'src/domain/productos/dto/UpdateProductoDto';
-import { ProductoMapper } from 'src/domain/mapper/ProductoMapper';
+import { ProductoMapper } from 'src/domain/mapper/producto.mapper';
 import { ProductoOrmEntity } from './ProductoOrmEntity';
-import { SucursalMapper } from 'src/domain/mapper/SucursalMapper';
+import { SucursalMapper } from 'src/domain/mapper/sucursal.mapper';
 
 @Injectable()
 export class ProductoRepositoryImpl implements ProductoRepository {

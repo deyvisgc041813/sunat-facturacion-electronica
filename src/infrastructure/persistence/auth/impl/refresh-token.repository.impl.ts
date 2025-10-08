@@ -2,7 +2,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { RefreshTokenDto } from 'src/domain/auth/dto/refresh.token.dto';
 import { IRefreshTokenRepositoryPort } from 'src/domain/auth/ports/refresh.repository.token';
 import { Repository } from 'typeorm';
-import { RefreshTokenMapper } from 'src/domain/mapper/RefreshTokenMapper';
+import { RefreshTokenMapper } from 'src/domain/mapper/refresh-token.mapper';
 import { RefreshTokenOrmEntity } from '../RefreshTokenOrmEntity';
 
 export class RefreshTokenRepositoryImpl implements IRefreshTokenRepositoryPort {

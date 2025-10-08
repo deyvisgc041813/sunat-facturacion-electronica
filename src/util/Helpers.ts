@@ -30,6 +30,7 @@ import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
 import { TRIBUTOS_RESUMEN } from './constantes';
+import { Plan } from './general.enum';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -544,4 +545,18 @@ export function obtenerCatalogoPorCodigo(
   codigo: TipoCatalogoEnum
 ): ResponseCatalogoTipoDTO | undefined {
   return catalogos.find((c) => c.codigoCatalogo === codigo);
+}
+export function obtenerDescPlan(codigo: string): string {
+  switch (codigo) {
+    case Plan.Basico:
+      return 'Plan Básico';
+    case Plan.Estándar:
+      return 'Plan Estándar';
+    case Plan.Profesional:
+      return 'Plan Profesional';
+    case Plan.Empresarial:
+      return 'Plan Empresarial';
+    default:
+      return 'Plan desconocido';
+  }
 }

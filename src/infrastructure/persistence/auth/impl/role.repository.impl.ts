@@ -4,7 +4,7 @@ import { IRoleRepositoryPort } from 'src/domain/auth/ports/role.repository';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { RoleRequestDto } from 'src/domain/auth/dto/usuario/usuario.response.dto';
 import { RolesOrmEntity } from '../RolesOrmEntity';
-import { RoleMapper } from 'src/domain/mapper/RoleMapper';
+import { RoleMapper } from 'src/domain/mapper/role.mapper';
 
 
 export class RoleRepositoryImpl implements IRoleRepositoryPort {

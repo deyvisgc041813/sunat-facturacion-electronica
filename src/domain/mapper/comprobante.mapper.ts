@@ -1,11 +1,11 @@
 import { ComprobanteOrmEntity } from '../../infrastructure/persistence/comprobante/ComprobanteOrmEntity';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
-import { ClienteMapper } from './ClienteMapper';
+import { ClienteMapper } from './cliente.mapper';
 import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
-import { SerieMapper } from './SerieMapper';
+import { SerieMapper } from './serie-comprobante.mapper';
 import { EstadoComunicacionEnvioSunat } from 'src/util/estado.enum';
-import { SucursalMapper } from './SucursalMapper';
-import { ComprobanteRespSunatMapper } from './ComprobanteRespSunatMapper.maper';
+import { SucursalMapper } from './sucursal.mapper';
+import { ComprobanteRespSunatMapper } from './comprobante-resp-sunat.maper';
 
 export class ComprobanteMapper {
   static toDomain(orm: ComprobanteOrmEntity): ComprobanteResponseDto {

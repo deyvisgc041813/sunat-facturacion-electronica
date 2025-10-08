@@ -14,7 +14,7 @@ import {
   EstadoEnumComprobante,
   EstadoComunicacionEnvioSunat,
 } from 'src/util/estado.enum';
-import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { XmlBuilderComunicacionBajaService } from 'src/infrastructure/sunat/xml/xml-builder-comunicacion-baja.service';
@@ -29,7 +29,7 @@ import { BadRequestException } from '@nestjs/common';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
-import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/internal.response.dto';
 import { ISerieComprobanteRepositoryPort } from 'src/domain/serie-comprobante/ports/serie-comprobante.port';
 
 export class CreateComunicacionBajaUseCase {

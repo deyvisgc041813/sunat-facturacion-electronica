@@ -1,16 +1,19 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClienteOrmEntity } from './infrastructure/persistence/cliente/ClienteOrmEntity';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
 import { EmpresaRepositoryImpl } from './infrastructure/persistence/empresa/empresa.repository.impl';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteOrmEntity';
 import { EmpresaController } from './adapter/web/controller/empresa.controller';
 import { ProductoOrmEntity } from './infrastructure/persistence/producto/ProductoOrmEntity';
 import { EmpresaService } from './domain/empresa/services/empresa.service';
-import { CreateEmpresaUseCase } from './application/Empresa/create.usecase';
-import { GetAllEmpresaUseCase } from './application/Empresa/get-all.usecase';
-import { GetByIdEmpresaUseCase } from './application/Empresa/get-by-id.usecase';
-import { UpdateEmpresaUseCase } from './application/Empresa/update.usecase';
+import { CreateEmpresaUseCase } from './application/empresa/create.empresa.usecase';
+import { GetAllEmpresaUseCase } from './application/empresa/get-all.empresa.usecase';
+import { GetByIdEmpresaUseCase } from './application/empresa/get-by-id.empresa.usecase';
+import { UpdateEmpresaUseCase } from './application/empresa/update.empresa.usecase';
+import { DeleteEmpresaUseCase } from './application/empresa/delete.empresa.usecase';
+import { UpdateStatusEmpresaUseCase } from './application/empresa/update-status.empresa.usecase';
+import { AuditoriaService } from './domain/core/logs/service/auditoria.logs.service';
 
 @Module({
   imports: [
@@ -25,9 +28,12 @@ import { UpdateEmpresaUseCase } from './application/Empresa/update.usecase';
   providers: [
     {
       provide: EmpresaService,
-      useFactory: (empresaRepo: EmpresaRepositoryImpl) =>
-        new EmpresaService(empresaRepo),
-      inject: [EmpresaRepositoryImpl],
+
+      useFactory: (
+        empresaRepo: EmpresaRepositoryImpl,
+        auditoriaService: AuditoriaService,
+      ) => new EmpresaService(empresaRepo, auditoriaService),
+      inject: [EmpresaRepositoryImpl, AuditoriaService],
     },
 
     // Casos de uso
@@ -49,73 +55,26 @@ import { UpdateEmpresaUseCase } from './application/Empresa/update.usecase';
         new GetByIdEmpresaUseCase(empresaService),
       inject: [EmpresaService],
     },
-      {
+    {
       provide: UpdateEmpresaUseCase,
       useFactory: (empresaService: EmpresaService) =>
         new UpdateEmpresaUseCase(empresaService),
       inject: [EmpresaService],
     },
-
+    {
+      provide: DeleteEmpresaUseCase,
+      useFactory: (empresaService: EmpresaService) =>
+        new DeleteEmpresaUseCase(empresaService),
+      inject: [EmpresaService],
+    },
+    {
+      provide: UpdateStatusEmpresaUseCase,
+      useFactory: (empresaService: EmpresaService) =>
+        new UpdateStatusEmpresaUseCase(empresaService),
+      inject: [EmpresaService],
+    },
     EmpresaRepositoryImpl,
   ],
   exports: [EmpresaRepositoryImpl],
 })
 export class EmpresaModule {}
-
-// @Module({
-//   imports: [
-//     TypeOrmModule.forFeature([
-//       UsuariosOrmEntity,
-//       RolesOrmEntity,
-//       SucursalOrmEntity,
-//       RefreshTokenOrmEntity,
-//       SerieAuditoriaOrmEntity,
-//       UserRolesOrmEntity,
-//       UserSucursalesOrmEntity
-//     ]),
-//   ],
-//   controllers: [UsuarioController],
-//   providers: [
-//     {
-//       provide: UsuarioService,
-//       useFactory: (
-//         userRepo: UserRepositoryImpl,
-//         sucursalService: SucursalRepositoryImpl,
-//         roleRepo: RoleRepositoryImpl
-//       ) => new UsuarioService(userRepo, sucursalService, roleRepo),
-//       inject: [UserRepositoryImpl, SucursalRepositoryImpl, RoleRepositoryImpl],
-//     },
-
-//     // Casos de uso
-//     {
-//       provide: CreateUsersUseCase,
-//       useFactory: (authService: UsuarioService) =>
-//         new CreateUsersUseCase(authService),
-//       inject: [UsuarioService],
-//     },
-//     {
-//       provide: UpdateUsersUseCase,
-//       useFactory: (authService: UsuarioService) =>
-//         new UpdateUsersUseCase(authService),
-//       inject: [UsuarioService],
-//     },
-//     {
-//       provide: GetUsersUseCase,
-//       useFactory: (authService: UsuarioService) =>
-//         new GetUsersUseCase(authService),
-//       inject: [UsuarioService],
-//     },
-//      {
-//       provide: GetUsuarioByIdUseCase,
-//       useFactory: (authService: UsuarioService) =>
-//         new GetUsuarioByIdUseCase(authService),
-//       inject: [UsuarioService],
-//     },
-
-//     UserRepositoryImpl,
-//     SucursalRepositoryImpl,
-//     RoleRepositoryImpl
-//   ],
-//   exports: [UsuarioService],
-// })
-// export class UsuarioModule {}

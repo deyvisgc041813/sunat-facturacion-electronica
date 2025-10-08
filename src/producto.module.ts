@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
 import { ProductoController } from './adapter/web/controller/producto.controller';
 import { ProductoRepositoryImpl } from './infrastructure/persistence/producto/producto.repository.impl';
 import { CatalogoModule } from './catalogo.module';

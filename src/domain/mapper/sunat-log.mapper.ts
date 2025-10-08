@@ -3,7 +3,7 @@ import {
   CreateSunatLogDto,
   SunatLogResponseDto,
 } from 'src/domain/sunat-log/interface/sunat.log.interface';
-import { SucursalMapper } from './SucursalMapper';
+import { SucursalMapper } from './sucursal.mapper';
 
 export class SunatLogMapper {
   static toDomain(orm: SunatLogOrmEntity): SunatLogResponseDto {

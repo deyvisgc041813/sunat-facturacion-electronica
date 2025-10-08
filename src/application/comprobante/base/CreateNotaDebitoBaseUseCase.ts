@@ -5,7 +5,7 @@ import { ICreateComprobante } from 'src/domain/comprobante/interface/create.inte
 import { DateUtils } from 'src/util/date.util';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ZipUtil } from 'src/util/ZipUtil';
-import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
@@ -49,8 +49,8 @@ import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/sunat-log
 import { FindCatalogosUseCase } from 'src/application/catalogo/FindCatalogosUseCase';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
 import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
-import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
-import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/internal.response.dto';
+import { GetCertificadoDto } from 'src/domain/empresa/dto/obtner-certificado.dto';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 import { validarTipoAfectacionNotaDebito } from 'src/util/notas-credito-debito.validator';
 import { MAP_TRIBUTOS } from 'src/util/constantes';

@@ -16,15 +16,15 @@ import { ICreateAuditoriaLog } from "src/domain/core/logs/dto/create.request.aud
   }):  ICreateAuditoriaLog {
     return {
       tablaAfectada: params.tablaAfectada,
-      registroId: params.idRegistro ?? 0,
-      accion: params.accion,
-      valoresAnteriores: params.valoresAnteriores ?? null,
-      valoresNuevos: params.valoresNuevos ?? null,
-      usuarioId: params.usuario.userId,
-      nombreUsuario: params.usuario.nombre,
-      entorno: params.entorno ?? 'BETA',
-      observacion: params.observacion ?? '',
-      aplicacionOrigen: params.aplicacionOrigen ?? '',
-      sucursalId: params.sucursalId ?? 0,
+      registroId: params?.idRegistro ?? 0,
+      accion: params?.accion,
+      valoresAnteriores: params?.valoresAnteriores ?? null,
+      valoresNuevos: params?.valoresNuevos ?? null,
+      usuarioId: params?.usuario?.userId,
+      nombreUsuario: params?.usuario?.nombre,
+      entorno: params?.entorno ?? 'BETA',
+      observacion: params?.observacion ?? '',
+      aplicacionOrigen: params?.aplicacionOrigen ?? '',
+      sucursalId: params?.sucursalId ?? 0,
     };
   }

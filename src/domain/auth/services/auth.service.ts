@@ -33,7 +33,7 @@ export class AuthService {
     }
     await this.refreshRepo.revokeByUser(user.usuarioId);
     const payload = {
-      sub: user.usuarioId,
+      userId: user.usuarioId,
       empresaId: user.sucursales?.[0]?.empresa?.empresaId ?? null,
       username: user.correo,
       roles: user.roles,
@@ -67,12 +67,13 @@ export class AuthService {
     const decoded = this.tokenService.verify(refreshToken);
     //Crear un payload limpio SIN exp ni iat
     const payload = {
-      sub: decoded?.sub,
+      userId: decoded?.userId,
       empresaId: decoded?.empresaId,
       username: decoded?.username,
       roles: decoded?.roles,
       sucursales: decoded?.sucursales,
       nombre: decoded?.nombre,
+      sucursalActiva: decoded?.sucursalActiva
     };
 
     return { access_token: this.tokenService.signAccessToken(payload) };

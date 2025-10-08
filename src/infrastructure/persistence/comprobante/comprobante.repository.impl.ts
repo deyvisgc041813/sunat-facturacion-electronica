@@ -19,7 +19,7 @@ import { IResponsePs } from 'src/domain/comprobante/interface/response.ps.interf
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 import dayjs from 'dayjs';
 import { ComprobanteRespuestaSunatOrmEntity } from './ComprobanteRespuestaSunatOrmEntity';
-import { ComprobanteMapper } from 'src/domain/mapper/ComprobanteMapper';
+import { ComprobanteMapper } from 'src/domain/mapper/comprobante.mapper';
 @Injectable()
 export class ComprobanteRepositoryImpl implements ConprobanteRepository {
   constructor(

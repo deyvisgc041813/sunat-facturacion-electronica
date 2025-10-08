@@ -1,4 +1,4 @@
-import { EmpresaResponseDto } from "src/domain/empresa/dto/EmpresaResponseDto";
+import { EmpresaResponseDto } from "src/domain/empresa/dto/external.response.dto";
 import { EmpresaService } from "src/domain/empresa/services/empresa.service";
 
 export class GetByIdEmpresaUseCase {

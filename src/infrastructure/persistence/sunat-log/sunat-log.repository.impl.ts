@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { CreateSunatLogDto, SunatLogResponseDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogOrmEntity } from '../../persistence/sunat-log/SunatLogOrmEntity';
-import { SunatLogMapper } from 'src/domain/mapper/SunatLogMapper';
+import { SunatLogMapper } from 'src/domain/mapper/sunat-log.mapper';
 
 @Injectable()
 export class SunatLogRepositoryImpl implements SunatLogRepository {

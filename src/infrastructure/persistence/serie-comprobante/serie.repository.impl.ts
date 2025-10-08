@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { SerieAuditoriaOrmEntity } from '../serie-log/SerieAuditoriaOrmEntity';
 import { CreateSerieAuditoriaDto } from 'src/domain/series-auditoria/dto/CreateSerieAuditoriaDto';
-import { SerieMapper } from 'src/domain/mapper/SerieMapper';
+import { SerieMapper } from 'src/domain/mapper/serie-comprobante.mapper';
 import { SerieOrmEntity } from './SerieOrmEntity';
 import { ISerieComprobanteRepositoryPort } from 'src/domain/serie-comprobante/ports/serie-comprobante.port';
 import { CreateSerieDto } from 'src/domain/serie-comprobante/dto/create.request.dto';
@@ -15,7 +15,7 @@ import { SerieResponseDto } from 'src/domain/serie-comprobante/dto/reesponse.dto
 import { UpdateSerieDto } from 'src/domain/serie-comprobante/dto/update.request.dto';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { EEstadosGlobales } from 'src/util/estado.enum';
-import { SerieAuditoriaMapper } from 'src/domain/mapper/SerieAuditoriaMapper';
+import { SerieAuditoriaMapper } from 'src/domain/mapper/serie-auditoria.mapper';
 
 @Injectable()
 export class SerieComprobanteRepositoryImpl
@@ -57,7 +57,7 @@ export class SerieComprobanteRepositoryImpl
       where: {
         serieId: id,
         sucursal: { sucursalId },
-        estado: In([EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO]),
+        estado: EEstadosGlobales.ACTIVO,
       },
       relations: ['sucursal'],
     });

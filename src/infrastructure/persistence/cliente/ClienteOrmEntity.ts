@@ -1,6 +1,6 @@
 // src/infrastructure/database/typeorm/cliente.orm-entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
-import { EmpresaOrmEntity } from '../empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from '../empresa/empesa.orm.entity';
 import { ComprobanteOrmEntity } from '../comprobante/ComprobanteOrmEntity';
 
 @Entity('clientes')

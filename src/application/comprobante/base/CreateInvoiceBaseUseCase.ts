@@ -5,7 +5,7 @@ import { ICreateComprobante } from 'src/domain/comprobante/interface/create.inte
 import { DateUtils } from 'src/util/date.util';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ZipUtil } from 'src/util/ZipUtil';
-import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException } from '@nestjs/common';
 import {
@@ -28,8 +28,8 @@ import { ICatalogoRepository } from 'src/domain/catalogo/interface/catalogo.repo
 import { ITributoTasaRepository } from 'src/domain/tributo-tasa/tasa-tributo.repository';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/sucursal/sucursal.repository.impl';
 import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
-import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
-import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { GetCertificadoDto } from 'src/domain/empresa/dto/obtner-certificado.dto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/internal.response.dto';
 import { MAP_TRIBUTOS } from 'src/util/constantes';
 import { FindTasaByCodeUseCase } from 'src/application/Tasa/FindTasaByCodeUseCase';
 

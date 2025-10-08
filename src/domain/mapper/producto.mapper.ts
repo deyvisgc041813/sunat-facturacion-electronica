@@ -2,7 +2,7 @@ import { ProductoResponseDto } from "src/domain/productos/dto/ProductoResponseDt
 import { CreateProductoDto } from "src/domain/productos/dto/CreateProductoDto";
 import { UpdateProductoDto } from "src/domain/productos/dto/UpdateProductoDto";
 import { ProductoOrmEntity } from "src/infrastructure/persistence/producto/ProductoOrmEntity";
-import { SucursalMapper } from "./SucursalMapper";
+import { SucursalMapper } from "./sucursal.mapper";
 
 export class ProductoMapper {
   static ormToDTO(orm: ProductoOrmEntity): ProductoResponseDto {

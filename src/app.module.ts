@@ -7,7 +7,7 @@ import { ClienteModule } from './cliente.module';
 import { ProductoModule } from './producto.module';
 import { EmpresaModule } from './empresa.module';
 import { CatalogoModule } from './catalogo.module';
-import { SerieModule } from './serie.module';
+import { SerieComprobanteModule } from './serie-comprobante.module';
 import { SerieAuditoriaModule } from './serie-auditoria.module';
 import { ComprobanteModule } from './comprobante.module';
 import { ErrorLogModule } from './error-log.module';
@@ -40,7 +40,7 @@ import { CoreModuleModule } from './core-module.module';
    ProductoModule,
    EmpresaModule,
    CatalogoModule,
-   SerieModule,
+   SerieComprobanteModule,
    SerieAuditoriaModule,
    ComprobanteModule,
    ErrorLogModule,

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { BajaComprobanteOrmEntity } from './infrastructure/persistence/comunicacion-baja/BajaComprobanteOrmEntity';
 import { BajaComprobanteDetalleOrmEntity } from './infrastructure/persistence/comunicacion-baja/BajaComprobanteDetalleOrmEntity';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
 import { ErrorLogOrmEntity } from './infrastructure/persistence/error-log/ErrorLogOrmEntity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteOrmEntity';
 import { SunatLogOrmEntity } from './infrastructure/persistence/sunat-log/SunatLogOrmEntity';

@@ -5,7 +5,7 @@ import { ErrorLogRepository } from 'src/domain/error-log/ErrorLog.repository';
 import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
 import { ErrorLogResponseDto } from 'src/domain/error-log/dto/ErrorLogResponseDto';
 import { ErrorLogOrmEntity } from './ErrorLogOrmEntity';
-import { ErrorLogMapper } from 'src/domain/mapper/ErrorLogMapper';
+import { ErrorLogMapper } from 'src/domain/mapper/error-log.mapper';
 
 @Injectable()
 export class ErrorLogRepositoryImpl implements ErrorLogRepository {

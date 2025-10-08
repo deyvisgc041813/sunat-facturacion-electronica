@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 import { IResumenRepository } from 'src/domain/resumen/interface/resumen.repository.interface';
 import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
 import { ResumenBoletasOrmEntity } from './ResumenBoletasOrmEntity';
-import { ResumenBPMaper } from 'src/domain/mapper/ResumenBPMaper';
+import { ResumenBPMaper } from 'src/domain/mapper/resumen-bp.mapper';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { CreateResumenBoletaDto } from 'src/domain/resumen/interface/create.summary.interface';
 

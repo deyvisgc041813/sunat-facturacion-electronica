@@ -16,12 +16,15 @@ export class EmpresaResponseDto {
     public certificadoIssuer:string,
     public certificadoValidoDesde:Date,
     public certificadoValidoHasta:Date,
+    public plan:string,
     public nombreComercial?: string,
     public direccion?: string,
     public usuarioSolSecundario?: string,
     public estado?:string,
     public logoPublicId?:string,
     public certificadoPublicId?:string,
+    public clienteSecret?: string,
+    public clienteId?: string,
     public cliente?:ClienteResponseDto[],
     public sucursales?:SucursalResponseDto[]
   ) {}

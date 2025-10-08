@@ -27,12 +27,12 @@ import {
   EstadoEnvioSunat,
 } from 'src/util/estado.enum';
 import { ResumenBoletaDetalleDto } from 'src/domain/resumen/interface/create.summary.detalle.interface';
-import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { BadRequestException } from '@nestjs/common';
-import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/internal.response.dto';
 import { ISerieComprobanteRepositoryPort } from 'src/domain/serie-comprobante/ports/serie-comprobante.port';
 
 export class CreateResumenUseCase {

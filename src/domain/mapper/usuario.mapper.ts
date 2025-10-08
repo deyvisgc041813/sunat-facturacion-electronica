@@ -1,8 +1,8 @@
 import { UsuarioResponseDto } from '../auth/dto/usuario/usuario.response.dto';
 import { UsuariosOrmEntity } from 'src/infrastructure/persistence/auth/UsuariosOrmEntity';
-import { RoleMapper } from './RoleMapper';
-import { SucursalMapper } from './SucursalMapper';
-import { SerieAuditoriaMapper } from './SerieAuditoriaMapper';
+import { RoleMapper } from './role.mapper';
+import { SucursalMapper } from './sucursal.mapper';
+import { SerieAuditoriaMapper } from './serie-auditoria.mapper';
 import { UpdateUsuarioDto } from '../auth/dto/usuario/update.request.dto';
 
 export class UsuarioMapper {

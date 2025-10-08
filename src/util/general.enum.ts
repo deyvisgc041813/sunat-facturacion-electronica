@@ -20,3 +20,9 @@ export enum EAccionAudit {
   ANULACION = 'ANULACION',
   CONSULTA = 'CONSULTA'
 }
+export enum Plan {
+  Basico = '01',        // Código para Plan Básico
+  Estándar = '02',      // Código para Plan Estándar
+  Profesional = '03',   // Código para Plan Profesional
+  Empresarial = '04',   // Código para Plan Empresarial
+}

@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { CpeDto } from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
-import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';

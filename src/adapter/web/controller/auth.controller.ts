@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   UseGuards,
-  ForbiddenException,
   BadRequestException,
 } from '@nestjs/common';
 import { User } from 'src/adapter/decorator/user.decorator';
@@ -15,7 +14,7 @@ import { LogoutUseCase } from 'src/application/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/auth/refresh-token.usecase';
 import { LoginDto } from 'src/domain/auth/dto/login.request.dto';
 
-@Controller('auth')
+@Controller('v1/auth')
 export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
@@ -29,7 +28,7 @@ export class AuthController {
     return this.loginUseCase.execute(body.correo, body.clave);
   }
 
-  @Post('refresh')
+  @Post('refresh-token')
   async refresh(@Body() body: { refresh_token: string }) {
     return this.refreshTokenUseCase.execute(body.refresh_token);
   }

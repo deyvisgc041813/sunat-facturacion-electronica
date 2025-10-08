@@ -1,7 +1,7 @@
 import { ResumenDetalleResponseDto } from 'src/domain/resumen/dto/ResumenDetalleResponseDto';
 import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
 import { ResumenBoletaDetalleDto } from '../resumen/interface/create.summary.detalle.interface';
-import { ComprobanteMapper } from './ComprobanteMapper';
+import { ComprobanteMapper } from './comprobante.mapper';
 ;
 
 

@@ -6,7 +6,7 @@ import { SucursalOrmEntity } from './SucursalOrmEntity';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { CreateSucursalDto } from 'src/domain/sucursal/dto/create.request.dto';
 import { SucursalResponseDto } from 'src/domain/sucursal/dto/sucursal.response.dto';
-import { SucursalMapper } from 'src/domain/mapper/SucursalMapper';
+import { SucursalMapper } from 'src/domain/mapper/sucursal.mapper';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { UpdateSucursalDto } from 'src/domain/sucursal/dto/update.request.dto';
 
@@ -61,7 +61,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       where: {
         sucursalId: sucursalesId,
         empresa: { empresaId },
-        estado: In([EstadoSystem.ACTIVO, EstadoSystem.INACTIVO]),
+        estado: EstadoSystem.ACTIVO,
       },
       relations: [
         'empresa',

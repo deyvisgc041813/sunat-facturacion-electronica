@@ -1,6 +1,6 @@
 
 import { ResponseCatalogoTipoDTO } from '../catalogo/dto/catalogo.response';
-import { CatalogoDetalleMapper } from './CatalogoDetalleMapper';
+import { CatalogoDetalleMapper } from './catalogo-detalle.mapper';
 import { CatalogoTipoOrmEnity } from 'src/infrastructure/persistence/catalogo/CatalogoTipoOrmEnity';
 import { CatalogoDetalleOrmEnity } from 'src/infrastructure/persistence/catalogo/CatalogoDetalleOrmEnity';
 

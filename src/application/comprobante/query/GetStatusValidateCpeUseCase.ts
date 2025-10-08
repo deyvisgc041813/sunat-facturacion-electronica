@@ -1,14 +1,14 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { CpeDto } from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
-import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { SunatLogRepository } from 'src/domain/sunat-log/SunatLog.repository';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import pLimit from 'p-limit';
 import { CryptoUtil } from 'src/util/CryptoUtil';
-import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/internal.response.dto';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 export class CpeValidadoDto extends CpeDto {
   existe: boolean;

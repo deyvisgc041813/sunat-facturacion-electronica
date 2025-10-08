@@ -1,10 +1,10 @@
 import { ResumenBoletasOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasOrmEntity';
 import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
-import { ResumenBPDetalleMapper } from './ResumenBPDetalleMapper';
+import { ResumenBPDetalleMapper } from './resumen-bp-detalle.mapper';
 import { CreateResumenBoletaDto } from '../resumen/interface/create.summary.interface';
 import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
 import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/comprobante/ComprobanteOrmEntity';
-import { SucursalMapper } from './SucursalMapper';
+import { SucursalMapper } from './sucursal.mapper';
 
 export class ResumenBPMaper {
   static toDomain(orm: ResumenBoletasOrmEntity): ResumenResponseDto {

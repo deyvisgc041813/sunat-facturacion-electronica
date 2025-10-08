@@ -1,12 +1,14 @@
+import { Expose, Transform } from 'class-transformer';
 import {
   IsString,
   IsNotEmpty,
   Length,
-  IsIn,
   IsOptional,
   IsEmail,
   Matches,
+  IsIn,
 } from 'class-validator';
+import { Plan } from 'src/util/general.enum';
 
 export class CreateEmpresaDto {
   //@ApiProperty({ example: '20123456789', description: 'RUC de la empresa (11 dígitos numéricos)' })
@@ -18,15 +20,21 @@ export class CreateEmpresaDto {
   readonly ruc: string;
 
   //@ApiProperty({ example: 'Mi Empresa SAC', description: 'Razón social de la empresa' })
+  @Expose({ name: 'razon_social' })
+  @Transform(({ value }) => String(value))
   @IsString({ message: 'La razón social debe ser un texto válido' })
   @IsNotEmpty({ message: 'La razón social es obligatoria' })
   readonly razonSocial: string;
+
+  @Expose({ name: 'nombre_comercial' })
+  @Transform(({ value }) => String(value))
   @IsOptional()
   @IsString({ message: 'El nombre comercial debe ser un texto válido' })
   readonly nombreComercial: string;
   //@ApiProperty({ type: 'string', format: 'binary', description: 'Archivo del certificado digital en formato .pfx o .pem' })
   @IsOptional()
-  certificadoDigital: Buffer;
+  certificado_digital: Buffer;
+
   @IsOptional()
   logo: Buffer;
   //@ApiProperty({ example: 'Av. Siempre Viva 123', description: 'Dirección fiscal de la empresa' })
@@ -34,17 +42,21 @@ export class CreateEmpresaDto {
   @IsNotEmpty({ message: 'La dirección fiscal es obligatoria' })
   readonly direccion: string;
 
+  @Expose({ name: 'clave_certificado' })
+  @Transform(({ value }) => String(value))
   //@ApiProperty({ example: 'clave123', description: 'Clave del certificado digital' })
   @IsString({ message: 'La clave del certificado debe ser un texto válido' })
   @IsNotEmpty({ message: 'La clave del certificado digital es obligatoria' })
   claveCertificado: string;
 
+  @Expose({ name: 'usuario_sol_secundario' })
+  @Transform(({ value }) => String(value))
   @IsString({ message: 'El usuario SOL secundario debe ser un texto válido' })
   @IsNotEmpty({ message: 'El usuario SOL secundario es obligatorio' })
   readonly usuarioSolSecundario: string;
-  //@ApiProperty({ example: 'USUARIO123', description: 'Usuario SOL secundario' })
 
-  //@ApiProperty({ example: 'clave456', description: 'Clave del usuario SOL secundario' })
+  @Expose({ name: 'clave_sol_secundario' })
+  @Transform(({ value }) => String(value))
   @IsString({ message: 'La clave SOL secundaria debe ser un texto válido' })
   @IsNotEmpty({ message: 'La clave del usuario SOL secundario es obligatoria' })
   claveSolSecundario: string;
@@ -59,6 +71,23 @@ export class CreateEmpresaDto {
   @Length(9, 9, { message: 'El teléfono debe tener exactamente 9 dígitos' })
   @Matches(/^[0-9]+$/, { message: 'El teléfono solo puede contener números' })
   readonly telefono: string;
+  @IsString({ message: 'El plan debe ser un texto válido.' })
+  @IsNotEmpty({ message: 'El plan es obligatorio.' })
+  @IsIn([Plan.Basico, Plan.Estándar, Plan.Profesional, Plan.Empresarial], {
+    message:
+      'El plan debe ser uno de los siguientes: Plan Básico (01), Plan Estándar (02), Plan Profesional (03) o Plan Empresarial (04).',
+  })
+  plan: string;
+
+  @Expose({ name: 'client_secret' })
+  @Transform(({ value }) => String(value))
+  @IsOptional()
+  clienteSecret: string;
+  @Expose({ name: 'client_id' })
+  @Transform(({ value }) => String(value))
+  @IsOptional()
+  clienteId: string;
+
   @IsOptional()
   logoPublicId: string;
   @IsOptional()

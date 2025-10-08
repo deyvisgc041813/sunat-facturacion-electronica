@@ -8,7 +8,7 @@ import {
   OneToMany,
   ManyToMany,
 } from 'typeorm';
-import { EmpresaOrmEntity } from '../empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from '../empresa/empesa.orm.entity';
 import { ProductoOrmEntity } from '../producto/ProductoOrmEntity';
 import { ComprobanteOrmEntity } from '../comprobante/ComprobanteOrmEntity';
 import { ResumenBoletasOrmEntity } from '../resumen/ResumenBoletasOrmEntity';

@@ -1,6 +1,6 @@
 
 import { SerieOrmEntity } from 'src/infrastructure/persistence/serie-comprobante/SerieOrmEntity';
-import { SucursalMapper } from './SucursalMapper';
+import { SucursalMapper } from './sucursal.mapper';
 import { SerieResponseDto } from '../serie-comprobante/dto/reesponse.dto';
 import { CreateSerieDto } from '../serie-comprobante/dto/create.request.dto';
 import { UpdateSerieDto } from '../serie-comprobante/dto/update.request.dto';

@@ -4,7 +4,7 @@ import { ClienteOrmEntity } from './infrastructure/persistence/cliente/ClienteOr
 
 import { ClienteRepositoryImpl } from './infrastructure/persistence/cliente/cliente.repository.impl';
 import { ClienteController } from './adapter/web/controller/cliente.controller';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/EmpresaOrmEntity';
+import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
 import { CatalogoModule } from './catalogo.module';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteOrmEntity';
 

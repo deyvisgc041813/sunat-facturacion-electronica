@@ -1,4 +1,4 @@
-import { CatalogoDetalleMapper } from "src/domain/mapper/CatalogoDetalleMapper";
+import { CatalogoDetalleMapper } from "src/domain/mapper/catalogo-detalle.mapper";
 import { ResponseCatalogoTipoDTO } from "../dto/catalogo.response";
 
 export interface ICatalogoRepository {

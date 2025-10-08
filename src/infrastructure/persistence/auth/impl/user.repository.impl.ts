@@ -3,7 +3,7 @@ import { IUsuarioRepositoryPort } from 'src/domain/auth/ports/usuario.repository
 import { UsuariosOrmEntity } from '../UsuariosOrmEntity';
 import { QueryRunner, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { UsuarioMapper } from 'src/domain/mapper/UsuarioMapper';
+import { UsuarioMapper } from 'src/domain/mapper/usuario.mapper';
 import { CreateUsuarioDto } from 'src/domain/auth/dto/usuario/create.request.dto';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { UpdateUsuarioDto } from 'src/domain/auth/dto/usuario/update.request.dto';

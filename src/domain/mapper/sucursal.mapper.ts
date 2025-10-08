@@ -1,13 +1,13 @@
-import { EmpresaMapper } from './EmpresaMapper';
+import { EmpresaMapper } from './empresa.mapper';
 import { SucursalOrmEntity } from 'src/infrastructure/persistence/sucursal/SucursalOrmEntity';
 import { SucursalResponseDto } from '../sucursal/dto/sucursal.response.dto';
 import { CreateSucursalDto } from '../sucursal/dto/create.request.dto';
-import { ProductoMapper } from './ProductoMapper';
-import { SerieMapper } from './SerieMapper';
-import { ResumenBPMaper } from './ResumenBPMaper';
-import { ComunicacionBajaMaper } from './ComunicacionBajaMaper';
-import { SunatLogMapper } from './SunatLogMapper';
-import { ComprobanteMapper } from './ComprobanteMapper';
+import { ProductoMapper } from './producto.mapper';
+import { SerieMapper } from './serie-comprobante.mapper';
+import { ResumenBPMaper } from './resumen-bp.mapper';
+import { ComunicacionBajaMaper } from './comunicacion-baja.mapper';
+import { SunatLogMapper } from './sunat-log.mapper';
+import { ComprobanteMapper } from './comprobante.mapper';
 import {
   DepartamentoResponseDto,
   DistritoResponseDto,

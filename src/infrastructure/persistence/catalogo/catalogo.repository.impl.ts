@@ -2,11 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { CatalogoDetalleOrmEnity } from './CatalogoDetalleOrmEnity';
-import { CatalogoDetalleMapper } from 'src/domain/mapper/CatalogoDetalleMapper';
+import { CatalogoDetalleMapper } from 'src/domain/mapper/catalogo-detalle.mapper';
 import { ICatalogoRepository } from 'src/domain/catalogo/interface/catalogo.repository';
 import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
 import { CatalogoTipoOrmEnity } from './CatalogoTipoOrmEnity';
-import { CatalogoMapper } from 'src/domain/mapper/CatalogoMapper';
+import { CatalogoMapper } from 'src/domain/mapper/catalogo.mapper';
 @Injectable()
 export class CatalogoRepositoryImpl implements ICatalogoRepository {
   constructor(

@@ -147,7 +147,6 @@ export class SerieComprobanteService {
     nuevoEstado: any,
     auth: IUserPayload,
   ): Promise<GenericResponse<void>> {
-    console.log(nuevoEstado)
     if ( ![EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO].includes( nuevoEstado)) {
       throw new BadRequestException(
         'El estado solo puede ser 1 (activo) o 0 (inactivo)',

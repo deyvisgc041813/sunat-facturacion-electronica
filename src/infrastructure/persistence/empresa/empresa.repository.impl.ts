@@ -1,18 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { EmpresaMapper } from 'src/domain/mapper/EmpresaMapper';
-import { EmpresaRepository } from 'src/domain/empresa/Empresa.repository';
-import { CreateEmpresaDto } from 'src/domain/empresa/dto/CreateEmpresaDto';
-import { EmpresaOrmEntity } from './EmpresaOrmEntity';
-import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
-import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
-import { GetCertificadoDto } from 'src/domain/empresa/dto/GetCertificadoDto';
+import { In, Repository } from 'typeorm';
+import { EmpresaMapper } from 'src/domain/mapper/empresa.mapper';
+import { CreateEmpresaDto } from 'src/domain/empresa/dto/create.request.dto';
+import { EmpresaOrmEntity } from './empesa.orm.entity';
+import { EmpresaResponseDto } from 'src/domain/empresa/dto/external.response.dto';
+import { UpdateEmpresaDto } from 'src/domain/empresa/dto/update.request';
+import { GetCertificadoDto } from 'src/domain/empresa/dto/obtner-certificado.dto';
 import { EEstadosGlobales } from 'src/util/estado.enum';
-import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/internal.response.dto';
+import { IEmpresaRepositoryPort } from 'src/domain/empresa/ports/empresa.repository.port';
+import { GenericResponse } from 'src/adapter/web/response/response.interface';
 
 @Injectable()
-export class EmpresaRepositoryImpl implements EmpresaRepository {
+export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
   constructor(
     @InjectRepository(EmpresaOrmEntity)
     private readonly repo: Repository<EmpresaOrmEntity>,
@@ -26,14 +27,22 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
     );
     return {
       status: true,
-      message: 'Cliente registrado correctamente',
+      message: 'La empresa se registró correctamente.',
       data: EmpresaMapper.toDomain(newEmpresa),
     };
   }
 
   async findAll(): Promise<EmpresaResponseDto[]> {
     const result = await this.repo.find({
-      relations: ['clientes', 'sucursales'],
+      where: {
+        estado: In([EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO]),
+      },
+      relations: [
+        'sucursales',
+        'sucursales.distrito',
+        'sucursales.distrito.provincia',
+        'sucursales.distrito.provincia.departamento',
+      ],
     });
     return result.map((empresa) => EmpresaMapper.toDomain(empresa));
   }
@@ -43,8 +52,13 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
     interno: false,
   ): Promise<EmpresaResponseDto | EmpresaInternaResponseDto | null> {
     const empresa = await this.repo.findOne({
-      where: { empresaId: id, estado: EEstadosGlobales.ACTIVO},
-      relations: ['clientes', 'sucursales'],
+      where: { empresaId: id, estado: EEstadosGlobales.ACTIVO },
+      relations: [
+        'sucursales',
+        'sucursales.distrito',
+        'sucursales.distrito.provincia',
+        'sucursales.distrito.provincia.departamento',
+      ],
     });
     if (!empresa) {
       throw new NotFoundException(`Empresa con id ${id} no encontrado`);
@@ -54,7 +68,9 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
       : EmpresaMapper.toDomainInterno(empresa);
   }
   async findCertificado(ruc: string): Promise<GetCertificadoDto | null> {
-    const empresa = await this.repo.findOne({ where: { ruc } });
+    const empresa = await this.repo.findOne({
+      where: { ruc, estado: EEstadosGlobales.ACTIVO },
+    });
 
     if (!empresa) {
       throw new NotFoundException(`No se encontró empresa con RUC ${ruc}`);
@@ -83,7 +99,24 @@ export class EmpresaRepositoryImpl implements EmpresaRepository {
     await this.repo.update(empresaId, empresaUpdate);
     return {
       status: true,
-      message: 'Actualizado correctamente',
+      message: 'La empresa se actualizó correctamente.',
+    };
+  }
+  async updateStatus(
+    empresaId: number,
+    nuevoEstado: string,
+  ): Promise<GenericResponse<void>> {
+    const empresa = await this.repo.findOne({
+      where: { empresaId },
+    });
+
+    if (!empresa) {
+      throw new NotFoundException(`La empresa con ID ${empresaId} no existe.`);
+    }
+    await this.repo.update(empresaId, { estado: nuevoEstado });
+    return {
+      status: true,
+      message: 'El estado se actualizó correctamente.',
     };
   }
 }

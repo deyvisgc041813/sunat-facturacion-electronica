@@ -1,10 +1,10 @@
-import { CreateEmpresaDto } from 'src/domain/empresa/dto/CreateEmpresaDto';
-import { EmpresaOrmEntity } from '../../infrastructure/persistence/empresa/EmpresaOrmEntity';
-import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
-import { UpdateEmpresaDto } from 'src/domain/empresa/dto/UpdateEmpresaDto';
-import { ClienteMapper } from './ClienteMapper';
-import { EmpresaInternaResponseDto } from '../empresa/dto/EmpresaInternaResponseDto';
-import { SucursalMapper } from './SucursalMapper';
+import { CreateEmpresaDto } from 'src/domain/empresa/dto/create.request.dto';
+import { EmpresaOrmEntity } from '../../infrastructure/persistence/empresa/empesa.orm.entity';
+import { EmpresaResponseDto } from 'src/domain/empresa/dto/external.response.dto';
+import { UpdateEmpresaDto } from 'src/domain/empresa/dto/update.request';
+import { ClienteMapper } from './cliente.mapper';
+import { EmpresaInternaResponseDto } from '../empresa/dto/internal.response.dto';
+import { SucursalMapper } from './sucursal.mapper';
 import { SucursalOrmEntity } from 'src/infrastructure/persistence/sucursal/SucursalOrmEntity';
 
 export class EmpresaMapper {
@@ -31,12 +31,15 @@ export class EmpresaMapper {
       orm.certificadoIssuer,
       orm.certificadoValidoDesde,
       orm.certificadoValidoHasta,
+      orm.plan,
       orm.nombreComercial ?? '',
       orm.direccion,
       orm.usuarioSolSecundario,
       orm.estado,
       orm.logoPublicId,
       orm.certificadoPublicId,
+      orm.clienteSecret, // solo para guias de remision
+      orm.clienteId, // solo para guias de remision
       clientes,
       sucursales,
     );
@@ -64,12 +67,15 @@ export class EmpresaMapper {
       orm.certificadoIssuer,
       orm.certificadoValidoDesde,
       orm.certificadoValidoHasta,
+      orm.plan,
       orm.nombreComercial ?? '',
       orm.direccion,
       orm.usuarioSolSecundario,
       orm.estado,
       orm.logoPublicId,
       orm.certificadoPublicId,
+      orm.clienteSecret, // solo para guias de remision
+      orm.clienteId, // solo para guias de remision
       clientes,
       sucursales,
     );
@@ -89,7 +95,7 @@ export class EmpresaMapper {
     object.razonSocial = data?.razonSocial;
     object.nombreComercial = data?.nombreComercial;
     object.direccion = data?.direccion;
-    object.certificadoDigital = data?.certificadoDigital;
+    object.certificadoDigital = data?.certificado_digital;
     object.claveCertificado = data?.claveCertificado;
     object.usuarioSolSecundario = data?.usuarioSolSecundario;
     object.claveSolSecundario = data?.claveSolSecundario;
@@ -97,6 +103,9 @@ export class EmpresaMapper {
     object.telefono = data?.telefono;
     object.logo = data?.logo;
     object.logoPublicId = data?.logoPublicId;
+    object.clienteSecret = data?.clienteSecret
+    object.clienteId = data?.clienteId,
+    object.plan = data?.plan,
     object.certificadoNombreArchivo = data?.certificadoNombreArchivo
     object.certificadoHash = data?.certificadoHash
     object.certificadoSubject = data?.certificadoSubject

@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { ConprobanteRepository } from 'src/domain/comprobante/comprobante.repository';
 import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
-import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/EmpresaInternaResponseDto';
-import { ErrorMapper } from 'src/domain/mapper/ErrorMapper';
+import { EmpresaInternaResponseDto } from 'src/domain/empresa/dto/internal.response.dto';
+import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
 import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';

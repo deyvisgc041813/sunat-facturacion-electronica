@@ -22,7 +22,6 @@ export class AdjustCorrelativeSerieComprobanteUseCase {
         'El valor del motivo es obligatorio .',
       );
     }
-    console.log(auth)
     return this.serieService.adjustCorrelative(
       auth.sucursalActiva ?? 0,
       serieId,

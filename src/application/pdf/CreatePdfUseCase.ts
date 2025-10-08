@@ -13,7 +13,7 @@ import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
 import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 import { ISucursalRepository } from 'src/domain/sucursal/ports/sucursal.repository';
-import { EmpresaResponseDto } from 'src/domain/empresa/dto/EmpresaResponseDto';
+import { EmpresaResponseDto } from 'src/domain/empresa/dto/external.response.dto';
 export class CreatePdfUseCase {
   constructor(
     private readonly sucursalRepo: ISucursalRepository,

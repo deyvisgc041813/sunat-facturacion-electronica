@@ -1,8 +1,6 @@
 
-import { EmpresaResponseDto } from "./EmpresaResponseDto";
+import { EmpresaResponseDto } from "./external.response.dto";
 
-// DTO extendido para uso interno
-// DTO extendido (interno, añade credenciales)
 export class EmpresaInternaResponseDto extends EmpresaResponseDto {
   constructor(
     base: EmpresaResponseDto, // <- aquí recibes el dto base
@@ -24,12 +22,15 @@ export class EmpresaInternaResponseDto extends EmpresaResponseDto {
       base.certificadoIssuer,
       base.certificadoValidoDesde,
       base.certificadoValidoHasta,
+      base.plan,
       base.nombreComercial,
       base.direccion,
       base.usuarioSolSecundario,
       base.estado,
       base.logoPublicId,
       base.certificadoPublicId,
+      base.clienteSecret,
+      base.clienteId,
       base.cliente
     );
   }
