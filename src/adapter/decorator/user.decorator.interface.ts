@@ -7,5 +7,6 @@ export interface IUserPayload {
   sucursales: number[];     // Lista de sucursales asignadas
   correo:string
   nombre:string
-  sucursalActiva:number
+  sucursalActiva:number,
+  subDominio:string
 }

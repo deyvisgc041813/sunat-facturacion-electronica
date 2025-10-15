@@ -1,44 +1,19 @@
 import { EmpresaMapper } from './empresa.mapper';
-import { SucursalOrmEntity } from 'src/infrastructure/persistence/sucursal/SucursalOrmEntity';
-import { SucursalResponseDto } from '../sucursal/dto/sucursal.response.dto';
-import { CreateSucursalDto } from '../sucursal/dto/create.request.dto';
-import { ProductoMapper } from './producto.mapper';
-import { SerieMapper } from './serie-comprobante.mapper';
-import { ResumenBPMaper } from './resumen-bp.mapper';
-import { ComunicacionBajaMaper } from './comunicacion-baja.mapper';
-import { SunatLogMapper } from './sunat-log.mapper';
-import { ComprobanteMapper } from './comprobante.mapper';
-import {
-  DepartamentoResponseDto,
-  DistritoResponseDto,
-  ProvinciaResponseDto,
-  UbigeoResponseDto,
-} from '../ubigeo/dto/ubigeo.response';
-import { UpdateSucursalDto } from '../sucursal/dto/update.request.dto';
+import { SucursalResponseDto } from '../parent/sucursal/dto/sucursal.response.dto';
+import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/sucursal.orm.entity';
+import { CreateSucursalDto } from '../parent/sucursal/dto/create.request.dto';
+import { UpdateSucursalDto } from '../parent/sucursal/dto/update.request.dto';
+import { DepartamentoResponseDto, DistritoResponseDto, ProvinciaResponseDto, UbigeoResponseDto } from '../parent/ubigeo/dto/ubigeo.response';
 
 export class SucursalMapper {
   static toDomain(orm: SucursalOrmEntity): SucursalResponseDto {
-    const empresa = orm.empresa
-      ? EmpresaMapper.toDomain(orm.empresa)
-      : undefined;
-    const productos = orm.productos
-      ? orm.productos?.map((p) => ProductoMapper.ormToDTO(p))
-      : [];
-    const series = orm.series
-      ? orm.series?.map((s) => SerieMapper.toDomain(s))
-      : [];
-    const comprobantes = orm.comprobantes
-      ? orm.comprobantes?.map((c) => ComprobanteMapper.toDomain(c))
-      : [];
-    const resumenes = orm.resumenes
-      ? orm.resumenes?.map((r) => ResumenBPMaper.toDomain(r))
-      : [];
-    const bajas = orm.comunicacionBaja
-      ? orm.comunicacionBaja?.map((c) => ComunicacionBajaMaper.toDomain(c))
-      : [];
-    const logs = orm.sunatLog
-      ? orm.sunatLog?.map((l) => SunatLogMapper.toDomain(l))
-      : [];
+    const empresa = orm?.empresa ? EmpresaMapper.toDomain(orm?.empresa) : undefined;
+    const productos = [];
+    const series = [];
+    const comprobantes = [];
+    const resumenes = [];
+    const bajas = [];
+    const logs = [];
     const ubicacionGeografica = orm?.distrito ? SucursalMapper.setUbigeo(orm?.distrito) : undefined  
     return new SucursalResponseDto(
       orm.sucursalId,
@@ -46,6 +21,7 @@ export class SucursalMapper {
       orm.nombre,
       orm.direccion,
       orm.codigoEstablecimiento,
+      orm.subDominio,
       orm.entorno,
       orm.ubigeo,
       orm.telefono,
@@ -69,8 +45,8 @@ export class SucursalMapper {
   }
 
   static toDomainInterno(orm: SucursalOrmEntity): SucursalResponseDto {
-    const empresa = orm.empresa
-      ? EmpresaMapper.toDomainInterno(orm.empresa)
+    const empresa = orm?.empresa
+      ? EmpresaMapper.toDomainInterno(orm?.empresa)
       : undefined;
     return new SucursalResponseDto(
       orm.sucursalId,
@@ -78,6 +54,7 @@ export class SucursalMapper {
       orm.nombre,
       orm.direccion,
       orm.codigoEstablecimiento,
+      orm.subDominio,
       orm.entorno,
       orm.ubigeo,
       orm.telefono,
@@ -103,12 +80,14 @@ export class SucursalMapper {
     target.signatureNote = source.signatureNote ?? '';
     target.entorno = source.entorno ?? '';
     target.codigoEstablecimiento = source.codigoEstablecimiento ?? '';
+    target.subDominio = source.subDominio
     target.distrito = source.distritoId
       ? ({ distritoId: source.distritoId } as any)
       : null;
     target.empresa = source.empresaId
       ? ({ empresaId: source.empresaId } as any)
       : null;
+    target.estado = source?.estado  
   }
 
   static dtoToCreate(dto: CreateSucursalDto): SucursalOrmEntity {

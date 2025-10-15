@@ -1,5 +1,5 @@
 import { IUserPayload } from "src/adapter/decorator/user.decorator.interface";
-import { ICreateAuditoriaLog } from "src/domain/core/logs/dto/create.request.auditoria-logs";
+import { ICreateAuditoriaLog } from "src/domain/parent/core/logs/dto/create.auditoria-logs";
 
   // 👇 Método privado reutilizable dentro del servicio
   export function buildLogData(params: {
@@ -12,7 +12,8 @@ import { ICreateAuditoriaLog } from "src/domain/core/logs/dto/create.request.aud
     entorno?: string;
     observacion?: string;
     aplicacionOrigen?: string;
-    sucursalId?:number
+    sucursalId?:number,
+    empresaId?:number
   }):  ICreateAuditoriaLog {
     return {
       tablaAfectada: params.tablaAfectada,
@@ -26,5 +27,6 @@ import { ICreateAuditoriaLog } from "src/domain/core/logs/dto/create.request.aud
       observacion: params?.observacion ?? '',
       aplicacionOrigen: params?.aplicacionOrigen ?? '',
       sucursalId: params?.sucursalId ?? 0,
+      empresaId:params?.empresaId ?? 0
     };
   }

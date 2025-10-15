@@ -1,11 +1,12 @@
-import { CreateEmpresaDto } from 'src/domain/empresa/dto/create.request.dto';
-import { EmpresaOrmEntity } from '../../infrastructure/persistence/empresa/empesa.orm.entity';
-import { EmpresaResponseDto } from 'src/domain/empresa/dto/external.response.dto';
-import { UpdateEmpresaDto } from 'src/domain/empresa/dto/update.request';
+
+import { EmpresaOrmEntity } from 'src/infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ClienteMapper } from './cliente.mapper';
-import { EmpresaInternaResponseDto } from '../empresa/dto/internal.response.dto';
 import { SucursalMapper } from './sucursal.mapper';
-import { SucursalOrmEntity } from 'src/infrastructure/persistence/sucursal/SucursalOrmEntity';
+import { EmpresaResponseDto } from '../parent/empresa/dto/external.response.dto';
+import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/sucursal.orm.entity';
+import { EmpresaInternaResponseDto } from '../parent/empresa/dto/internal.response.dto';
+import { CreateEmpresaDto } from '../parent/empresa/dto/create.request.dto';
+import { UpdateEmpresaDto } from '../parent/empresa/dto/update.request';
 
 export class EmpresaMapper {
   static toDomain(orm: EmpresaOrmEntity): EmpresaResponseDto {

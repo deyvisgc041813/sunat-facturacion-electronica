@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { TributoTasaOrmEntity } from './infrastructure/persistence/tasa-tributo/TributoTasaOrmEntity';
-import { TributoTasaRepositoryImpl } from './infrastructure/persistence/tasa-tributo/tasa-tributo.repository.impl';
+import { TributoTasaOrmEntity } from './infrastructure/persistence/parent/entity/tributo-tasa.orm.entity';
+import { TributoTasaRepositoryImpl } from './infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
 
 @Module({
   imports: [TypeOrmModule.forFeature([TributoTasaOrmEntity])],

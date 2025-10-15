@@ -1,7 +1,7 @@
-import { ResumenDetalleResponseDto } from 'src/domain/resumen/dto/ResumenDetalleResponseDto';
-import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
-import { ResumenBoletaDetalleDto } from '../resumen/interface/create.summary.detalle.interface';
+import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/tenant/entity/resumen/resumen-bp-detalle.orm.entity';
 import { ComprobanteMapper } from './comprobante.mapper';
+import { ResumenDetalleResponseDto } from '../tenant/resumen/dto/resumen-detalle.response.dto';
+import { ResumenBoletaDetalleDto } from '../tenant/resumen/interface/create.summary.detalle.interface';
 ;
 
 

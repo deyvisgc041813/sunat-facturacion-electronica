@@ -1,17 +1,18 @@
 import { UsuarioResponseDto } from 'src/domain/auth/dto/usuario/usuario.response.dto';
 import { IUsuarioRepositoryPort } from 'src/domain/auth/ports/usuario.repository';
-import { UsuariosOrmEntity } from '../UsuariosOrmEntity';
 import { QueryRunner, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UsuarioMapper } from 'src/domain/mapper/usuario.mapper';
 import { CreateUsuarioDto } from 'src/domain/auth/dto/usuario/create.request.dto';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { UpdateUsuarioDto } from 'src/domain/auth/dto/usuario/update.request.dto';
-import { SucursalOrmEntity } from '../../sucursal/SucursalOrmEntity';
-import { RolesOrmEntity } from '../RolesOrmEntity';
-import { UserRolesOrmEntity } from '../UserRolesOrmEntity';
-import { UserSucursalesOrmEntity } from '../UserSucursalesOrmEntity ';
 import { NotFoundException } from '@nestjs/common';
+import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/sucursal.orm.entity';
+import { UsuariosOrmEntity } from '../usuario.orm.entity';
+import { RolesOrmEntity } from '../role.orm.entity';
+import { UserRolesOrmEntity } from '../user-role.orm.entity';
+import { UserSucursalesOrmEntity } from '../user-sucursal.orm.entity';
+import { EEstadosGlobales } from 'src/util/estado.enum';
 
 export class UserRepositoryImpl implements IUsuarioRepositoryPort {
   constructor(
@@ -30,7 +31,6 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
         UsuarioMapper.createEntityFromDto(usuario),
       );
       const usuarioId = save.identifiers[0].usuarioId;
-      await this.addUserSucursales(usuarioId, usuario.sucursales, queryRunner);
       await this.addUserRoles(usuarioId, usuario.roles, queryRunner);
       await queryRunner.commitTransaction();
       const response = new UsuarioResponseDto(
@@ -38,8 +38,7 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
         usuario.correo,
         usuario.nombre ?? '',
         '1',
-        usuario.roles,
-        usuario.sucursales,
+        usuario.roles
       );
       return {
         status: true,
@@ -51,24 +50,18 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
       throw error;
     }
   }
-  async findAll(sucursalId: number): Promise<UsuarioResponseDto[]> {
+  async findAll(): Promise<UsuarioResponseDto[]> {
     const usuarios = await this.repo.find({
-      where: {
-        sucursales: {
-          sucursalId,
-        },
-      },
       relations: ['roles', 'sucursales'],
     });
     return usuarios.map((us) => UsuarioMapper.toDomain(us));
   }
 
   async findById(
-    sucursalId: number,
     usuarioId: number,
   ): Promise<UsuarioResponseDto | null> {
     const usuario = await this.repo.findOne({
-      where: { usuarioId, sucursales: { sucursalId } },
+      where: { usuarioId },
       relations: ['roles', 'sucursales'],
     });
     if (!usuario)
@@ -103,31 +96,13 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
           usuario.roles = usuario.roles.filter((role) => role.roleId);
         }
       }
-      // Validar y actualizar sucursales
-      if (usuario.sucursales && usuario.sucursales.length > 0) {
-        if (hasRoleAndSucursalChanges) {
-          await this.removeUserSucursal(usuarioId, queryRunner);
-          await this.addUserSucursales(
-            usuarioId,
-            usuario.sucursales ?? [],
-            queryRunner,
-          );
-        } else {
-          // Si no es admin, no se permite agregar o eliminar sucursales, solo se actualizan las existentes
-          usuario.sucursales = usuario.sucursales.filter(
-            (sucursal) => sucursal.sucursalId,
-          );
-        }
-      }
       usuario.usuarioId = usuarioId;
-      const update = await queryRunner.manager.save(
-        UsuarioMapper.updateEntityFromDto(usuario),
-      );
+      const update = await queryRunner.manager.save(UsuarioMapper.updateEntityFromDto(usuario) );
       await queryRunner.commitTransaction();
       return {
         status: true,
         message: hasRoleAndSucursalChanges
-          ? 'La actualización del usuario fue exitosa, incluyendo la modificación de roles y sucursales.'
+          ? 'La actualización del usuario fue exitosa, incluyendo la modificación de roles.'
           : 'La actualización del usuario fue exitosa.',
         data: UsuarioMapper.toDomain(update),
       };

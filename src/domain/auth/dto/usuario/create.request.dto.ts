@@ -28,11 +28,11 @@ export class CreateUsuarioDto {
   @IsInt({ each: true, message: 'Cada rol debe ser un número entero' })
   @Type(() => Any)
   roles: any[];
-
-  @IsArray({ message: 'Las sucursales deben ser un arreglo' })
-  @IsInt({ each: true, message: 'Cada sucursal debe ser un número entero' })
-  @Type(() => Any)
-  sucursales: any[];
+  
+  // @IsArray({ message: 'Las sucursales deben ser un arreglo' })
+  // @IsInt({ each: true, message: 'Cada sucursal debe ser un número entero' })
+  // @Type(() => Any)
+  // sucursales: any[];
 
   constructor(partial?: Partial<CreateUsuarioDto>) {
     Object.assign(this, partial);

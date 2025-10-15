@@ -6,13 +6,14 @@ export const User = createParamDecorator(
     const request = ctx.switchToHttp().getRequest();
     const payload = request.user; // asumimos que aquí está el JWT decodificado
     return {
-      userId: payload.userId,
-      empresaId: payload.empresaId,
-      correo: payload.correo,
-      nombre: payload.nombre,
-      sucursalActiva: payload.sucursalActiva,
-      roles: payload.roles,
-      sucursales: payload.sucursales,
+      userId: payload?.userId,
+      empresaId: payload?.empresaId,
+      correo: payload?.correo,
+      nombre: payload?.nombre,
+      sucursalActiva: payload?.sucursalActiva,
+      roles: payload?.roles,
+      sucursales: payload?.sucursales,
+      subDominio: payload?.subDominio
     };
   },
 );

@@ -1,8 +1,8 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AuditoriaLogOrmEntity } from './infrastructure/persistence/core/logs/auditoria.log-orm.entity';
-import { AuditoriaService } from './domain/core/logs/service/auditoria.logs.service';
-import { AuditoriaLogsRepositoryImpl } from './infrastructure/persistence/core/logs/auditoria-log.repository';
+import { AuditoriaLogOrmEntity } from './infrastructure/persistence/parent/entity/auditoria.log-orm.entity';
+import { AuditoriaLogsRepositoryImpl } from './infrastructure/persistence/parent/implement/auditoria-log.repository';
+import { AuditoriaService } from './domain/parent/core/logs/service/auditoria.logs.service';
 
 @Global()
 @Module({

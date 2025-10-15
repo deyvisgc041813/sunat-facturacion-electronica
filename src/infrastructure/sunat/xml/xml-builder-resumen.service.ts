@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { IDocumento, ISummaryDocument } from 'src/domain/resumen/interface/sunat.summary.interface';
 import {
   formatDateForSunat,
   generarTributosRC,
@@ -8,6 +7,7 @@ import {
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
 import { MAP_TRIBUTOS, MTO_CERO } from 'src/util/constantes';
+import { IDocumento, ISummaryDocument } from 'src/domain/tenant/resumen/interface/sunat.summary.interface';
 
 @Injectable()
 export class XmlBuilderResumenService {

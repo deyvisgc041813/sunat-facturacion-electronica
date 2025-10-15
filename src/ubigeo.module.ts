@@ -1,14 +1,14 @@
 import { Module } from '@nestjs/common';
-import { DepartamentoOrmEntity } from './infrastructure/persistence/ubigeo/departamento.orm.entity';
+import { DepartamentoOrmEntity } from './infrastructure/persistence/parent/entity/ubigeo/departamento.orm.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProvinciaOrmEntity } from './infrastructure/persistence/ubigeo/provincia.orm.entity copy';
-import { DistritoOrmEntity } from './infrastructure/persistence/ubigeo/distrito.orm.entity';
-import { UbigeoService } from './domain/ubigeo/services/ubigeo.service';
-import { UbigeoRepositoryImpl } from './infrastructure/persistence/ubigeo/ubigeo.repository.impl';
-import { GetDepartamentUseCase } from './application/ubigeo/get-departament.usecase';
-import { GetProvinceUseCase } from './application/ubigeo/get-province.usecase';
-import { GetDistrictUseCase } from './application/ubigeo/get-district.usecase';
-import { UbigeoController } from './adapter/web/controller/ubigeo.controller';
+import { DistritoOrmEntity } from './infrastructure/persistence/parent/entity/ubigeo/distrito.orm.entity';
+import { UbigeoRepositoryImpl } from './infrastructure/persistence/parent/implement/ubigeo.repository.impl';
+import { GetDepartamentUseCase } from './application/parent/ubigeo/get-departament.usecase';
+import { GetProvinceUseCase } from './application/parent/ubigeo/get-province.usecase';
+import { GetDistrictUseCase } from './application/parent/ubigeo/get-district.usecase';
+import { UbigeoController } from './adapter/web/controller/parent/ubigeo.controller';
+import { ProvinciaOrmEntity } from './infrastructure/persistence/parent/entity/ubigeo/provincia.orm.entity';
+import { UbigeoService } from './domain/parent/ubigeo/services/ubigeo.service';
 
 @Module({
   imports: [

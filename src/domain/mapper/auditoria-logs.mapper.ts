@@ -1,6 +1,7 @@
-import { AuditoriaLogsResponseDto } from "../core/logs/dto/auditoria-logs.response";
-import { AuditoriaLogOrmEntity } from "src/infrastructure/persistence/core/logs/auditoria.log-orm.entity";
-import { ICreateAuditoriaLog } from "../core/logs/dto/create.request.auditoria-logs";
+
+import { AuditoriaLogOrmEntity } from "src/infrastructure/persistence/parent/entity/auditoria.log-orm.entity";
+import { AuditoriaLogsResponseDto } from "../parent/core/logs/dto/auditoria-logs.response.dto";
+import { ICreateAuditoriaLog } from "../parent/core/logs/dto/create.auditoria-logs";
 
 export class AuditoriaLogsMapper {
   static toDomain(orm: AuditoriaLogOrmEntity): AuditoriaLogsResponseDto {
@@ -13,7 +14,7 @@ export class AuditoriaLogsMapper {
       orm.valoresNuevos,
       orm.usuarioId,
       orm.nombreUsuario ?? "",
-      orm.sucursalId,
+      orm.sucursalId ?? 0,
       orm.aplicacionOrigen ?? "",
       orm.entorno,
       orm.observacion

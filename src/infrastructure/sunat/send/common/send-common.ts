@@ -2,12 +2,12 @@ import { HttpException, HttpStatus } from "@nestjs/common";
 import AdmZip from "adm-zip";
 import axios from "axios";
 import path from "path";
-import { IResponseSunat } from "src/domain/comprobante/interface/response.sunat.interface";
 import { mapResponseCodeToEstado } from "src/util/Helpers";
 import { OrigenErrorEnum } from "src/util/OrigenErrorEnum";
 import { parseStringPromise } from "xml2js";
 import * as fs from 'fs';
 import { createWorker } from "tesseract.js";
+import { IResponseSunat } from "src/domain/tenant/comprobante/interface/response.sunat.interface";
 export class SendCommon {
   /** Procesar CDR */
   static async extraerDatosCdr(cdrZip: any): Promise<IResponseSunat> {

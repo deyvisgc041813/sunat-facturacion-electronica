@@ -1,5 +1,6 @@
-import {ComprobanteRespuestaSunatResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
-import { ComprobanteRespuestaSunatOrmEntity } from 'src/infrastructure/persistence/comprobante/ComprobanteRespuestaSunatOrmEntity';
+import { ComprobanteRespuestaSunatOrmEntity } from "src/infrastructure/persistence/tenant/entity/comprobante/conprobante-respuesta-sunat.orm.entity";
+import { ComprobanteRespuestaSunatResponseDto } from "../tenant/comprobante/dto/conprobante.response.dto";
+
 
 export class ComprobanteRespSunatMapper {
   static toDomain(orm: ComprobanteRespuestaSunatOrmEntity): ComprobanteRespuestaSunatResponseDto {

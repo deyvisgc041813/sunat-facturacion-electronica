@@ -438,25 +438,19 @@
 //   }
 // }
 
-import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import axios from 'axios';
-import AdmZip from 'adm-zip';
-import * as soap from 'soap';
 import { parseStringPromise } from 'xml2js';
-import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
 import {
   formatDateToDDMMYYYY,
   mapResponseCodeToEstado,
 } from 'src/util/Helpers';
-import { CpeDto } from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
-import path from 'path';
-import { createWorker } from 'tesseract.js';
-import * as fs from 'fs';
 import * as cheerio from 'cheerio';
 import { ErrorCatalogService } from 'src/util/conversion.error';
-import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import https from 'https';
 import { SendCommon } from './common/send-common';
+import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
+import { CpeDto } from 'src/domain/tenant/comprobante/dto/cpe/consultar-lote.cpe.dto';
 export interface ResultadoCpe {
   estado: string;
   descripcion: string;

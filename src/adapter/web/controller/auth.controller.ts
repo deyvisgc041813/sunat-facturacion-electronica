@@ -8,13 +8,13 @@ import {
 import { User } from 'src/adapter/decorator/user.decorator';
 import type { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
-import { BranchSelectionUseCase } from 'src/application/auth/branch-selection.usecase copy';
+import { BranchSelectionUseCase } from 'src/application/auth/branch-selection.usecase';
 import { LoginUseCase } from 'src/application/auth/login.usecase';
 import { LogoutUseCase } from 'src/application/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/auth/refresh-token.usecase';
 import { LoginDto } from 'src/domain/auth/dto/login.request.dto';
 
-@Controller('v1/auth')
+@Controller('auth')
 export class AuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,

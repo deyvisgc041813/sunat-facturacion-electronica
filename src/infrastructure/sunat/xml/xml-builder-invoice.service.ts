@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
 import { MAP_TIPO_AFECTACION_TRIBUTO, MAP_TRIBUTOS, TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRATUITAS, TIPO_AFECTACION_GRAVADAS } from 'src/util/constantes';
 import { PriceTypeCode } from 'src/util/catalogo.enum';
+import { CreateInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/create.invoice.dto';
 
 @Injectable()
 export class XmlBuilderInvoiceService {

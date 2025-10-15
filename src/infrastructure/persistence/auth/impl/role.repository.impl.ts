@@ -3,9 +3,8 @@ import { In, Repository } from 'typeorm';
 import { IRoleRepositoryPort } from 'src/domain/auth/ports/role.repository';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { RoleRequestDto } from 'src/domain/auth/dto/usuario/usuario.response.dto';
-import { RolesOrmEntity } from '../RolesOrmEntity';
 import { RoleMapper } from 'src/domain/mapper/role.mapper';
-
+import { RolesOrmEntity } from '../role.orm.entity';
 
 export class RoleRepositoryImpl implements IRoleRepositoryPort {
   constructor(

@@ -1,11 +1,8 @@
-import { DepartamentoOrmEntity } from 'src/infrastructure/persistence/ubigeo/departamento.orm.entity';
-import {
-  DepartamentoResponseDto,
-  DistritoResponseDto,
-  ProvinciaResponseDto,
-} from '../ubigeo/dto/ubigeo.response';
-import { ProvinciaOrmEntity } from 'src/infrastructure/persistence/ubigeo/provincia.orm.entity copy';
-import { DistritoOrmEntity } from 'src/infrastructure/persistence/ubigeo/distrito.orm.entity';
+import { DepartamentoOrmEntity } from 'src/infrastructure/persistence/parent/entity/ubigeo/departamento.orm.entity';
+
+import { DistritoOrmEntity } from 'src/infrastructure/persistence/parent/entity/ubigeo/distrito.orm.entity';
+import { DepartamentoResponseDto, DistritoResponseDto, ProvinciaResponseDto } from '../parent/ubigeo/dto/ubigeo.response';
+import { ProvinciaOrmEntity } from 'src/infrastructure/persistence/parent/entity/ubigeo/provincia.orm.entity';
 
 export class UbigeoMapper {
   static toDomainDepartament(

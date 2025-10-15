@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
-import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { MAP_TIPO_AFECTACION_TRIBUTO, MAP_TRIBUTOS, TIPO_AFECTACION_EXONERADAS } from 'src/util/constantes';
+import { CreateNotaDto } from 'src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto';
 /**
  * Tipos de Nota de Débito SUNAT (ResponseCode)
  *

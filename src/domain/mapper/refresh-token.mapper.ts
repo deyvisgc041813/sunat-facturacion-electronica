@@ -1,7 +1,8 @@
-import { RolesOrmEntity } from 'src/infrastructure/persistence/auth/RolesOrmEntity';
+
+import { RefreshTokenOrmEntity } from 'src/infrastructure/persistence/auth/refresh-token.orm.entity';
 import { RefreshTokenDto } from '../auth/dto/refresh.token.dto';
-import { UsuariosOrmEntity } from 'src/infrastructure/persistence/auth/UsuariosOrmEntity';
-import { RefreshTokenOrmEntity } from 'src/infrastructure/persistence/auth/RefreshTokenOrmEntity';
+import { UsuariosOrmEntity } from 'src/infrastructure/persistence/auth/usuario.orm.entity';
+import { RolesOrmEntity } from 'src/infrastructure/persistence/auth/role.orm.entity';
 
 export class RefreshTokenMapper {
   static toDomain(orm: RefreshTokenOrmEntity): RefreshTokenDto {

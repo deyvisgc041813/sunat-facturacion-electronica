@@ -4,7 +4,7 @@ import {
 } from 'src/util/Helpers';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
-import { ComunicacionBajaDto } from 'src/domain/comunicacion-baja/ComunicacionBajaDto';
+import { ComunicacionBajaDto } from 'src/domain/tenant/comunicacion-baja/dto/comunicacion-baja.dto';
 
 @Injectable()
 export class XmlBuilderComunicacionBajaService {

@@ -6,10 +6,8 @@ import {
   TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
-  TipoDocumentoLetras
+  TipoDocumentoLetras,
 } from './catalogo.enum';
-import { CreateClienteDto } from '../domain/cliente/dto/CreateRequestDto';
-import { UpdateClienteDto } from '../domain/cliente/dto/UpdateClienteDto';
 import { DOMParser } from '@xmldom/xmldom';
 import {
   codigoRespuestaSunatMap,
@@ -17,25 +15,25 @@ import {
   EstadoEnumComprobante,
   EstadoEnvioSunat,
 } from './estado.enum';
-import { EstadoCdrResult } from 'src/domain/comprobante/interface/estado.cdr.interface';
 import { parseStringPromise } from 'xml2js';
-import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
-import { IMtoGloables } from 'src/domain/comprobante/interface/mtos-globales';
-import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
 import { convertirMontoEnLetras } from './conversion-numero-letra';
-import { IDocumento } from 'src/domain/resumen/interface/sunat.summary.interface';
 export type TipoNotaDebito = 'GLOBAL' | 'ITEM' | 'INVALIDO';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
 import { TRIBUTOS_RESUMEN } from './constantes';
 import { Plan } from './general.enum';
+import { UpdateClienteDto } from 'src/domain/parent/cliente/dto/update.client.dto';
+import { CreateClienteDto } from 'src/domain/parent/cliente/dto/create.client.dto';
+import { EstadoCdrResult } from 'src/domain/tenant/comprobante/interface/estado.cdr.interface';
+import { IUpdateComprobante } from 'src/domain/tenant/comprobante/interface/update.interface';
+import { IMtoGloables } from 'src/domain/tenant/comprobante/interface/mtos-globales';
+import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
+import { IDocumento } from 'src/domain/tenant/resumen/interface/sunat.summary.interface';
+import { ResponseCatalogoTipoDTO } from 'src/domain/parent/catalogo/dto/catalogo.response';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
-
-
 
 export function validarSoloNumeros(
   valor: string,
@@ -242,8 +240,12 @@ export function setobjectUpdateComprobante(
   return objectUpdate;
 }
 
-export function buildMtoGlobales(mto: any, tipoAfectacionGravadas: number[],
-    tipoAfectacionExoneradas: number[], tipoAfectacionInafectas: number[]): IMtoGloables[] {
+export function buildMtoGlobales(
+  mto: any,
+  tipoAfectacionGravadas: number[],
+  tipoAfectacionExoneradas: number[],
+  tipoAfectacionInafectas: number[],
+): IMtoGloables[] {
   const iMtoGlobalesGravadas: IMtoGloables = {
     mtoOperacion: mto?.mtoOperGravadas ?? 0,
     tipo: tipoAfectacionGravadas,
@@ -542,7 +544,7 @@ export function obtenerTiposAfectacion(catalogos: ResponseCatalogoTipoDTO[]): {
 }
 export function obtenerCatalogoPorCodigo(
   catalogos: ResponseCatalogoTipoDTO[],
-  codigo: TipoCatalogoEnum
+  codigo: TipoCatalogoEnum,
 ): ResponseCatalogoTipoDTO | undefined {
   return catalogos.find((c) => c.codigoCatalogo === codigo);
 }
@@ -559,4 +561,9 @@ export function obtenerDescPlan(codigo: string): string {
     default:
       return 'Plan desconocido';
   }
+}
+export function generateTenantCredentials(subDominio: string) {
+  const username = `user_${subDominio}`;
+  const password = Math.random().toString(36).slice(-10);
+  return { username, password };
 }

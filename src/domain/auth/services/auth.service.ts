@@ -6,17 +6,19 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/user.repository.impl';
-import { RefreshTokenRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/refresh-token.repository.impl';
-import { JwtAdapter } from 'src/infrastructure/persistence/auth/security/jwt.adapter';
-import { formatDateForSunat, getFechaHoraActualLima, getFechaHoyYYYYMMDD } from 'src/util/Helpers';
+import { JwtAdapter } from 'src/infrastructure/persistence/parent/security/jwt.adapter';
+import { formatDateForSunat, getFechaHoraActualLima } from 'src/util/Helpers';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
+import { RefreshTokenRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/refresh-token.repository.impl';
+import { UserRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/user.repository.impl';
+import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 @Injectable()
 export class AuthService {
   constructor(
     private readonly userRepo: UserRepositoryImpl,
     private readonly tokenService: JwtAdapter,
     private readonly refreshRepo: RefreshTokenRepositoryImpl,
+    private readonly sucursalService: SucursalService,
   ) {}
 
   async login(username: string, password: string) {
@@ -27,21 +29,35 @@ export class AuthService {
     const hoy = getFechaHoraActualLima().toISOString().split('T')[0]; // yyyy-mm-dd
     let sucursalActivaId = 0;
     const fechaSelec: Date | null = user.fecSelecSucursal ?? null;
-    if (user.sucursalActiva && user.sucursalActiva > 0 && formatDateForSunat(fechaSelec) === hoy) {
+    let subDominio = '';
+    const empresaId = user.sucursales?.[0]?.empresa?.empresaId ?? 0;
+    if (
+      user.sucursalActiva &&
+      user.sucursalActiva > 0 &&
+      formatDateForSunat(fechaSelec) === hoy
+    ) {
       // Si ya tiene sucursal activa hoy
       sucursalActivaId = user.sucursalActiva;
+      const sucursal = await this.sucursalService.getById(
+        sucursalActivaId,
+        empresaId,
+      );
+      subDominio = sucursal?.subDominio ?? '';
     }
     await this.refreshRepo.revokeByUser(user.usuarioId);
+    const sucursales = user?.sucursales?.map((s) => s.sucursalId) ?? [];
     const payload = {
       userId: user.usuarioId,
-      empresaId: user.sucursales?.[0]?.empresa?.empresaId ?? null,
+      empresaId: empresaId,
       username: user.correo,
       roles: user.roles,
-      sucursales: user.sucursales.map((s) => s.sucursalId),
+      sucursales: sucursales,
       nombre: user.nombre,
       sucursalActiva: sucursalActivaId,
+      subDominio,
     };
-    const accessToken = this.tokenService.signAccessToken(payload);
+    const signOptions = { expiresIn: '1d' };
+    const accessToken = this.tokenService.signAccessToken(payload, signOptions);
     const refreshTokenStr = this.tokenService.signRefreshToken(payload);
 
     const refreshToken = new RefreshTokenDto(
@@ -73,28 +89,51 @@ export class AuthService {
       roles: decoded?.roles,
       sucursales: decoded?.sucursales,
       nombre: decoded?.nombre,
-      sucursalActiva: decoded?.sucursalActiva
+      sucursalActiva: decoded?.sucursalActiva,
+      subDominio: decoded?.subDominio,
     };
-
-    return { access_token: this.tokenService.signAccessToken(payload) };
+    return {
+      access_token: this.tokenService.signAccessToken(payload, {
+        expiresIn: '1d',
+      }),
+    };
   }
-  async branchActive(sucursalId: number, auth: IUserPayload) {
+  async branchActive(
+    sucursalId: number,
+    empresaId:number,
+    auth: IUserPayload,
+    expiraToken: boolean,
+  ) {
     // Validar que la sucursal elegida pertenece al usuario
-    const sucursalesIds = auth.sucursales.map((id) => id);
-    if (!sucursalesIds.includes(sucursalId)) {
-      throw new ForbiddenException('No tiene acceso a esta sucursal');
+    let sucursalesIds = []
+    if (expiraToken) {
+      const sucursalesIds = auth.sucursales.map((id) => id);
+      if (!sucursalesIds.includes(sucursalId)) {
+        throw new ForbiddenException('No tiene acceso a esta sucursal');
+      }
     }
+    
     await this.userRepo.activarSucursal(auth.userId, sucursalId, new Date());
     // Generar nuevo token JWT con la sucursal activa
+    empresaId = auth.empresaId === 0 || !auth.empresaId ? empresaId : auth.empresaId
+    const sucursal = await this.sucursalService.getById(
+      sucursalId,
+      empresaId,
+    );
     const payload = {
-      sub: auth.userId,
-      username: auth.correo,
-      roles: auth.roles,
+      userId: auth?.userId,
+      empresaId: empresaId,
+      username: auth?.correo,
+      roles: auth?.roles,
       sucursales: sucursalesIds,
-      nombre: auth.nombre,
+      nombre: auth?.nombre,
       sucursalActiva: sucursalId,
+      subDominio: sucursal?.subDominio,
     };
-    const accessToken = this.tokenService.signAccessToken(payload);
+    const signOptions = expiraToken
+      ? { expiresIn: '1d' }
+      : { expiresIn: '100y' };
+    const accessToken = this.tokenService.signAccessToken(payload, signOptions);
     const refreshTokenStr = this.tokenService.signRefreshToken(payload);
     const refreshToken = new RefreshTokenDto(
       refreshTokenStr,

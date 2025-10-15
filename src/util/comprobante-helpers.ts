@@ -1,15 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
-import { CreateInvoiceDto } from 'src/domain/comprobante/dto/invoice/CreateInvoiceDto';
 import { generateLegends } from './Helpers';
 import {
   TipoCatalogoEnum,
   TipoComprobanteEnum,
 } from './catalogo.enum';
-import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
-import { ResponseCatalogoTipoDTO } from 'src/domain/catalogo/dto/catalogo.response';
-import { TributoTasaResponseDto } from 'src/domain/tributo-tasa/dto/TributoTasaResponseDto';
-import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { MAP_TRIBUTOS, TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRAVADAS, TIPO_AFECTACION_INAFECTAS } from './constantes';
+import { CreateInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/create.invoice.dto';
+import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
+import { ResponseCatalogoTipoDTO } from 'src/domain/parent/catalogo/dto/catalogo.response';
+import { TributoTasaResponseDto } from 'src/domain/parent/tributo-tasa/dto/response.tributo-tasa.dto';
+import { CreateNotaDto } from 'src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto';
 interface ValidationError {
   index: number; // índice del detalle
   field: string; // campo validado

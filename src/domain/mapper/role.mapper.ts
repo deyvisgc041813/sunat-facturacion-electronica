@@ -1,4 +1,5 @@
-import { RolesOrmEntity } from "src/infrastructure/persistence/auth/RolesOrmEntity";
+
+import { RolesOrmEntity } from "src/infrastructure/persistence/auth/role.orm.entity";
 import { RoleRequestDto } from "../auth/dto/usuario/usuario.response.dto";
 
 export class RoleMapper {

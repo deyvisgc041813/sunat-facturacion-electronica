@@ -1,21 +1,21 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UsuariosOrmEntity } from './infrastructure/persistence/auth/UsuariosOrmEntity';
-import { RolesOrmEntity } from './infrastructure/persistence/auth/RolesOrmEntity';
-import { SucursalOrmEntity } from './infrastructure/persistence/sucursal/SucursalOrmEntity';
-import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity';
-import { UsuarioController } from './adapter/web/controller/usuario.controller';
+import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/tenant/entity/serie-comprobante/serie-auditoria.orm.entity';
+import { UsuarioController } from './adapter/web/controller/parent/usuario.controller';
 import { UsuarioService } from './domain/auth/services/usuario.service';
+import { SucursalRepositoryImpl } from './infrastructure/persistence/parent/implement/sucursal.repository.impl';
+import { SucursalOrmEntity } from './infrastructure/persistence/parent/entity/sucursal.orm.entity';
+import { GetUsersUseCase } from './application/auth/usuario/get-users.usecase';
+import { GetUsuarioByIdUseCase } from './application/auth/usuario/get-users-by-id.usecase';
+import { UpdateUsersUseCase } from './application/auth/usuario/update-users.usecase';
+import { CreateUsersUseCase } from './application/auth/usuario/create-users.usecase';
+import { UsuariosOrmEntity } from './infrastructure/persistence/auth/usuario.orm.entity';
+import { RolesOrmEntity } from './infrastructure/persistence/auth/role.orm.entity';
+import { RefreshTokenOrmEntity } from './infrastructure/persistence/auth/refresh-token.orm.entity';
+import { UserRolesOrmEntity } from './infrastructure/persistence/auth/user-role.orm.entity';
+import { UserSucursalesOrmEntity } from './infrastructure/persistence/auth/user-sucursal.orm.entity';
 import { UserRepositoryImpl } from './infrastructure/persistence/auth/impl/user.repository.impl';
-import { RefreshTokenOrmEntity } from './infrastructure/persistence/auth/RefreshTokenOrmEntity';
-import { CreateUsersUseCase } from './application/admin/usuario/create-users.usecase';
-import { UpdateUsersUseCase } from './application/admin/usuario/update-users.usecase';
-import { SucursalRepositoryImpl } from './infrastructure/persistence/sucursal/sucursal.repository.impl';
 import { RoleRepositoryImpl } from './infrastructure/persistence/auth/impl/role.repository.impl';
-import { UserRolesOrmEntity } from './infrastructure/persistence/auth/UserRolesOrmEntity';
-import { UserSucursalesOrmEntity } from './infrastructure/persistence/auth/UserSucursalesOrmEntity ';
-import { GetUsersUseCase } from './application/admin/usuario/get-users.usecase';
-import { GetUsuarioByIdUseCase } from './application/admin/usuario/get-users-by-id.usecase';
 
 @Module({
   imports: [

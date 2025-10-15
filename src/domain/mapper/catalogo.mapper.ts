@@ -1,8 +1,9 @@
 
-import { ResponseCatalogoTipoDTO } from '../catalogo/dto/catalogo.response';
+
 import { CatalogoDetalleMapper } from './catalogo-detalle.mapper';
-import { CatalogoTipoOrmEnity } from 'src/infrastructure/persistence/catalogo/CatalogoTipoOrmEnity';
-import { CatalogoDetalleOrmEnity } from 'src/infrastructure/persistence/catalogo/CatalogoDetalleOrmEnity';
+import { CatalogoTipoOrmEnity } from 'src/infrastructure/persistence/parent/entity/catalogo/catalogo-tipo.orm.entity';
+import { CatalogoDetalleOrmEnity } from 'src/infrastructure/persistence/parent/entity/catalogo/catalogo-detalle.orm.entity';
+import { ResponseCatalogoTipoDTO } from '../parent/catalogo/dto/catalogo.response';
 
 export class CatalogoMapper {
   static toDomain(orm: CatalogoTipoOrmEnity): ResponseCatalogoTipoDTO {

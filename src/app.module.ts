@@ -10,7 +10,6 @@ import { CatalogoModule } from './catalogo.module';
 import { SerieComprobanteModule } from './serie-comprobante.module';
 import { SerieAuditoriaModule } from './serie-auditoria.module';
 import { ComprobanteModule } from './comprobante.module';
-import { ErrorLogModule } from './error-log.module';
 import { TasaTributoModule } from './tasa-tributo.module';
 import { ResumenBoletasModule } from './resumen-boletas.module';
 import { ComunicacionBajaModule } from './comunicacion-baja.module';
@@ -22,6 +21,9 @@ import { JwtAuthGuard } from './adapter/guards/jwt.auth.guard';
 import { APP_GUARD } from '@nestjs/core';
 import { UbigeoModule } from './ubigeo.module';
 import { CoreModuleModule } from './core-module.module';
+import { TenantConeccionesModule } from './tenant-conecciones.module';
+import { TenantContextModule } from './tenant-context.module';
+import { TenantGuard } from './adapter/guards/tenant.guard';
 
 @Module({
   imports: [
@@ -43,7 +45,6 @@ import { CoreModuleModule } from './core-module.module';
    SerieComprobanteModule,
    SerieAuditoriaModule,
    ComprobanteModule,
-   ErrorLogModule,
    TasaTributoModule,
    ResumenBoletasModule,
    ComunicacionBajaModule,
@@ -52,10 +53,14 @@ import { CoreModuleModule } from './core-module.module';
    AuthModule,
    UsuarioModule,
    UbigeoModule,
-   CoreModuleModule
+   CoreModuleModule,
+   TenantConeccionesModule,
+   TenantContextModule,
+   
   ],
   
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, TenantGuard],
+  exports: [TenantGuard]
 })
 export class AppModule {}

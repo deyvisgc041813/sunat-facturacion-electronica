@@ -1,17 +1,14 @@
 
-import { SerieOrmEntity } from 'src/infrastructure/persistence/serie-comprobante/SerieOrmEntity';
-import { SucursalMapper } from './sucursal.mapper';
-import { SerieResponseDto } from '../serie-comprobante/dto/reesponse.dto';
-import { CreateSerieDto } from '../serie-comprobante/dto/create.request.dto';
-import { UpdateSerieDto } from '../serie-comprobante/dto/update.request.dto';
+import { SerieOrmEntity } from 'src/infrastructure/persistence/tenant/entity/serie-comprobante/serie-comprobante.orm.entity';
+import { CreateSerieDto } from '../tenant/serie-comprobante/dto/create.request.dto';
+import { UpdateSerieDto } from '../tenant/serie-comprobante/dto/update.request.dto';
+import { SerieResponseDto } from '../tenant/serie-comprobante/dto/reesponse.dto';
 
 export class SerieMapper {
   static toDomain(orm: SerieOrmEntity): SerieResponseDto {
-    const sucursal = orm.sucursal
-      ? SucursalMapper.toDomain(orm.sucursal)
-      : undefined;
     return new SerieResponseDto(
       orm.serieId,
+      orm.sucursalId,
       orm.tipoComprobante,
       orm.serie,
       orm.correlativoInicial ?? 0,
@@ -19,8 +16,7 @@ export class SerieMapper {
       orm.usuarioRegistro,
       orm.fechaRegistro,
       orm.usuarioModificacion,
-      orm.fechaModificacion,
-      sucursal,
+      orm.fechaModificacion
     );
   }
   static mapCommonFields(source: any, target: SerieOrmEntity): void {
@@ -28,7 +24,7 @@ export class SerieMapper {
     target.tipoComprobante = source.tipoComprobante;
     target.serie = source.serie;
     target.correlativoInicial = source.correlativoInicial;
-    target.sucursal = source.sucursalId  ? ({ sucursalId: source.sucursalId } as any)  : null;
+    target.sucursalId = source.sucursalId
   }
 
   static dtoToCreate(dto: CreateSerieDto): SerieOrmEntity {

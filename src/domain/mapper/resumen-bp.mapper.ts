@@ -1,14 +1,12 @@
-import { ResumenBoletasOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasOrmEntity';
-import { ResumenResponseDto } from 'src/domain/resumen/dto/ResumenResponseDto';
+import { ResumenBoletasOrmEntity } from 'src/infrastructure/persistence/tenant/entity/resumen/resumen-bp.orm.entity';
 import { ResumenBPDetalleMapper } from './resumen-bp-detalle.mapper';
-import { CreateResumenBoletaDto } from '../resumen/interface/create.summary.interface';
-import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
-import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/comprobante/ComprobanteOrmEntity';
-import { SucursalMapper } from './sucursal.mapper';
+import { ResumenBoletasDetalleOrmEntity } from 'src/infrastructure/persistence/tenant/entity/resumen/resumen-bp-detalle.orm.entity';
+import { ResumenResponseDto } from '../tenant/resumen/dto/resumen.response.dto';
+import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
+import { CreateResumenBoletaDto } from '../tenant/resumen/interface/create.summary.interface';
 
 export class ResumenBPMaper {
   static toDomain(orm: ResumenBoletasOrmEntity): ResumenResponseDto {
-    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm.sucursal) : null;
     const resumenDetalle = orm.detalles
       ? orm.detalles?.map((d) => ResumenBPDetalleMapper.toDomain(d))
       : [];
@@ -21,6 +19,7 @@ export class ResumenBPMaper {
       orm.estado,
       orm.ticket,
       orm.resumenId,
+      orm.sucursalId,
       orm.fechaRespuestaSunat,
       orm.codResPuestaSunat,
       orm.mensajeSunat,
@@ -28,7 +27,6 @@ export class ResumenBPMaper {
       orm.cdr,
       orm.hashResumen,
       orm.observacionSunat,
-      sucursal,
       resumenDetalle,
     );
   }
@@ -56,11 +54,7 @@ export class ResumenBPMaper {
         detalle.operacion = d.operacion;
         return detalle;
       }) ?? [];
-
-    if (data.sucursalId) {
-      object.sucursal = { sucursalId: data.sucursalId } as any;
-    }
-
+    object.sucursalId = data.sucursalId;  
     object.ticket = data.ticket;
     object.resumenId = data.resumenId;
     return object;
@@ -69,8 +63,4 @@ export class ResumenBPMaper {
   static dtoToOrmCreate(dto: CreateResumenBoletaDto): ResumenBoletasOrmEntity {
     return this.assignCommon(new ResumenBoletasOrmEntity(), dto, false);
   }
-
-  // static dtoToOrmUpdate(dto: ISummaryDocument): ResumenBoletasOrmEntity {
-  //   return this.assignCommon(new ResumenBoletasOrmEntity(), dto, true);
-  // }
 }

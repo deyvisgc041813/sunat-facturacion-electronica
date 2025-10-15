@@ -1,7 +1,7 @@
-import { TributoTasaResponseDto } from "src/domain/tributo-tasa/dto/TributoTasaResponseDto";
 import { formatDateToCompact } from "src/util/Helpers";
-import { CreateTributoTasaDto } from "src/domain/tributo-tasa/dto/CreateTributoTasaDto";
-import { TributoTasaOrmEntity } from "src/infrastructure/persistence/tasa-tributo/TributoTasaOrmEntity";
+import { TributoTasaOrmEntity } from "src/infrastructure/persistence/parent/entity/tributo-tasa.orm.entity";
+import { TributoTasaResponseDto } from "../parent/tributo-tasa/dto/response.tributo-tasa.dto";
+import { CreateTributoTasaDto } from "../parent/tributo-tasa/dto/create.tributo-tasa.dto";
 
 export class TributoTasaMapper {
   static toDomain(orm: TributoTasaOrmEntity): TributoTasaResponseDto {

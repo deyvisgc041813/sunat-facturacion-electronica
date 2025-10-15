@@ -1,27 +1,31 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SerieController } from './adapter/web/controller/serie-comprobante.controller';
+import { SerieController } from './adapter/web/controller/tenant/serie-comprobante.controller';
 import { SerieAuditoriaModule } from './serie-auditoria.module';
 import { CatalogoModule } from './catalogo.module';
-import { SerieOrmEntity } from './infrastructure/persistence/serie-comprobante/SerieOrmEntity';
-import { SerieComprobanteService } from './domain/serie-comprobante/service/serie-comprobante.service';
-import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/serie-comprobante/serie.repository.impl';
-import { CatalogoRepositoryImpl } from './infrastructure/persistence/catalogo/catalogo.repository.impl';
-import { AuditoriaService } from './domain/core/logs/service/auditoria.logs.service';
-import { CreateSerieComprobanteUseCase } from './application/serie-comprobante/create.serie.usecase';
-import { GetSerieComprobanteBySucursalUseCase } from './application/serie-comprobante/get.series.usecase';
-import { GetBySucursalAndTipComAndSerieUseCase } from './application/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
-import { GetByIdSerieComprobanteBySucursalUseCase } from './application/serie-comprobante/get-by-id-serie-sucursal.usecase';
-import { AdjustCorrelativeSerieComprobanteUseCase } from './application/serie-comprobante/update.serie-correlativo.usecase';
-import { UpdateSerieComprobanteUseCase } from './application/serie-comprobante/update.serie.usecase';
-import { UpdateStatusSerieComprobanteUseCase } from './application/serie-comprobante/update-status.series.usecase';
-import { DeleteSeriesComprobanteUseCase } from './application/serie-comprobante/delete.sucursal.usecase';
+import { SerieOrmEntity } from './infrastructure/persistence/tenant/entity/serie-comprobante/serie-comprobante.orm.entity';
+import { CatalogoRepositoryImpl } from './infrastructure/persistence/parent/implement/catalogo.repository.impl';
+import { CreateSerieComprobanteUseCase } from './application/tenant/serie-comprobante/create.serie.usecase';
+import { GetSerieComprobanteBySucursalUseCase } from './application/tenant/serie-comprobante/get.series.usecase';
+import { GetBySucursalAndTipComAndSerieUseCase } from './application/tenant/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
+import { GetByIdSerieComprobanteBySucursalUseCase } from './application/tenant/serie-comprobante/get-by-id-serie-sucursal.usecase';
+import { AdjustCorrelativeSerieComprobanteUseCase } from './application/tenant/serie-comprobante/update.serie-correlativo.usecase';
+import { UpdateSerieComprobanteUseCase } from './application/tenant/serie-comprobante/update.serie.usecase';
+import { UpdateStatusSerieComprobanteUseCase } from './application/tenant/serie-comprobante/update-status.series.usecase';
+import { DeleteSeriesComprobanteUseCase } from './application/tenant/serie-comprobante/delete.sucursal.usecase';
+import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/tenant/implement/serie-comprobante.repository.impl';
+import { SerieComprobanteService } from './domain/tenant/serie-comprobante/service/serie-comprobante.service';
+import { AuditoriaService } from './domain/parent/core/logs/service/auditoria.logs.service';
+import { TenantConeccionesModule } from './tenant-conecciones.module';
+import { TenantContextModule } from './tenant-context.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SerieOrmEntity]),
     SerieAuditoriaModule,
     CatalogoModule,
+    TenantConeccionesModule,
+    TenantContextModule
   ],
   controllers: [SerieController],
 

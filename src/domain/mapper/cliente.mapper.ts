@@ -1,7 +1,8 @@
-import { ClienteResponseDto } from "src/domain/cliente/dto/ClienteResponseDto";
-import { UpdateClienteDto } from "src/domain/cliente/dto/UpdateClienteDto";
-import { ClienteOrmEntity } from "src/infrastructure/persistence/cliente/ClienteOrmEntity";
+
+import { ClienteOrmEntity } from "src/infrastructure/persistence/parent/entity/cliente.orm.entity";
+import { ClienteResponseDto } from "../parent/cliente/dto/client.response.dto";
 import { EmpresaMapper } from "./empresa.mapper";
+import { UpdateClienteDto } from "../parent/cliente/dto/update.client.dto";
 
 
 export class ClienteMapper {

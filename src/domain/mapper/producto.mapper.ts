@@ -1,12 +1,11 @@
-import { ProductoResponseDto } from "src/domain/productos/dto/ProductoResponseDto";
-import { CreateProductoDto } from "src/domain/productos/dto/CreateProductoDto";
-import { UpdateProductoDto } from "src/domain/productos/dto/UpdateProductoDto";
-import { ProductoOrmEntity } from "src/infrastructure/persistence/producto/ProductoOrmEntity";
-import { SucursalMapper } from "./sucursal.mapper";
+
+import { ProductoOrmEntity } from "src/infrastructure/persistence/tenant/entity/inventario/producto.orm.entity";
+import { ProductoResponseDto } from "../tenant/inventario/producto/dto/producto.response.dto";
+import { CreateProductoDto } from "../tenant/inventario/producto/dto/create.product.dto";
+import { UpdateProductoDto } from "../tenant/inventario/producto/dto/update.product.dto";
 
 export class ProductoMapper {
-  static ormToDTO(orm: ProductoOrmEntity): ProductoResponseDto {
-    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm.sucursal) : undefined
+  static toDomain(orm: ProductoOrmEntity): ProductoResponseDto {
     return new ProductoResponseDto(
       orm.productoId,
       orm.codigo,
@@ -15,11 +14,11 @@ export class ProductoMapper {
       orm.precioUnitario,
       orm.afectaIgv ?? 0,
       orm.estado,
-      sucursal
+      orm.sucursalId
     );
   }
  private static assignCommon(object: ProductoOrmEntity, orm: any, isUpdate = false): ProductoOrmEntity {
-     object.sucursal.sucursalId = orm.sucursalId ?? 0
+     object.sucursalId = orm.sucursalId ?? 0
      object.codigo = orm.codigo 
      object.descripcion = orm.descripcion 
      object.unidadMedida = orm.unidadMedida

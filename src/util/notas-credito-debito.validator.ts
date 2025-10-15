@@ -1,7 +1,7 @@
 import { NotaCreditoMotivo } from 'src/util/catalogo.enum';
 import { BadRequestException } from '@nestjs/common';
 import { TipoComprobanteEnum } from './catalogo.enum';
-import { DetailDto } from 'src/domain/comprobante/dto/base/DetailDto';
+import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
 
 export function validarComprobante(comprobante: any): void {
   switch (comprobante.tipoComprobante) {

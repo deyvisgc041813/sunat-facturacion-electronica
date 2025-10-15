@@ -1,6 +1,7 @@
 
-import { ResponseCatalogoDetalleDTO } from '../catalogo/dto/catalogo.response';
-import { CatalogoDetalleOrmEnity } from 'src/infrastructure/persistence/catalogo/CatalogoDetalleOrmEnity';
+
+import { CatalogoDetalleOrmEnity } from 'src/infrastructure/persistence/parent/entity/catalogo/catalogo-detalle.orm.entity';
+import { ResponseCatalogoDetalleDTO } from '../parent/catalogo/dto/catalogo.response';
 
 export class CatalogoDetalleMapper {
   static toDomain(orm: CatalogoDetalleOrmEnity): ResponseCatalogoDetalleDTO {

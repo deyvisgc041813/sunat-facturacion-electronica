@@ -1,8 +1,9 @@
-import { SerieAuditoriaResponseDto } from "src/domain/series-auditoria/dto/SerieAuditoriaResponseDto";
-import { CreateSerieAuditoriaDto } from "src/domain/series-auditoria/dto/CreateSerieAuditoriaDto";
-import { UpdateSerieAuditoriaDto } from "src/domain/series-auditoria/dto/UpdateSerieAuditoriaDto";
-import { SerieAuditoriaOrmEntity } from "src/infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity";
+
+import { SerieAuditoriaOrmEntity } from "src/infrastructure/persistence/tenant/entity/serie-comprobante/serie-auditoria.orm.entity";
 import { SerieMapper } from "./serie-comprobante.mapper";
+import { SerieAuditoriaResponseDto } from "../tenant/series-auditoria/dto/serie-auditoria.response.dto";
+import { CreateSerieAuditoriaDto } from "../tenant/series-auditoria/dto/create.serie-auditoria.dto";
+import { UpdateSerieAuditoriaDto } from "../tenant/series-auditoria/dto/update.serie-auditoria.dto";
 
 export class SerieAuditoriaMapper {
   static toDomain (orm: SerieAuditoriaOrmEntity): SerieAuditoriaResponseDto {

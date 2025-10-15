@@ -1,0 +1,43 @@
+import { Injectable } from '@nestjs/common';
+import { CancelInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/cancel.invoice.dto';
+import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/comprobante/comprobante.repository.impl';
+import { SerieComprobanteRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/serie-comprobante.repository.impl';
+import { EstadoEnumComprobante } from 'src/util/estado.enum';
+
+@Injectable()
+export class AnularComprobanteUseCase {
+  constructor(
+    private readonly comprobanteRepo: ComprobanteRepositoryImpl,
+    private readonly repoSerie: SerieComprobanteRepositoryImpl,
+  ) {}
+
+  async execute(
+    cancel: CancelInvoiceDto,
+  ): Promise<{ status: boolean; message: string }> {
+    const surcursalId = cancel.sucursalId;
+    const numCorrelativo = cancel.correlativo;
+    const motivo = cancel.motivo ?? '';
+    let serieId = cancel.serieId;
+    if (serieId == 0) {
+      const rpa = await this.repoSerie.findBySucursalTipCompSerie(
+        surcursalId,
+        cancel.tipoComprobante,
+        cancel.serie,
+      );
+      serieId = rpa?.serieId ?? 0;
+    }
+    const status = await this.comprobanteRepo.updateComprobanteStatus(
+      surcursalId,
+      serieId,
+      numCorrelativo,
+      motivo,
+      EstadoEnumComprobante.ANULADO
+    );
+    return {
+      status,
+      message: status
+        ? `El comprobante con número ${cancel.serie}-${numCorrelativo} fue anulado correctamente.`
+        : `El comprobante con número ${cancel.serie}-${numCorrelativo} no se encuentra registrado en el sistema o ya fue anulado.`,
+    };
+  }
+}

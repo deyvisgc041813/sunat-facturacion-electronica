@@ -1,43 +1,47 @@
+import { ClienteModule } from './cliente.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
 import { FirmaService } from './infrastructure/sunat/firma/firma.service';
-import { EmpresaRepositoryImpl } from './infrastructure/persistence/empresa/empresa.repository.impl';
-import { ComprobanteController } from './adapter/web/controller/comprobante.controller';
-import { ErrorLogRepositoryImpl } from './infrastructure/persistence/error-log/error-log.repository.impl';
-import { ErrorLogOrmEntity } from './infrastructure/persistence/error-log/ErrorLogOrmEntity';
-import { ClienteOrmEntity } from './infrastructure/persistence/cliente/ClienteOrmEntity';
-import { ComprobanteRepositoryImpl } from './infrastructure/persistence/comprobante/comprobante.repository.impl';
-import { ComprobanteOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteOrmEntity';
+import { ComprobanteController } from './adapter/web/controller/tenant/comprobante.controller';
 import { SunatService } from './infrastructure/sunat/send/sunat.service';
-import { CreateComprobanteUseCase } from './application/comprobante/base/CreateComprobanteUseCase';
 import { CatalogoModule } from './catalogo.module';
-import { UpdateComprobanteUseCase } from './application/comprobante/update/UpdateComprobanteUseCase';
-import { SunatLogOrmEntity } from './infrastructure/persistence/sunat-log/SunatLogOrmEntity';
 import { XmlBuilderInvoiceService } from './infrastructure/sunat/xml/xml-builder-invoice.service';
-import { CreateNotaCreditoUseCase } from './application/comprobante/create/CreateNotaCreditoUseCase';
 import { XmlBuilderNotaCreditoService } from './infrastructure/sunat/xml/xml-builder-nota-credito.service';
-import { GetByComprobanteAceptadoUseCase } from './application/comprobante/query/GetByComprobanteAceptadoUseCase';
-import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/serie-log/SerieAuditoriaOrmEntity';
-import { TributoTasaOrmEntity } from './infrastructure/persistence/tasa-tributo/TributoTasaOrmEntity';
+import { SerieAuditoriaOrmEntity } from './infrastructure/persistence/tenant/entity/serie-comprobante/serie-auditoria.orm.entity';
+import { TributoTasaOrmEntity } from './infrastructure/persistence/parent/entity/tributo-tasa.orm.entity';
 import { TasaTributoModule } from './tasa-tributo.module';
-import { FindTasaByCodeUseCase } from './application/Tasa/FindTasaByCodeUseCase';
-import { CreateNotaDebitoUseCase } from './application/comprobante/create/CreateNotaDebitoUseCase';
+import { FindTasaByCodeUseCase } from './application/parent/Tasa/FindTasaByCodeUseCase';
 import { XmlBuilderNotaDebitoService } from './infrastructure/sunat/xml/xml-builder-nota-debito.service';
-import { CreateInvoiceUseCase } from './application/comprobante/create/CreateInvoiceUseCase';
-import { ValidarAnulacionComprobanteUseCase } from './application/comprobante/validate/ValidarAnulacionComprobanteUseCase';
-import { AnularComprobanteUseCase } from './application/comprobante/update/AnularComprobanteUseCase';
-import { SunatLogRepositoryImpl } from './infrastructure/persistence/sunat-log/sunat-log.repository.impl';
-import { GetValidatedCpeUseCase } from './application/comprobante/query/GetValidatedCpeUseCase';
-import { GetStatusValidateCpeUseCase } from './application/comprobante/query/GetStatusValidateCpeUseCase';
-import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteRespuestaSunatOrmEntity';
-import { SucursalOrmEntity } from './infrastructure/persistence/sucursal/SucursalOrmEntity';
-import { SucursalRepositoryImpl } from './infrastructure/persistence/sucursal/sucursal.repository.impl';
-import { FindCatalogosUseCase } from './application/catalogo/FindCatalogosUseCase';
-import { SerieOrmEntity } from './infrastructure/persistence/serie-comprobante/SerieOrmEntity';
-import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/serie-comprobante/serie.repository.impl';
-import { GetBySucursalAndTipComAndSerieUseCase } from './application/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
+import { SunatLogRepositoryImpl } from './infrastructure/persistence/tenant/implement/auditoria/sunat-log.repository.impl';
+import { SucursalRepositoryImpl } from './infrastructure/persistence/parent/implement/sucursal.repository.impl';
+import { FindCatalogosUseCase } from './application/parent/catalogo/FindCatalogosUseCase';
+import { SerieOrmEntity } from './infrastructure/persistence/tenant/entity/serie-comprobante/serie-comprobante.orm.entity';
+import { GetBySucursalAndTipComAndSerieUseCase } from './application/tenant/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
 import { SerieComprobanteModule } from './serie-comprobante.module';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
+import { ClienteOrmEntity } from './infrastructure/persistence/parent/entity/cliente.orm.entity';
+import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
+import { SunatLogOrmEntity } from './infrastructure/persistence/tenant/entity/sunat-log.orm.entity';
+import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/conprobante-respuesta-sunat.orm.entity';
+import { SucursalOrmEntity } from './infrastructure/persistence/parent/entity/sucursal.orm.entity';
+import { ComprobanteRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/comprobante.repository.impl';
+import { EmpresaRepositoryImpl } from './infrastructure/persistence/parent/implement/empresa.repository.impl';
+import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/tenant/implement/serie-comprobante.repository.impl';
+import { CreateComprobanteUseCase } from './application/tenant/comprobante/base/CreateComprobanteUseCase';
+import { UpdateComprobanteUseCase } from './application/tenant/comprobante/update/UpdateComprobanteUseCase';
+import { CreateInvoiceUseCase } from './application/tenant/comprobante/create/CreateInvoiceUseCase';
+import { CreateNotaCreditoUseCase } from './application/tenant/comprobante/create/CreateNotaCreditoUseCase';
+import { CreateNotaDebitoUseCase } from './application/tenant/comprobante/create/CreateNotaDebitoUseCase';
+import { GetByComprobanteAceptadoUseCase } from './application/tenant/comprobante/query/GetByComprobanteAceptadoUseCase';
+import { ValidarAnulacionComprobanteUseCase } from './application/tenant/comprobante/validate/ValidarAnulacionComprobanteUseCase';
+import { AnularComprobanteUseCase } from './application/tenant/comprobante/update/AnularComprobanteUseCase';
+import { GetValidatedCpeUseCase } from './application/tenant/comprobante/query/GetValidatedCpeUseCase';
+import { GetStatusValidateCpeUseCase } from './application/tenant/comprobante/query/GetStatusValidateCpeUseCase';
+import { TenantConeccionesModule } from './tenant-conecciones.module';
+import { TenantContextModule } from './tenant-context.module';
+import { ComprobanteRespuestaSunatRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/comprobante-respuesta.sunat.repository.impl';
+import { LogRespuestaSunatRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/log-respuesta-sunat-fallida.repository.impl';
+import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/log-respuesta-sunat-fallida.orm.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -45,16 +49,19 @@ import { SerieComprobanteModule } from './serie-comprobante.module';
       ClienteOrmEntity,
       SerieOrmEntity,
       SerieAuditoriaOrmEntity,
-      ErrorLogOrmEntity,
       ComprobanteOrmEntity,
       SunatLogOrmEntity,
       TributoTasaOrmEntity,
       ComprobanteRespuestaSunatOrmEntity,
-      SucursalOrmEntity
+      LogRespuestaSunatOrmEntity,
+      SucursalOrmEntity,
     ]),
     CatalogoModule,
     TasaTributoModule,
-    SerieComprobanteModule
+    SerieComprobanteModule,
+    ClienteModule,
+    TenantConeccionesModule,
+    TenantContextModule
   ],
   controllers: [ComprobanteController],
   providers: [
@@ -64,11 +71,12 @@ import { SerieComprobanteModule } from './serie-comprobante.module';
     FirmaService,
     SunatService,
     EmpresaRepositoryImpl,
-    ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
     SucursalRepositoryImpl,
     SerieComprobanteRepositoryImpl,
+    ComprobanteRespuestaSunatRepositoryImpl,
+    LogRespuestaSunatRepositoryImpl,
     CreateComprobanteUseCase,
     UpdateComprobanteUseCase,
     CreateInvoiceUseCase,
@@ -84,7 +92,6 @@ import { SerieComprobanteModule } from './serie-comprobante.module';
     FindCatalogosUseCase
   ],
   exports: [
-    ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
     SucursalRepositoryImpl,
@@ -92,11 +99,14 @@ import { SerieComprobanteModule } from './serie-comprobante.module';
     FirmaService,
     SunatService,
     EmpresaRepositoryImpl,
-    ErrorLogRepositoryImpl,
     SunatLogRepositoryImpl,
     SerieComprobanteRepositoryImpl,
     GetValidatedCpeUseCase,
-    FindCatalogosUseCase
+    FindCatalogosUseCase,
+    ComprobanteRespuestaSunatRepositoryImpl,
+    LogRespuestaSunatRepositoryImpl,
+    TenantConeccionesModule,
+    TenantContextModule
   ],
 })
 export class ComprobanteModule {}

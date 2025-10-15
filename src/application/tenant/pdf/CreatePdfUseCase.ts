@@ -1,0 +1,162 @@
+
+import { BadRequestException } from '@nestjs/common';
+import QRCode from 'qrcode';
+
+import { formatDateForSunat, formatDateToDDMMYYYY } from 'src/util/Helpers';
+import { convertirMontoEnLetras } from 'src/util/conversion-numero-letra';
+import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
+import { ISucursalRepository } from 'src/domain/parent/sucursal/ports/sucursal.repository';
+import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante.repository';
+import { IPdfService } from 'src/domain/tenant/exportar/pdf/pdf.service';
+import { EmpresaResponseDto } from 'src/domain/parent/empresa/dto/external.response.dto';
+import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
+import { IComprobantePdfDto, ItemComprobante } from 'src/domain/tenant/exportar/pdf/pdf.interface';
+import { ComprobanteResponseDto } from 'src/domain/tenant/comprobante/dto/conprobante.response.dto';
+export class CreatePdfUseCase {
+  constructor(
+    private readonly sucursalRepo: ISucursalRepository,
+    private readonly comprobanteRepo: ConprobanteRepository,
+    private readonly pdfService: IPdfService,
+  ) {}
+  async execute(empresaId:number, sucursalId: number, comprobanteId: number, tipo: string): Promise<any> {
+    try {
+      const sucursal = await this.sucursalRepo.findSucursalInterna(empresaId, sucursalId);
+      if (!sucursal) {
+        throw new BadRequestException(
+          'No se encontró información de la sucursal asociada al usuario actual. No es posible generar el comprobante.',
+        );
+      }
+      const comprobante = await this.comprobanteRepo.findById(
+        sucursalId,
+        [comprobanteId],
+      );
+      if (!comprobante || comprobante.length === 0) {
+        throw new BadRequestException(
+          `No se encontró información del comprobante con ID ${comprobanteId} para la sucursal ${sucursalId}.`,
+        );
+      }
+      const dataComprobante = comprobante[0];
+      const empresa =  sucursal.empresa  as EmpresaResponseDto
+      const itemDetalle: ItemComprobante[] = comprobante[0].payloadJson?.details?.map((com: DetailDto) => {
+          const cantidad = Number(com.cantidad) || 0;
+          const pUnit = Number(com.mtoPrecioUnitario) || 0;
+          const descuento = Number(com.mtoDescuento) || 0;
+          return {
+            cantidad,
+            unidad: com.unidad,
+            descripcion: com.descripcion,
+            pUnit: pUnit.toFixed(2),
+            descuento: descuento.toFixed(2),
+            total: (cantidad * pUnit).toFixed(2),
+          };
+        }) ?? [];
+
+
+      const qr = await this.generarQRBoleta(
+        empresa?.ruc,
+        dataComprobante,
+        dataComprobante?.payloadJson,
+      );
+
+      const tipoComprobante = dataComprobante?.payloadJson?.tipoComprobante ?? '';
+      const numDocCliente = dataComprobante?.payloadJson?.client?.numDoc ?? '';
+      const clientePayloadJson =
+        dataComprobante?.payloadJson?.client?.rznSocial ?? '';
+      const tipoDocumentoCliente =
+        dataComprobante?.payloadJson?.client?.tipoDoc ?? '';
+      const direccionCliente =
+        dataComprobante?.payloadJson?.client?.address?.direccion ?? '';
+      const telefonoCliente =
+        dataComprobante?.payloadJson?.client?.telefono ?? '';
+      const formaPago = dataComprobante?.payloadJson?.formaPago?.tipo ?? '';
+      const TipoDocumentoLabels: Record<string, string> = {
+        '0': 'DOC. TRIB. NO DOM. SIN RUC',
+        '1': 'DNI',
+        '4': 'CARNET DE EXTRANJERÍA',
+        '6': 'RUC',
+        '7': 'PASAPORTE',
+        A: 'CÉDULA DIPLOMÁTICA',
+      };
+      const data: IComprobantePdfDto = {
+        logo: !empresa?.logo ? 'https://w7.pngwing.com/pngs/902/964/png-transparent-chicken-hot-rooster-fire-logo-thumbnail.png' : empresa.logo,
+        empresa: empresa?.razonSocial,
+        rucEmpresa: empresa.ruc,
+        direccionEmpresa: empresa?.direccion ?? '',
+        telefonoEmpresa: empresa?.telefono,
+        emailEmpresa: empresa?.email,
+        cliente: clientePayloadJson,
+        numeroDocumento: numDocCliente,
+        tipoDocLabel: TipoDocumentoLabels[tipoDocumentoCliente] || 'N/A',
+        direccionCliente: direccionCliente,
+        telefonoCliente,
+        serie: dataComprobante?.serieCorrelativo,
+        fechaEmision: formatDateForSunat(dataComprobante?.fechaEmision),
+        fechaVencimiento: formatDateForSunat(dataComprobante?.fechaVencimiento),
+        opGravadas: String(dataComprobante?.totalGravado),
+        opExoneradas: String(dataComprobante?.totalExonerado),
+        opInafectas: String(dataComprobante?.totalInafecto),
+        igv: String(dataComprobante?.totalIgv),
+        total: String(dataComprobante?.total),
+        montoLetras: convertirMontoEnLetras(Number(dataComprobante?.total)),
+        qrPath: qr ?? '',
+        hash: dataComprobante?.comprobanteRespuestaSunat?.hashCpe ?? '',
+        condicionPago: formaPago,
+        medioPago: 'Efectivo',
+        vendedor: '',
+        urlConsulta: 'https://rdinversiones.easyfacturasegdt.com/buscar',
+        items: itemDetalle,
+        titleComprobante: this.setTitleComprobante(tipoComprobante) ?? ""
+      };
+      if("A4" === tipo){
+        return this.pdfService.generarComprobanteA4(data);
+      } else {
+        return this.pdfService.generarComprobanteTicket(data);
+      }
+
+    } catch (err) {
+      throw err;
+    }
+  }
+  async generarQRBoleta(
+    numRuc: string,
+    dataComprobante: ComprobanteResponseDto,
+    payloadJson: any,
+  ): Promise<string | undefined> {
+    const tipoComprobante = payloadJson?.tipoComprobante ?? '';
+    const serie = payloadJson?.serie ?? '';
+    const tipoDoc = payloadJson.client?.tipoDoc ?? '';
+    const numeroDocumento = payloadJson.client?.numDoc ?? '';
+    const qrData = [
+      numRuc, // RUC emisor
+      tipoComprobante, // Tipo comprobante (01=factura, 03=boleta)
+      serie, // Serie
+      dataComprobante.numeroComprobante, // Correlativo
+      dataComprobante?.totalIgv, // IGV total
+      dataComprobante?.total, // Importe total
+      formatDateToDDMMYYYY(dataComprobante.fechaEmision), // Fecha de emisión
+      tipoDoc, // Tipo doc cliente (1=DNI, 6=RUC)
+      numeroDocumento, // Número doc cliente
+    ].join('|');
+    try {
+      const qr = await QRCode.toDataURL(qrData, { width: 250 });
+      return qr;
+    } catch (err) {
+      console.error('Error generando QR:', err);
+    }
+  }
+private setTitleComprobante(tipoComprobante: string): string {
+  let message = "";
+  
+  if (TipoComprobanteEnum.BOLETA === tipoComprobante) {
+    message = "BOLETA DE VENTA";
+  } else if (TipoComprobanteEnum.FACTURA === tipoComprobante) {
+    message = "FACTURA DE VENTA";
+  } else if (TipoComprobanteEnum.NOTA_CREDITO === tipoComprobante) {
+    message = "NOTA DE CRÉDITO";
+  } else if (TipoComprobanteEnum.NOTA_DEBITO === tipoComprobante) {
+    message = "NOTA DE DÉBITO";
+  }
+  return message
+}
+
+}

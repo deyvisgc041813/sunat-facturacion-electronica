@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { IPdfService } from 'src/domain/exportar/pdf/pdf.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as Handlebars from 'handlebars';
 import * as html_to_pdf from 'html-pdf-node';
-import { IComprobantePdfDto } from 'src/domain/exportar/pdf.interface';
+import { IPdfService } from 'src/domain/tenant/exportar/pdf/pdf.service';
+import { IComprobantePdfDto } from 'src/domain/tenant/exportar/pdf/pdf.interface';
 
 @Injectable()
 export class PdfServiceImpl implements IPdfService {
@@ -37,7 +37,7 @@ export class PdfServiceImpl implements IPdfService {
     // const outputPath = path.join(outputDir, `boleta-sssss.pdf`);
     // fs.writeFileSync(outputPath, pdfBuffer);
 
-    // console.log(`✅ PDF generado en: ${outputPath}`);
+
 
     return pdfBuffer;
   }
@@ -76,7 +76,6 @@ async  generarComprobanteTicket(datos: any): Promise<Buffer> {
     // const outputPath = path.join(outputDir, `boleta-sssss.pdf`);
     // fs.writeFileSync(outputPath, pdfBuffer);
 
-    // console.log(`✅ PDF generado en: ${outputPath}`);
 
     return pdfBuffer;
   }

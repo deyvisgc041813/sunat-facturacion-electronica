@@ -5,11 +5,8 @@ import { UpdateUsuarioDto } from '../dto/usuario/update.request.dto';
 
 export interface IUsuarioRepositoryPort {
   save(usuario: CreateUsuarioDto): Promise<GenericResponse<UsuarioResponseDto>>;
-  findAll(sucursalId: number): Promise<UsuarioResponseDto[]>;
-  findById(
-    sucursalId: number,
-    usuarioId: number,
-  ): Promise<UsuarioResponseDto | null>;
+  findAll(): Promise<UsuarioResponseDto[]>;
+  findById(usuarioId: number): Promise<UsuarioResponseDto | null>;
   findByUsername(username: string): Promise<UsuarioResponseDto | null>;
   update(
     usuarioId: number,

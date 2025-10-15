@@ -20,7 +20,20 @@ export enum EEstadosGlobales {
   ACTIVO = "1", // ACTIVO
   INACTIVO = "0", // INACTIVO
   ELIMINADO = "99", // ELIMINAR
+  HABILITADA_FACTURACION = "2", // La sucursal está activa y habilitada para facturación.
+  EN_MANTENIMIENTO = "3",       // La sucursal está en mantenimiento, no puede operar.
+  PENDIENTE_ACTIVACION = "4",   // La sucursal está en proceso de activación.
+  SUSPENDIDA_TEMPORAL = "5",    // La sucursal está suspendida temporalmente.
+  CERRADA_PERMANENTE = "6",     // La sucursal está cerrada de forma permanente.
 }
+
+
+
+
+
+
+
+
 export enum EstadoEnvioSunat {
   PENDIENTE = 'PENDIENTE',         // Registrado pero aún no enviado
   ENVIADO = 'ENVIADO',             // Enviado a SUNAT, en espera

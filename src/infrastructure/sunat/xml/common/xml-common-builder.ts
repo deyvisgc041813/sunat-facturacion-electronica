@@ -1,7 +1,7 @@
-import { CreateInvoiceDto } from "src/domain/comprobante/dto/invoice/CreateInvoiceDto";
-import { CreateNotaDto } from "src/domain/comprobante/dto/notasComprobante/CreateNotaDto";
-import { ComunicacionBajaDto } from "src/domain/comunicacion-baja/ComunicacionBajaDto";
-import { ISummaryDocument } from "src/domain/resumen/interface/sunat.summary.interface";
+import { CreateInvoiceDto } from "src/domain/tenant/comprobante/dto/invoice/create.invoice.dto";
+import { CreateNotaDto } from "src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto";
+import { ComunicacionBajaDto } from "src/domain/tenant/comunicacion-baja/dto/comunicacion-baja.dto";
+import { ISummaryDocument } from "src/domain/tenant/resumen/interface/sunat.summary.interface";
 import { MAP_TRIBUTOS, MTO_CERO } from "src/util/constantes";
 
 export class XmlCommonBuilder {

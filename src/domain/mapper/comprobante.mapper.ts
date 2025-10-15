@@ -1,17 +1,13 @@
-import { ComprobanteOrmEntity } from '../../infrastructure/persistence/comprobante/ComprobanteOrmEntity';
-import { ComprobanteResponseDto } from 'src/domain/comprobante/dto/ConprobanteResponseDto';
-import { ClienteMapper } from './cliente.mapper';
-import { IUpdateComprobante } from 'src/domain/comprobante/interface/update.interface';
 import { SerieMapper } from './serie-comprobante.mapper';
 import { EstadoComunicacionEnvioSunat } from 'src/util/estado.enum';
-import { SucursalMapper } from './sucursal.mapper';
 import { ComprobanteRespSunatMapper } from './comprobante-resp-sunat.maper';
+import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
+import { ComprobanteResponseDto } from '../tenant/comprobante/dto/conprobante.response.dto';
+import { IUpdateComprobante } from '../tenant/comprobante/interface/update.interface';
 
 export class ComprobanteMapper {
   static toDomain(orm: ComprobanteOrmEntity): ComprobanteResponseDto {
     const serie = orm.serie ? SerieMapper.toDomain(orm.serie) : null;
-    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm.sucursal) : null;
-    const cliente = orm.cliente ? ClienteMapper.toDomain(orm.cliente) : null;
     const comprobanteRspSunat = orm.respuestaSunat ? ComprobanteRespSunatMapper.toDomain(orm.respuestaSunat) : null
     return new ComprobanteResponseDto(
       orm.comprobanteId,
@@ -29,8 +25,8 @@ export class ComprobanteMapper {
       orm.estado,
       orm.comunicadoSunat ?? EstadoComunicacionEnvioSunat.NO_ENVIADO,
       orm.serieCorrelativo ?? "",
-      sucursal,
-      cliente,
+      orm.sucursalId,
+      orm.clienteId,
       serie,
       comprobanteRspSunat,
       orm.payloadJson,

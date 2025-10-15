@@ -6,9 +6,9 @@ import {
 } from 'src/util/catalogo.enum';
 import { create } from 'xmlbuilder2';
 import { XmlCommonBuilder } from './common/xml-common-builder';
-import { CreateNotaDto } from 'src/domain/comprobante/dto/notasComprobante/CreateNotaDto';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 import { CANTIDAD_DEFAULT, MAP_TIPO_AFECTACION_TRIBUTO, MAP_TRIBUTOS, MTO_CERO_NUMBER, TAX_EXEPTION_REASONCODE_ICBPER, TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRAVADAS, TIPO_AFECTACION_INAFECTAS, UNIDAD_MEDIDAD_DEFAULT } from 'src/util/constantes';
+import { CreateNotaDto } from 'src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto';
 /**
  *  Tipos de Nota de Crédito SUNAT (ResponseCode)
  *

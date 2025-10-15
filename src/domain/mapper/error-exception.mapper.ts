@@ -1,9 +1,8 @@
-import { CreateErrorLogDto } from 'src/domain/error-log/dto/CreateErrorLogDto';
-import { CreateSunatLogDto } from 'src/domain/sunat-log/interface/sunat.log.interface';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { QueryFailedError } from 'typeorm';
-import { buildDuplicateMessage } from '../exceptions/http-error.filter';
+import { CreateSunatLogDto } from '../tenant/sunat-log/interface/sunat.log.interface';
+import { buildDuplicateMessage } from '../exception/http-error.filter';
 
 export class ErrorMapper {
   static mapError(
@@ -84,20 +83,19 @@ export class ErrorMapper {
       mensajeError = error.message || 'Error interno inesperado';
       detalleError = error;
     }
+    // // 📌 Creación del log genérico
+    // const create = new CreateErrorLogDto();
+    // create.sucursalId = data.sucursalId ?? 0;
+    // create.tipoComprobante = data.tipo;
+    // create.serie = data.serie;
+    // create.correlativo = String(data.correlativo);
+    // create.origen = origen;
+    // create.codigoError = codigoError;
+    // create.mensajeError = mensajeError;
+    // create.detalleError = JSON.stringify(detalleError);
+    // create.estado = EstadoEnumComprobante.ERROR;
 
-    // 📌 Creación del log genérico
-    const create = new CreateErrorLogDto();
-    create.sucursalId = data.sucursalId ?? 0;
-    create.tipoComprobante = data.tipo;
-    create.serie = data.serie;
-    create.correlativo = String(data.correlativo);
-    create.origen = origen;
-    create.codigoError = codigoError;
-    create.mensajeError = mensajeError;
-    create.detalleError = JSON.stringify(detalleError);
-    create.estado = EstadoEnumComprobante.ERROR;
-
-    return { tipoError: origen, create };
+    // return { tipoError: origen, create };
   }
 
   private static mapSunatFaultToEstado(code: string): EstadoEnumComprobante {

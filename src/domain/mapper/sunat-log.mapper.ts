@@ -1,25 +1,19 @@
-import { SunatLogOrmEntity } from '../../infrastructure/persistence/sunat-log/SunatLogOrmEntity';
-import {
-  CreateSunatLogDto,
-  SunatLogResponseDto,
-} from 'src/domain/sunat-log/interface/sunat.log.interface';
-import { SucursalMapper } from './sucursal.mapper';
+
+import { SunatLogOrmEntity } from 'src/infrastructure/persistence/tenant/entity/sunat-log.orm.entity';
+import { CreateSunatLogDto, SunatLogResponseDto } from '../tenant/sunat-log/interface/sunat.log.interface';
 
 export class SunatLogMapper {
   static toDomain(orm: SunatLogOrmEntity): SunatLogResponseDto {
-    const sucursal = orm.sucursal
-      ? SucursalMapper.toDomain(orm.sucursal)
-      : undefined;
     const logs: SunatLogResponseDto = {
       id: orm.id,
-      comprobanteId: orm.comprobanteId ?? 0,
-      fechaEnvio: orm.fechaEnvio,
-      estado: orm.estado,
-      request: orm.request,
-      response: orm.response,
-      resumenId: orm.resumenId,
-      sucursal,
-      serie: orm.serie,
+      comprobanteId: orm?.comprobanteId ?? 0,
+      fechaEnvio: orm?.fechaEnvio,
+      estado: orm?.estado,
+      request: orm?.request,
+      response: orm?.response,
+      resumenId: orm?.resumenId,
+      sucursalId: orm?.sucursalId,
+      serie: orm?.serie,
     };
     return logs;
   }
@@ -27,16 +21,14 @@ export class SunatLogMapper {
     object: SunatLogOrmEntity,
     data: any,
   ): SunatLogOrmEntity {
-    object.comprobanteId = data.comprobanteId > 0 ? data.comprobanteId : null;
+    object.comprobanteId = data?.comprobanteId > 0 ? data.comprobanteId : null;
     object.fechaEnvio = data?.fechaEnvio;
     object.estado = data?.estado;
     object.request = data?.request;
     object.response = data?.response;
     object.resumenId = data?.resumenId ? data.resumenId : null;
     object.codigoResSunat = data?.codigoResSunat;
-    if (data.sucursalId) {
-      object.sucursal = { sucursalId: data.sucursalId } as any;
-    }
+    object.sucursalId = data?.sucursalId;
     object.intento = data?.intentos;
     object.usuarioEnvio = data?.usuarioEnvio
     object.fechaRespuesta = data?.fechaRespuesta;

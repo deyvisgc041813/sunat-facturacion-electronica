@@ -1,20 +1,19 @@
 import { Module } from '@nestjs/common';
-import { EmpresaOrmEntity } from './infrastructure/persistence/empresa/empesa.orm.entity';
-import { ErrorLogOrmEntity } from './infrastructure/persistence/error-log/ErrorLogOrmEntity';
-import { ComprobanteOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteOrmEntity';
-import { SunatLogOrmEntity } from './infrastructure/persistence/sunat-log/SunatLogOrmEntity';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ResumenBoletasOrmEntity } from './infrastructure/persistence/resumen/ResumenBoletasOrmEntity';
-import { ResumenBoletasDetalleOrmEntity } from './infrastructure/persistence/resumen/ResumenBoletasDetalleOrmEntity';
+import { ResumenBoletasOrmEntity } from './infrastructure/persistence/tenant/entity/resumen/resumen-bp.orm.entity';
+import { ResumenBoletasDetalleOrmEntity } from './infrastructure/persistence/tenant/entity/resumen/resumen-bp-detalle.orm.entity';
 import { CatalogoModule } from './catalogo.module';
 import { ComprobanteModule } from './comprobante.module';
 import { XmlBuilderResumenService } from './infrastructure/sunat/xml/xml-builder-resumen.service';
-import { ResumenController } from './adapter/web/controller/resumen.controller';
-import { CreateResumenUseCase } from './application/resumen/create/CreateResumenUseCase';
-import { GetNextCorrelativoUseCase } from './application/resumen/query/GetNextCorrelativoUseCase';
-import { ResumenRepositoryImpl } from './infrastructure/persistence/resumen/resumen.repository';
-import { GetStatusResumenUseCase } from './application/resumen/query/GetStatusResumenUseCase';
-import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/comprobante/ComprobanteRespuestaSunatOrmEntity';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
+import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
+import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/conprobante-respuesta-sunat.orm.entity';
+import { SunatLogOrmEntity } from './infrastructure/persistence/tenant/entity/sunat-log.orm.entity';
+import { ResumenRepositoryImpl } from './infrastructure/persistence/tenant/implement/resumen.repository';
+import { ResumenController } from './adapter/web/controller/tenant/resumen.controller';
+import { CreateResumenUseCase } from './application/tenant/resumen/create/CreateResumenUseCase';
+import { GetNextCorrelativoUseCase } from './application/tenant/resumen/query/GetNextCorrelativoUseCase';
+import { GetStatusResumenUseCase } from './application/tenant/resumen/query/GetStatusResumenUseCase';
 
 @Module({
   imports: [
@@ -22,7 +21,6 @@ import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence
       ResumenBoletasOrmEntity,
       ResumenBoletasDetalleOrmEntity,
       EmpresaOrmEntity,
-      ErrorLogOrmEntity,
       ComprobanteOrmEntity,
       ComprobanteRespuestaSunatOrmEntity,
       SunatLogOrmEntity

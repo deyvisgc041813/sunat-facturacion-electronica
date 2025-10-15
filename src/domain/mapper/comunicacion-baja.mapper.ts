@@ -1,14 +1,13 @@
-import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/comprobante/ComprobanteOrmEntity';
-import { BajaComprobanteResponseDto } from '../comunicacion-baja/ComunicacionBajaResponseDto';
-import { BajaComprobanteOrmEntity } from 'src/infrastructure/persistence/comunicacion-baja/BajaComprobanteOrmEntity';
+
+import { BajaComprobanteOrmEntity } from 'src/infrastructure/persistence/tenant/entity/comunicacion-baja/baja-comprobante.orm.entity';
 import { ComunicacionBajaDetalleMapper } from './comunicacion-baja-detalle.mapper';
-import { BajaComprobanteDetalleOrmEntity } from 'src/infrastructure/persistence/comunicacion-baja/BajaComprobanteDetalleOrmEntity';
-import { CreateComunicacionBajaDto } from '../comunicacion-baja/interface/create.comunicacion.interface';
-import { SucursalMapper } from './sucursal.mapper';
+import { BajaComprobanteDetalleOrmEntity } from 'src/infrastructure/persistence/tenant/entity/comunicacion-baja/baja-comunicacion-detalle.orm.entity';
+import { ComprobanteOrmEntity } from 'src/infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
+import { CreateComunicacionBajaDto } from '../tenant/comunicacion-baja/interface/create.comunicacion.interface';
+import { BajaComprobanteResponseDto } from '../tenant/comunicacion-baja/dto/ComunicacionBajaResponseDto';
 
 export class ComunicacionBajaMaper {
   static toDomain(orm: BajaComprobanteOrmEntity): BajaComprobanteResponseDto {
-    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm.sucursal) : null;
     const bajaDetalle = orm.detalles  ? orm.detalles?.map((d) => ComunicacionBajaDetalleMapper.toDomain(d)) : [];
     return new BajaComprobanteResponseDto(
       orm.bajaComprobanteId,
@@ -19,6 +18,7 @@ export class ComunicacionBajaMaper {
       orm.estado,
       orm.serie,
       orm.ticket ?? "",
+      orm.sucursalId,
       orm.xml,
       orm.cdr,
       orm.hashComunicacion,
@@ -26,7 +26,6 @@ export class ComunicacionBajaMaper {
       orm.codResPuestaSunat,
       orm.mensajeSunat,
       orm.observacionSunat,
-      sucursal,
       bajaDetalle
     );
   }
@@ -35,16 +34,17 @@ private static assignCommon(
     data: any,
     isUpdate = false,
   ): BajaComprobanteOrmEntity {
-    object.fechaGeneracion = data.fechaGeneracion;
-    object.fecReferencia = data.fecReferencia;
-    object.correlativo = data.correlativo;
-    object.nombreArchivo = data.nombreArchivo;
-    object.estado = data.estado;
-    object.serie = data.serie
-    object.ticket = data.ticket
-    object.xml = data.xml;
-    object.cdr = data.cdr;
-    object.hashComunicacion = data.hashComunicacion;
+    object.fechaGeneracion = data?.fechaGeneracion;
+    object.fecReferencia = data?.fecReferencia;
+    object.correlativo = data?.correlativo;
+    object.nombreArchivo = data?.nombreArchivo;
+    object.estado = data?.estado;
+    object.serie = data?.serie
+    object.ticket = data?.ticket
+    object.xml = data?.xml;
+    object.cdr = data?.cdr;
+    object.hashComunicacion = data?.hashComunicacion;
+    object.sucursalId = data.sucursalId
     // mapear a entidades ORM reales
     object.detalles = data?.detalle?.map((d: any) => {
       const detalle = new BajaComprobanteDetalleOrmEntity();
@@ -52,9 +52,6 @@ private static assignCommon(
       detalle.motivo = d.motivo;
       return detalle;
     }) ?? [];
-    if (data.sucursalId) {
-      object.sucursal = { sucursalId: data.sucursalId } as any;
-    }
     return object;
   }
   

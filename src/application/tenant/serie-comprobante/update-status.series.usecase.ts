@@ -1,0 +1,11 @@
+import { IUserPayload } from "src/adapter/decorator/user.decorator.interface";
+import { GenericResponse } from "src/adapter/web/response/response.interface";
+import { SerieComprobanteService } from "src/domain/tenant/serie-comprobante/service/serie-comprobante.service";
+export class UpdateStatusSerieComprobanteUseCase {
+  constructor(private readonly serieService: SerieComprobanteService) {}
+  async execute(sucursalId:number, newEstado:string, auth: IUserPayload): Promise<GenericResponse<void>> {
+    return this.serieService.serieStatus(sucursalId, newEstado, auth);
+  }
+
+
+}
