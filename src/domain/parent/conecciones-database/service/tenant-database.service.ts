@@ -454,6 +454,7 @@ export class TenantDatabaseService {
     typeOperacion: string,
   ): Promise<void> {
     try {
+      console.log("sucursalid series ", sucursalId)
       if (typeOperacion == 'create') {
         const series = [
           { tipo: TipoComprobanteEnum.FACTURA, serie: 'F001' },

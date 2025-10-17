@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { CreateEmpresaUseCase } from './application/parent/empresa/create.empresa.usecase';
 import { GetAllEmpresaUseCase } from './application/parent/empresa/get-all.empresa.usecase';
 import { GetByIdEmpresaUseCase } from './application/parent/empresa/get-by-id.empresa.usecase';
+import { GetByRucEmpresaUseCase } from './application/parent/empresa/get-by-ruc.empresa.usecase';
 import { UpdateEmpresaUseCase } from './application/parent/empresa/update.empresa.usecase';
 import { DeleteEmpresaUseCase } from './application/parent/empresa/delete.empresa.usecase';
 import { UpdateStatusEmpresaUseCase } from './application/parent/empresa/update-status.empresa.usecase';
@@ -87,6 +88,12 @@ import { UbigeoModule } from './ubigeo.module';
       provide: GetByIdEmpresaUseCase,
       useFactory: (empresaService: EmpresaService) =>
         new GetByIdEmpresaUseCase(empresaService),
+      inject: [EmpresaService],
+    },
+    {
+      provide: GetByRucEmpresaUseCase,
+      useFactory: (empresaService: EmpresaService) =>
+        new GetByRucEmpresaUseCase(empresaService),
       inject: [EmpresaService],
     },
     {

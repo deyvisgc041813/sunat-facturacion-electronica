@@ -17,6 +17,7 @@ import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 import { GetAllEmpresaUseCase } from 'src/application/parent/empresa/get-all.empresa.usecase';
 import { GetByIdEmpresaUseCase } from 'src/application/parent/empresa/get-by-id.empresa.usecase';
+import { GetByRucEmpresaUseCase } from 'src/application/parent/empresa/get-by-ruc.empresa.usecase';
 import { UpdateEmpresaUseCase } from 'src/application/parent/empresa/update.empresa.usecase';
 import { generarCertificadoPrueba } from 'src/certificado/generarCertificadoPrueba';
 import type { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
@@ -36,6 +37,7 @@ export class EmpresaController {
     private readonly createUseCase: CreateEmpresaUseCase,
     private readonly getAllUseCase: GetAllEmpresaUseCase,
     private readonly getByIdUseCase: GetByIdEmpresaUseCase,
+    private readonly getByRucUseCase: GetByRucEmpresaUseCase,
     private readonly updateUseCase: UpdateEmpresaUseCase,
     private readonly deleteUseCase: DeleteEmpresaUseCase,
     private readonly updateStatusUseCase: UpdateStatusEmpresaUseCase,
@@ -58,6 +60,7 @@ export class EmpresaController {
     @Body() body: CreateEmpresaDto,
     @User() auth: IUserPayload,
   ) {
+    console.log("body ", body)
     const certificado = files.certificado_digital?.[0];
     const logo = files.logo?.[0];
     FileValidatorUtil.validarCertificado(certificado);
@@ -83,6 +86,7 @@ export class EmpresaController {
     @Body() body: CreateEmpresaOnboardingDto,
     @User() auth: IUserPayload,
   ) {
+    console.log("certificado_digital ", files)
     const certificado = files.certificado_digital?.[0];
     const logo = files.logo?.[0];
     FileValidatorUtil.validarCertificado(certificado);
@@ -125,6 +129,11 @@ export class EmpresaController {
   @Get(':id')
   async findById(@Param('id', ParseIntPipe) id: number) {
     return this.getByIdUseCase.execute(id);
+  }
+
+  @Get('/ruc/:ruc')
+  async findByRuc(@Param('ruc', ParseIntPipe) ruc: string) {
+    return this.getByRucUseCase.execute(ruc);
   }
 
   @Post('/generar-certificado-prueba')

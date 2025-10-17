@@ -115,6 +115,9 @@ export class EmpresaService {
   async getById(empresaId: number): Promise<EmpresaResponseDto | null> {
     return this.empRepo.findById(empresaId, false);
   }
+  async getByRuc(ruc: string): Promise<EmpresaResponseDto | null> {
+    return this.empRepo.findByRuc(ruc, false);
+  }
   async update(
     empresaEdit: EmpresaResponseDto,
     data: UpdateEmpresaDto,
@@ -291,6 +294,7 @@ export class EmpresaService {
         sucursal = await this.sucursalService.create(createSucursal, auth);
       }
       const sucursalId = sucursal?.data?.sucursalId
+      console.log("sucursalId ", sucursalId)
       tenant = await this.tenantService.activateTenant(sucursalId, body?.ruc, subDominioClient.replace(/[^a-z0-9]/g, ''));
       const rsp = await this.authService.branchActive(sucursalId, empresa?.data?.empresaId, auth, false)
       return {
