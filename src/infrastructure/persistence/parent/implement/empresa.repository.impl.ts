@@ -67,6 +67,26 @@ export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
       ? EmpresaMapper.toDomain(empresa)
       : EmpresaMapper.toDomainInterno(empresa);
   }
+  async findByRuc(
+    ruc: string,
+    interno: false,
+  ): Promise<EmpresaResponseDto | EmpresaInternaResponseDto | null> {
+    const empresa = await this.repo.findOne({
+      where: { ruc, estado: EEstadosGlobales.ACTIVO },
+      relations: [
+        'sucursales',
+        'sucursales.distrito',
+        'sucursales.distrito.provincia',
+        'sucursales.distrito.provincia.departamento',
+      ],
+    });
+    if (!empresa) {
+      throw new NotFoundException(`Empresa con ruc ${ruc} se encontro`);
+    }
+    return !interno
+      ? EmpresaMapper.toDomain(empresa)
+      : EmpresaMapper.toDomainInterno(empresa);
+  }
   async findCertificado(ruc: string): Promise<GetCertificadoDto | null> {
     const empresa = await this.repo.findOne({
       where: { ruc, estado: EEstadosGlobales.ACTIVO },

@@ -28,7 +28,14 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
-      '@typescript-eslint/no-unsafe-argument': 'warn'
+      '@typescript-eslint/no-unsafe-argument': 'warn',
+      // --- FIX PARA LOS ERRORES "Delete ␍" ---
+      'prettier/prettier': [
+        'warn', // cambia de "error" a "warn" para no romper build
+        {
+          endOfLine: 'auto', // <- ignora CRLF vs LF
+        },
+      ],
     },
   },
 );

@@ -450,6 +450,7 @@ async deleteTenant(sucursalId: number, numRuc: string, subDominio: string): Prom
     typeOperacion: string,
   ): Promise<void> {
     try {
+      console.log("sucursalid series ", sucursalId)
       if (typeOperacion == 'create') {
         const series = [
           { tipo: TipoComprobanteEnum.FACTURA, serie: 'F001' },
