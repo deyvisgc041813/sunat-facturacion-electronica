@@ -105,7 +105,6 @@ export abstract class CreateNotaDebitoBaseUseCase {
       sucursal,
     );
      const cliente = await this.clienteService.getByNumDocumento(
-      empresaId,
       data.client.numDoc,
     );
     if (!cliente) {
@@ -150,7 +149,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
         data.details = mtoCalculados.details;
       }
       data.legends = mtoCalculados?.legends ?? data.legends;
-      const comprobante = await this.registrarComprobante(data, sucursalId);
+      const comprobante = await this.registrarComprobante(data, sucursalId, cliente?.clienteId);
       comprobanteId = comprobante.response?.comprobanteId ?? 0;
       data.correlativo = comprobante.response?.correlativo ?? data.correlativo;
       data.correoEmpresa = empresa?.correo ?? '';
@@ -228,11 +227,14 @@ export abstract class CreateNotaDebitoBaseUseCase {
       empresa.claveSolSecundario ?? '',
       empresa.email,
       empresa.telefono,
+      "",
+      "",
+      ""
     );
     return certificado;
   }
 
-  private async registrarComprobante(data: any, sucursalId: number) {
+  private async registrarComprobante(data: any, sucursalId: number, clientId:number) {
     const objComprobante: ICreateComprobante = {
       sucursalId,
       tipoComprobante: data.tipoComprobante as TipoComprobanteEnum,
@@ -247,6 +249,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       totalIgv: data.mtoIGV ?? 0,
       mtoImpVenta: data.mtoImpVenta ?? 0,
       payloadJson: JSON.stringify(data),
+      clientId
     };
     return this.useCreateComprobanteCase.execute(objComprobante, data);
   }

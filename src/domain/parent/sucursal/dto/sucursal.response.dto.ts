@@ -28,9 +28,7 @@ export class SucursalResponseDto {
     public usuarioRegistro?:string,
     public usuarioModificacion?:string,
     public fechaModificacion?: Date,
-
     public empresa?: EmpresaResponseDto | EmpresaInternaResponseDto,
-
     public productos?: ProductoResponseDto[],
     public series?: SerieResponseDto[],
     public comprobantes?: ComprobanteResponseDto[],

@@ -314,6 +314,7 @@ export class EmpresaService {
       throw error;
     }
   }
+
   private esArchivoPfxValido(buffer: Buffer): boolean {
     try {
       // usar loop para armar string de bytes crudos

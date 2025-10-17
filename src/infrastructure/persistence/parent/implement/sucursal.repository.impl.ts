@@ -29,6 +29,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
     const newSucursal = await this.repo.save(
       SucursalMapper.dtoToCreate(sucursal),
     );
+
     let resp = SucursalMapper.toDomain(newSucursal);
     delete resp.empresa;
     delete resp.ubicacionGeografica;
@@ -105,7 +106,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
     });
     if (!sucursal) {
       throw new NotFoundException(
-        `La sucursal con ID ${sucursalId} no se encuentra activa para emitir comprobantes.`,
+        'La sucursal actual no se encuentra activa para emitir comprobantes de venta. Verifique el estado o comuníquese con el administrador del sistema.',
       );
     }
     return SucursalMapper.toDomainInterno(sucursal);

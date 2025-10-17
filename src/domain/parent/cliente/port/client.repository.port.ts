@@ -12,7 +12,6 @@ export interface IClienteRepositoryPort {
     clienteId: number,
   ): Promise<ClienteResponseDto | null>;
   findByDocumento(
-    empresaId: number,
     numeroDocumento: string,
   ): Promise<ClienteResponseDto | null>;
   update(

@@ -50,11 +50,10 @@ export class ClienteRepositoryImpl implements IClienteRepositoryPort {
     return ClienteMapper.toDomain(cliente);
   }
   async findByDocumento(
-    empresaId: number,
     numeroDocumento: string,
   ): Promise<ClienteResponseDto | null> {
     const clienteEntity = await this.repo.findOne({
-      where: { empresaId, numeroDocumento, estado: EEstadosGlobales.ACTIVO },
+      where: {numeroDocumento, estado: EEstadosGlobales.ACTIVO },
     });
     return !clienteEntity ? null : ClienteMapper.toDomain(clienteEntity);
   }

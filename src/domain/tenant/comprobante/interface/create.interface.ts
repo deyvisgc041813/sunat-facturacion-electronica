@@ -3,6 +3,7 @@ import { TipoComprobanteEnum, TipoDocumentoIdentidadEnum } from "src/util/catalo
 
 export interface ICreateComprobante {
   sucursalId: number;
+  clientId:number,
   // Datos de cabecera del comprobante
   tipoComprobante:
     | TipoComprobanteEnum.FACTURA

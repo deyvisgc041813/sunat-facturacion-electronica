@@ -13,7 +13,6 @@ import { TasaTributoModule } from './tasa-tributo.module';
 import { FindTasaByCodeUseCase } from './application/parent/Tasa/FindTasaByCodeUseCase';
 import { XmlBuilderNotaDebitoService } from './infrastructure/sunat/xml/xml-builder-nota-debito.service';
 import { SunatLogRepositoryImpl } from './infrastructure/persistence/tenant/implement/auditoria/sunat-log.repository.impl';
-import { SucursalRepositoryImpl } from './infrastructure/persistence/parent/implement/sucursal.repository.impl';
 import { FindCatalogosUseCase } from './application/parent/catalogo/FindCatalogosUseCase';
 import { SerieOrmEntity } from './infrastructure/persistence/tenant/entity/serie-comprobante/serie-comprobante.orm.entity';
 import { GetBySucursalAndTipComAndSerieUseCase } from './application/tenant/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
@@ -42,6 +41,9 @@ import { TenantContextModule } from './tenant-context.module';
 import { ComprobanteRespuestaSunatRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/comprobante-respuesta.sunat.repository.impl';
 import { LogRespuestaSunatRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/log-respuesta-sunat-fallida.repository.impl';
 import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/log-respuesta-sunat-fallida.orm.entity';
+import { SearchDocumentService } from './application/tenant/comprobante/services/search-document.service';
+import { SucursalModule } from './sucursal.module';
+import { ClienteService } from './domain/parent/cliente/service/cliente.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -61,10 +63,16 @@ import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/
     SerieComprobanteModule,
     ClienteModule,
     TenantConeccionesModule,
-    TenantContextModule
+    TenantContextModule,
+    SucursalModule
   ],
   controllers: [ComprobanteController],
   providers: [
+    {
+      provide: SearchDocumentService,
+      useFactory: (clienteService: ClienteService ) => new SearchDocumentService(clienteService),
+      inject: [ClienteService],
+    },
     XmlBuilderInvoiceService,
     XmlBuilderNotaCreditoService,
     XmlBuilderNotaDebitoService,
@@ -73,7 +81,6 @@ import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/
     EmpresaRepositoryImpl,
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
-    SucursalRepositoryImpl,
     SerieComprobanteRepositoryImpl,
     ComprobanteRespuestaSunatRepositoryImpl,
     LogRespuestaSunatRepositoryImpl,
@@ -94,7 +101,6 @@ import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/
   exports: [
     SunatLogRepositoryImpl,
     ComprobanteRepositoryImpl,
-    SucursalRepositoryImpl,
     ValidarAnulacionComprobanteUseCase,
     FirmaService,
     SunatService,
@@ -106,7 +112,8 @@ import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/
     ComprobanteRespuestaSunatRepositoryImpl,
     LogRespuestaSunatRepositoryImpl,
     TenantConeccionesModule,
-    TenantContextModule
+    TenantContextModule,
+    SucursalModule
   ],
 })
 export class ComprobanteModule {}

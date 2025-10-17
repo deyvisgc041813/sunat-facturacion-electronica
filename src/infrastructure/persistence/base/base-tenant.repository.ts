@@ -13,9 +13,9 @@ export abstract class BaseTenantRepository<T> {
 
   protected async getRepository() {
     if (!this.repository) {
-      const subDominio = this.tenantContext.getSubDominio();
+      const subDominio = this.tenantContext.getSubDominio() ?? '';
       const sucursalId = this.tenantContext.getSucursalId()
-      console.log("sucursalId ", sucursalId)
+
       this.repository = await this.tenantRepositoryHelper.getTenantRepository(subDominio, this.entity, sucursalId);
     }
     return this.repository;

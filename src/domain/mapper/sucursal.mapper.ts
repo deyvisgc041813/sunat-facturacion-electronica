@@ -4,6 +4,7 @@ import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/
 import { CreateSucursalDto } from '../parent/sucursal/dto/create.request.dto';
 import { UpdateSucursalDto } from '../parent/sucursal/dto/update.request.dto';
 import { DepartamentoResponseDto, DistritoResponseDto, ProvinciaResponseDto, UbigeoResponseDto } from '../parent/ubigeo/dto/ubigeo.response';
+import { EmpresaInternaResponseDto } from '../parent/empresa/dto/internal.response.dto';
 
 export class SucursalMapper {
   static toDomain(orm: SucursalOrmEntity): SucursalResponseDto {

@@ -17,6 +17,8 @@ import { EEstadosGlobales } from 'src/util/estado.enum';
 import { AuditoriaService } from '../../core/logs/service/auditoria.logs.service';
 import { TenantDatabaseService } from '../../conecciones-database/service/tenant-database.service';
 import { DataSource } from 'typeorm';
+import { EmpresaInternaResponseDto } from '../../empresa/dto/internal.response.dto';
+import { GetCertificadoDto } from '../../empresa/dto/obtner-certificado.dto';
 
 @Injectable()
 export class SucursalService {
@@ -35,8 +37,8 @@ export class SucursalService {
       dto.usuarioRegistro = auth.correo;
       const subDominioClient = dto.subDominio.trim().toLowerCase();
       if (!subDominioClient.includes('.')) {
-        const dominioBase =  process.env.DOMINIO_PRINCIPAL;
-        dto.subDominio =`${subDominioClient}.${dominioBase}`;
+        const dominioBase = process.env.DOMINIO_PRINCIPAL;
+        dto.subDominio = `${subDominioClient}.${dominioBase}`;
       }
       const codigo = await this.sucursalRepo.generateBranchCodeByCompany(
         dto.empresaId,
@@ -144,15 +146,9 @@ export class SucursalService {
       throw error;
     }
   }
-    async deleteById(
-    sucursalId: number,
-    empresaId: number,
-  ): Promise<void> {
+  async deleteById(sucursalId: number, empresaId: number): Promise<void> {
     try {
-      const rsp = await this.sucursalRepo.deleteById(
-        sucursalId,
-       empresaId,
-      );
+      const rsp = await this.sucursalRepo.deleteById(sucursalId, empresaId);
     } catch (error: any) {
       throw error;
     }
@@ -270,11 +266,43 @@ export class SucursalService {
           EEstadosGlobales.PENDIENTE_ACTIVACION,
           auth.correo,
         );
-        console.error(  'Error durante activación de sucursal, rollback ejecutado:', error);
+        console.error(
+          'Error durante activación de sucursal, rollback ejecutado:',
+          error,
+        );
       }
       throw error;
     } finally {
       await queryRunner.release();
     }
+  }
+  async getDigitalCertificate(sucursalId: number, empresaId: number) {
+    const sucursal = await this.sucursalRepo.findSucursalInterna(
+      empresaId,
+      sucursalId
+    );
+    if (!sucursal) {
+      throw new BadRequestException(
+        `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
+      );
+    }
+    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
+    if (!empresa.certificadoDigital || !empresa?.claveCertificado) {
+      throw new Error(
+        `No se encontró certificado digital para la sucursal con RUC ${sucursal.nombre}`,
+      );
+    }
+    const certificado = new GetCertificadoDto(
+      empresa.certificadoDigital,
+      empresa.claveCertificado ?? '',
+      empresa.usuarioSolSecundario ?? '',
+      empresa.claveSolSecundario ?? '',
+      empresa.email,
+      empresa.telefono,
+      sucursal.signatureId ?? "",
+      sucursal.signatureNote ?? "",
+      sucursal.codigoEstablecimiento
+    );
+    return certificado;
   }
 }

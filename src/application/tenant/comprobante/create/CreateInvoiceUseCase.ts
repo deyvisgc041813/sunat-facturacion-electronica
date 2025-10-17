@@ -11,6 +11,8 @@ import { TributoTasaRepositoryImpl } from 'src/infrastructure/persistence/parent
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/sucursal.repository.impl';
 import { FindTasaByCodeUseCase } from 'src/application/parent/Tasa/FindTasaByCodeUseCase';
 import { CreateInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/create.invoice.dto';
+import { SearchDocumentService } from '../services/search-document.service';
+import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 @Injectable()
 export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
   constructor(
@@ -22,20 +24,23 @@ export class CreateInvoiceUseCase extends CreateInvoiceBaseUseCase {
     useUpdateCaseComprobante: UpdateComprobanteUseCase,
     sunatLogRepo: SunatLogRepositoryImpl,
     tributoRepo: TributoTasaRepositoryImpl,
-    sucursalRepo: SucursalRepositoryImpl,
+    sucursalService: SucursalService,
     findTasaByCodeUseCase: FindTasaByCodeUseCase,
+    searchDocument :SearchDocumentService
   ) {
     super(
       xmlInvoiceBuilder,
       firmaService,
       sunatService,
-      sucursalRepo,
+      sucursalService,
       useCreateCaseComprobante,
       catalogoRepo,
       useUpdateCaseComprobante,
       sunatLogRepo,
       tributoRepo,
-      findTasaByCodeUseCase
+      findTasaByCodeUseCase,
+      searchDocument
+      
     );
   }
   protected buildXml(data: CreateInvoiceDto): string {

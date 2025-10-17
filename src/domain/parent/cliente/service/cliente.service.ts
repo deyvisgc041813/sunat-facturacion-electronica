@@ -26,17 +26,20 @@ export class ClienteService {
   async create(
     cliente: CreateClienteDto,
     auth: IUserPayload,
+    origenRegistro: 'MANUAL' | 'AUTOMATICO',
   ): Promise<GenericResponse<ClienteResponseDto>> {
     try {
-      const existe = await this.clienteRepo.findByDocumento(
-        cliente.empresaId,
-        cliente.numeroDocumento,
-      );
-      if (existe) {
-        throw new BadRequestException(
-          `El cliente con documento ${cliente.numeroDocumento} ya se encuentra registrado.`,
+      if(origenRegistro === "MANUAL") {
+        const existe = await this.clienteRepo.findByDocumento(
+          cliente.numeroDocumento,
         );
+        if (existe ) {
+          throw new BadRequestException(
+            `El cliente con documento ${cliente.numeroDocumento} ya se encuentra registrado.`,
+          );
+        }
       }
+
       validarDatosSegunTipoDocumento(cliente);
       const newCliente = await this.clienteRepo.save(cliente);
       //return
@@ -70,11 +73,8 @@ export class ClienteService {
     if (!cliente) throw new NotFoundException('Cliente no encontrado.');
     return cliente;
   }
-  async getByNumDocumento(
-    empresaId: number,
-    numDoc: string,
-  ): Promise<ClienteResponseDto | null> {
-    const cliente = await this.clienteRepo.findByDocumento(empresaId, numDoc);
+  async getByNumDocumento(numDoc: string): Promise<ClienteResponseDto | null> {
+    const cliente = await this.clienteRepo.findByDocumento(numDoc);
     if (!cliente) throw new NotFoundException('Cliente no encontrado.');
     return cliente;
   }
@@ -90,10 +90,7 @@ export class ClienteService {
       if (!exist) {
         throw new NotFoundException('Cliente no encontrado.');
       }
-      const existe = await this.clienteRepo.findByDocumento(
-        empresaId,
-        dto.numeroDocumento ?? '',
-      );
+      const existe = await this.clienteRepo.findByDocumento(dto.numeroDocumento ?? '');
       if (existe && existe.clienteId !== clienteId) {
         throw new BadRequestException(
           `El cliente con documento ${exist.numeroDocumento} ya está registrado para esta empresa`,

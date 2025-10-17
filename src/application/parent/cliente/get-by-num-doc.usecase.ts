@@ -5,6 +5,6 @@ export class GetByNumDocClientUseCase {
   constructor(private readonly service: ClienteService) {}
 
   async execute(empresaId: number, numDoc: string): Promise<ClienteResponseDto | null> {
-    return this.service.getByNumDocumento(empresaId, numDoc)
+    return this.service.getByNumDocumento(numDoc)
   }
 }

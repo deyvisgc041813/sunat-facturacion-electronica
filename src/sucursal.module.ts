@@ -88,6 +88,6 @@ import { DataSource } from 'typeorm';
 
     SucursalRepositoryImpl,
   ],
-  exports: [SucursalService],
+  exports: [SucursalService, SucursalRepositoryImpl],
 })
 export class SucursalModule {}

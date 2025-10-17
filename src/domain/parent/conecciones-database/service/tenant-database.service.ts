@@ -117,13 +117,11 @@ export class TenantDatabaseService {
     await dataSource.initialize();
     this.connections.set(subDominio, dataSource);
     this.resetIdleTimer(subDominio);
-    await this.autoGenerateAndRunMigrations(dataSource);
-    await this.createSpGuardarComprobanteIfNotExists(
-      dataSource,
-      tipoOperacion,
-      dbName,
-    );
-    await this.insertDefaultSeries(dataSource, sucursalId, tipoOperacion);
+    if (tipoOperacion == 'create') {
+      await this.autoGenerateAndRunMigrations(dataSource);
+      await this.createSpGuardarComprobanteIfNotExists(dataSource, dbName);
+      await this.insertDefaultSeries(dataSource, sucursalId, tipoOperacion);
+    }
     console.log(`Tenant conectado: ${subDominio}`);
     return dataSource;
   }
@@ -181,6 +179,9 @@ export class TenantDatabaseService {
         `Tenant "${subDominio}" no está activo o no existe.`,
       );
     }
+    subDominio = (
+      subDominio.replace(/[^a-z0-9.]/gi, '').match(/^[^.]+/)?.[0] ?? ''
+    ).replace(/-/g, '');
     const dbPassword = await CryptoUtil.decrypt(tenant.dbPassword);
     // Crea conexión protegida por mutex
     const promise = this.createTenantConnectionLocked(
@@ -220,7 +221,7 @@ export class TenantDatabaseService {
     numRuc: string,
     subDominio: string,
   ): Promise<void> {
-    console.log("INICIO activateTenant")
+    console.log('INICIO activateTenant');
     const dbName = `${numRuc}_${subDominio}_db`;
     let { username, password } = generateTenantCredentials(numRuc);
     const existUserDb = await this.tenantRepo.findByDbUser(username);
@@ -246,33 +247,39 @@ export class TenantDatabaseService {
     await this.tenantRepo.save(sucursalId, dbName, username, dbPassword);
     console.log(`Tenant ${subDominio} activado con base ${dbName}`);
   }
-async deleteTenant(sucursalId: number, numRuc: string, subDominio: string): Promise<void> {
-  const dbName = `${numRuc}_${subDominio}_db`;
-  const userName = `user_${numRuc}`;
-  console.log(`Iniciando desactivación del tenant: ${dbName}`);
+  async deleteTenant(
+    sucursalId: number,
+    numRuc: string,
+    subDominio: string,
+  ): Promise<void> {
+    const dbName = `${numRuc}_${subDominio}_db`;
+    const userName = `user_${numRuc}`;
+    console.log(`Iniciando desactivación del tenant: ${dbName}`);
 
-  try {
-    await this.closeTenantConnection(subDominio);
-    await this.tenantRepo.delete(dbName, sucursalId);
+    try {
+      await this.closeTenantConnection(subDominio);
+      await this.tenantRepo.delete(dbName, sucursalId);
 
-    const adminDs = new DataSource({
-      type: 'mysql',
-      host: process.env.DB_HOST,
-      port: parseInt(process.env.DB_PORT || '3306', 10),
-      username: process.env.DB_USER,
-      password: process.env.DB_PASS,
-    });
+      const adminDs = new DataSource({
+        type: 'mysql',
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT || '3306', 10),
+        username: process.env.DB_USER,
+        password: process.env.DB_PASS,
+      });
 
-    await adminDs.initialize();
-    await adminDs.query(`DROP DATABASE IF EXISTS \`${dbName}\`;`);
-    await adminDs.query(`DROP USER IF EXISTS '${userName}'@'%';`);
-    console.log(`Tenant ${dbName} y usuario ${userName} eliminados correctamente`);
-    await adminDs.destroy();
-  } catch (error) {
-    console.error(`Error al eliminar tenant ${dbName}`, error);
-    throw error;
+      await adminDs.initialize();
+      await adminDs.query(`DROP DATABASE IF EXISTS \`${dbName}\`;`);
+      await adminDs.query(`DROP USER IF EXISTS '${userName}'@'%';`);
+      console.log(
+        `Tenant ${dbName} y usuario ${userName} eliminados correctamente`,
+      );
+      await adminDs.destroy();
+    } catch (error) {
+      console.error(`Error al eliminar tenant ${dbName}`, error);
+      throw error;
+    }
   }
-}
   /**
    * Lista de conexiones activas actualmente
    */
@@ -330,27 +337,25 @@ async deleteTenant(sucursalId: number, numRuc: string, subDominio: string): Prom
   }
   private async createSpGuardarComprobanteIfNotExists(
     tempDS: DataSource,
-    typeOperacion: string,
     dbName: string,
   ): Promise<void> {
     try {
-      if (typeOperacion == 'create') {
-        // Verificar si existe
-        const result: any[] = await tempDS.query(`
+      // Verificar si existe
+      const result: any[] = await tempDS.query(`
           SELECT COUNT(*) AS total
           FROM information_schema.ROUTINES
           WHERE ROUTINE_SCHEMA = DATABASE()
             AND ROUTINE_NAME = 'sp_guardar_comprobante';
         `);
-        const existe = result[0]?.total > 0;
-        if (existe) {
-          console.log(
-            `El procedimiento sp_guardar_comprobante ya existe en ${dbName}`,
-          );
-          return;
-        }
-        // Crear procedimiento (solo si no existe)
-        await tempDS.query(`
+      const existe = result[0]?.total > 0;
+      if (existe) {
+        console.log(
+          `El procedimiento sp_guardar_comprobante ya existe en ${dbName}`,
+        );
+        return;
+      }
+      // Crear procedimiento (solo si no existe)
+      await tempDS.query(`
           CREATE PROCEDURE \`sp_guardar_comprobante\`(
             IN p_sucursal_id INT,
             IN p_cliente_id INT,
@@ -436,10 +441,9 @@ async deleteTenant(sucursalId: number, numRuc: string, subDominio: string): Prom
                   p_tipo_comprobante AS tipo_comprobante;
           END;
         `);
-        console.log(
-          `Procedimiento sp_guardar_comprobante creado exitosamente en ${dbName}`,
-        );
-      }
+      console.log(
+        `Procedimiento sp_guardar_comprobante creado exitosamente en ${dbName}`,
+      );
     } finally {
       await tempDS.destroy();
     }
@@ -459,7 +463,7 @@ async deleteTenant(sucursalId: number, numRuc: string, subDominio: string): Prom
           { tipo: TipoComprobanteEnum.RESUMEN_DIARIO, serie: 'RC' },
           { tipo: TipoComprobanteEnum.COMUNICACION_BAJA, serie: 'RA' },
         ];
-         await tempDS.initialize();
+        await tempDS.initialize();
         for (const { tipo, serie } of series) {
           const [exists] = await tempDS.query(
             `SELECT 1 FROM ${ETablaAudit.SERIE_COMPROBANTE} WHERE sucursal_id = ? AND tipo_comprobante = ? AND serie = ? LIMIT 1`,

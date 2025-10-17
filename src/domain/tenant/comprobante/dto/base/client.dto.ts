@@ -1,5 +1,6 @@
 import { Type } from 'class-transformer';
 import {
+  IsEmail,
   IsIn,
   IsNotEmpty,
   IsOptional,
@@ -46,6 +47,10 @@ export class ClienteDto {
     message: 'El teléfono solo debe contener números',
   })
   telefono: string;
+
+  @IsOptional()
+  @IsEmail({}, { message: 'El formato del correo electrónico no es válido.' })
+  correo: string;
 
   @IsOptional() // en boleta puede faltar
   @ValidateNested()

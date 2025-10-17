@@ -87,6 +87,9 @@ export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
       empresa.claveSolSecundario ?? '',
       empresa.email,
       empresa.telefono,
+      "",
+      "",
+      ""
     );
     return certificado;
   }

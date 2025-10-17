@@ -7,7 +7,7 @@ import { ClienteService } from 'src/domain/parent/cliente/service/cliente.servic
 export class CreateClientUseCase {
   constructor(private readonly service: ClienteService) {}
   async execute(cliente: CreateClienteDto, auth: IUserPayload): Promise<GenericResponse<ClienteResponseDto>> {
-    return this.service.create(cliente, auth)
+    return this.service.create(cliente, auth, "MANUAL")
   }
 
 

@@ -36,7 +36,7 @@ import { TenantGuard } from './adapter/guards/tenant.guard';
       password: process.env.DB_PASS || '123456',
       database: process.env.DB_NAME || 'facturacion_electronica_pe',
       autoLoadEntities: true,
-      synchronize: false, // ⚠️ ponlo en true solo en desarrollo
+      synchronize: false, // ponlo en true solo en desarrollo
     }),
    ClienteModule,
    ProductoModule,

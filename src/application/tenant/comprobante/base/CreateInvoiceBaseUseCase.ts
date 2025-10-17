@@ -1,5 +1,3 @@
-
-
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { CreateComprobanteUseCase } from './CreateComprobanteUseCase';
 import { DateUtils } from 'src/util/date.util';
@@ -35,19 +33,23 @@ import { ICreateComprobante } from 'src/domain/tenant/comprobante/interface/crea
 import { GetCertificadoDto } from 'src/domain/parent/empresa/dto/obtner-certificado.dto';
 import { ICatalogoRepositoryPort } from 'src/domain/parent/catalogo/port/catalogo.repository.port';
 import { ITributoTasaRepositoryPort } from 'src/domain/parent/tributo-tasa/port/tasa-tributo.repository.port';
+import { SearchDocumentService } from '../services/search-document.service';
+import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 
 export abstract class CreateInvoiceBaseUseCase {
   constructor(
     protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService,
     protected readonly firmaService: FirmaService,
     protected readonly sunatService: SunatService,
-    protected readonly sucurSalRepo: SucursalRepositoryImpl,
+    protected readonly sucuralService: SucursalService,
+    //protected readonly sucurSalRepo: SucursalRepositoryImpl,
     protected readonly useCreateComprobanteCase: CreateComprobanteUseCase,
     protected readonly catalogoRepo: ICatalogoRepositoryPort,
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
     protected readonly tributoRepo: ITributoTasaRepositoryPort,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
+    protected readonly searchDocument :SearchDocumentService
   ) {}
   private readonly tasasVigentes = [MAP_TRIBUTOS.IGV.id];
   protected abstract buildXml(data: CreateInvoiceDto): string;
@@ -57,30 +59,18 @@ export abstract class CreateInvoiceBaseUseCase {
     empresaId: number,
     surcursalId: number,
   ): Promise<IResponseSunat> {
-    ComprobantesHelper.validarDetallesGeneralesPorComprobante(data);
-    const sucursal = await this.sucurSalRepo.findSucursalInterna(
-      empresaId,
-      surcursalId,
-    );
-    if (!sucursal) {
-      throw new BadRequestException(
-        `No se encontró ninguna sucursal asociada al identificador proporcionado (${surcursalId}). Verifique que el ID sea correcto.`,
-      );
-    }
-    const empresa = await this.validarCatalogOyObtenerCertificado(
-      data,
-      sucursal,
-    );
 
-    // Centralizamos las variables necesarias para manejar errores
+    ComprobantesHelper.validarDetallesGeneralesPorComprobante(data);
+    const sucursal = await this.sucuralService.getDigitalCertificate(surcursalId, empresaId)
     const contextoError = {
       comprobanteId: 0,
       sucursalId: 0,
       xmlFirmado: '',
       data,
     };
-
     try {
+      //const client = await this.searchDocument.consultarDocumento(empresaId,  data.client?.numDoc, "MANUAL")
+      console.log(sucursal)
       const tiposCatalogos = [
         TipoCatalogoEnum.UNIDAD_MEDIDA,
         TipoCatalogoEnum.TIPO_AFECTACION,
@@ -108,30 +98,29 @@ export abstract class CreateInvoiceBaseUseCase {
           errors: errores,
         });
       }
-
       // 2. Recalcular montos
       const invoice = ComprobantesHelper.recalcularMontos(data);
       // 3. Registrar comprobante en BD
-      const comprobante = await this.registrarComprobante(invoice, surcursalId);
+      const comprobante = await this.registrarComprobante(invoice, surcursalId, 0);
       contextoError.comprobanteId = comprobante.response?.comprobanteId ?? 0;
       invoice.correlativo = comprobante.response?.correlativo ?? 0;
       // esto tambien agregar en nota de credito y debito , resumens y bajas
-      ((invoice.correoEmpresa = empresa.correo),
-        (invoice.telefonoEmpresa = empresa.telefono));
+      ((invoice.correoEmpresa = sucursal.correo),
+        (invoice.telefonoEmpresa = sucursal.telefono));
       invoice.signatureId = sucursal?.signatureId ?? '';
       invoice.signatureNote = sucursal?.signatureNote ?? '';
       invoice.codigoEstablecimiento = sucursal?.codigoEstablecimiento ?? '';
       // 4. Construir, firmar y comprimir XML
       const { xmlFirmado, fileName, zipBuffer } = await this.prepararXmlFirmado(
         invoice,
-        empresa.certificadoDigital,
-        empresa.claveCertificado,
+        sucursal.certificadoDigital,
+        sucursal.claveCertificado,
       );
       contextoError.xmlFirmado = xmlFirmado;
       contextoError.sucursalId = surcursalId;
-      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
+      const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt(
-        empresa.claveSolSecundario ?? '',
+        sucursal.claveSolSecundario ?? '',
       );
       // 5. Enviar a SUNAT
       const responseSunat = await this.enviarASunat(
@@ -164,40 +153,10 @@ export abstract class CreateInvoiceBaseUseCase {
       throw error;
     }
   }
-
-  private async validarCatalogOyObtenerCertificado(
-    data: CreateInvoiceDto,
-    sucursal: SucursalResponseDto,
-  ) {
-    const existCatalogo = await this.catalogoRepo.obtenerDetallePorCatalogo(
-      TipoCatalogoEnum.TIPO_COMPROBANTE,
-      data.tipoComprobante,
-    );
-    if (!existCatalogo) {
-      throw new BadRequestException(
-        `El tipo de comprobante ${data.tipoComprobante} no se encuentra en los catálogos de SUNAT`,
-      );
-    }
-    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
-    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
-      throw new Error(
-        `No se encontró certificado digital para la sucursal con RUC ${data.company.ruc}`,
-      );
-    }
-    const certificado = new GetCertificadoDto(
-      empresa.certificadoDigital,
-      empresa.claveCertificado ?? '',
-      empresa.usuarioSolSecundario ?? '',
-      empresa.claveSolSecundario ?? '',
-      empresa.email,
-      empresa.telefono,
-    );
-    return certificado;
-  }
-
   private async registrarComprobante(
     data: CreateInvoiceDto,
     sucursalId: number,
+    clientId:number
   ) {
     const objComprobante: ICreateComprobante = {
       sucursalId,
@@ -214,6 +173,7 @@ export abstract class CreateInvoiceBaseUseCase {
       mtoImpVenta: data.mtoImpVenta ?? 0,
       payloadJson: JSON.stringify(data),
       mtoIcbper: data.icbper,
+      clientId
     };
     return this.useCreateComprobanteCase.execute(objComprobante, data);
   }
