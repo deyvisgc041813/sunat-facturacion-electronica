@@ -86,7 +86,6 @@ export class EmpresaController {
     @Body() body: CreateEmpresaOnboardingDto,
     @User() auth: IUserPayload,
   ) {
-    console.log("certificado_digital ", files)
     const certificado = files.certificado_digital?.[0];
     const logo = files.logo?.[0];
     FileValidatorUtil.validarCertificado(certificado);

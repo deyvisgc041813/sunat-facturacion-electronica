@@ -31,10 +31,12 @@ export class ClienteOrmEntity {
   estado: string;
   @Column({name: "nombre",  type: 'varchar', length: 100 })
   nombre?: string;
-  @Column({name: "apellido_paterno",  type: 'varchar', length: 100 })
-  apellidoPaterno?: string;
-  @Column({name: "apellido_materno",  type: 'varchar', length: 100 })
-  apellidoMaterno?: string;
+  @Column({ type: "varchar", length: 50})
+  distrito: string;
+  @Column({ type: "varchar", length: 50})
+  provincia: string;
+  @Column({ type: "varchar", length: 50})
+  departamento: string;
   @Column({name: "estado_contribuyente",  type: 'varchar', length: 45 })
   estadoComtribuyente?: string;
   @Column({name: "condicion_domicilio",  type: 'varchar', length: 45 })

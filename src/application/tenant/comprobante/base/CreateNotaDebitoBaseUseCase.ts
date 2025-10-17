@@ -150,8 +150,8 @@ export abstract class CreateNotaDebitoBaseUseCase {
       }
       data.legends = mtoCalculados?.legends ?? data.legends;
       const comprobante = await this.registrarComprobante(data, sucursalId, cliente?.clienteId);
-      comprobanteId = comprobante.response?.comprobanteId ?? 0;
-      data.correlativo = comprobante.response?.correlativo ?? data.correlativo;
+      comprobanteId = comprobante.data?.comprobanteId ?? 0;
+      data.correlativo = comprobante.data?.correlativo ?? data.correlativo;
       data.correoEmpresa = empresa?.correo ?? '';
       data.telefonoEmpresa = empresa?.telefono ?? "";
       data.signatureId = sucursal?.signatureId ?? '';
@@ -242,6 +242,7 @@ export abstract class CreateNotaDebitoBaseUseCase {
       numeroDocumento: data.client.numDoc,
       tipoDocumento: data.client.tipoDoc as TipoDocumentoIdentidadEnum,
       fechaEmision: DateUtils.toMySQLDateTime(data.fechaEmision),
+      fechaVencimiento: DateUtils.toMySQLDateTime(data?.fechaVencimiento),
       moneda: data.tipoMoneda,
       totalGravado: data.mtoOperGravadas ?? 0,
       totalExonerado: data.mtoOperExoneradas ?? 0,

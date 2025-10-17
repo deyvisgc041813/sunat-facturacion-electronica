@@ -1,5 +1,13 @@
-import { Type } from "class-transformer";
-import { IsEmail, IsInt, IsNotEmpty, IsOptional, IsString, Length, Matches } from "class-validator";
+import { Type } from 'class-transformer';
+import {
+  IsEmail,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+  Matches,
+} from 'class-validator';
 
 export class CreateClienteDto {
   @Type(() => Number) //convierte string a number
@@ -9,12 +17,16 @@ export class CreateClienteDto {
 
   @IsString()
   @IsNotEmpty({ message: 'El tipo de documento es obligatorio' })
-  @Length(1, 2, { message: 'El tipo de documento debe tener máximo 2 caracteres' })
+  @Length(1, 2, {
+    message: 'El tipo de documento debe tener máximo 2 caracteres',
+  })
   tipoDocumento: string;
 
   @IsString()
   @IsNotEmpty({ message: 'El número de documento es obligatorio' })
-  @Length(8, 15, { message: 'El número de documento debe tener entre 8 y 15 dígitos' })
+  @Length(8, 15, {
+    message: 'El número de documento debe tener entre 8 y 15 dígitos',
+  })
   numeroDocumento: string;
 
   @IsString()
@@ -30,7 +42,9 @@ export class CreateClienteDto {
   correo?: string;
 
   @IsOptional()
-  @Matches(/^[0-9+\-() ]+$/, { message: 'El teléfono contiene caracteres inválidos' })
+  @Matches(/^[0-9+\-() ]+$/, {
+    message: 'El teléfono contiene caracteres inválidos',
+  })
   telefono?: string;
 
   @IsOptional()
@@ -39,19 +53,23 @@ export class CreateClienteDto {
 
   @IsOptional()
   @IsString()
-  apellidoPaterno?: string;
-
-  @IsOptional()
-  @IsString()
-  apellidoMaterno?: string;
-
-  @IsOptional()
-  @IsString()
   estadoComtribuyente?: string;
 
   @IsOptional()
   @IsString()
   condicionDomicilio?: string;
+
+  @IsOptional()
+  @IsString()
+  distrito?: string;
+
+  @IsOptional()
+  @IsString()
+  provincia?: string;
+
+  @IsOptional()
+  @IsString()
+  departamento?: string;
 
   constructor(partial?: Partial<CreateClienteDto>) {
     Object.assign(this, partial);

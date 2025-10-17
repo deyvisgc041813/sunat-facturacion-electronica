@@ -22,6 +22,7 @@ import { TenantContextService } from 'src/domain/parent/conecciones-database/ser
 import { BaseTenantRepository } from '../../../base/base-tenant.repository';
 import { ComprobanteRespuestaSunatRepositoryImpl } from './comprobante-respuesta.sunat.repository.impl';
 import { LogRespuestaSunatRepositoryImpl } from './log-respuesta-sunat-fallida.repository.impl';
+import { GenericResponse } from 'src/adapter/web/response/response.interface';
 @Injectable()
 export class ComprobanteRepositoryImpl
   extends BaseTenantRepository<ComprobanteOrmEntity>
@@ -38,16 +39,18 @@ export class ComprobanteRepositoryImpl
   async save(
     dto: ICreateComprobante,
     payloadJson: any,
-  ): Promise<{ status: boolean; message: string; response?: IResponsePs }> {
+  ): Promise<GenericResponse<IResponsePs>> {
     const repo = await this.getRepository();
     const mtoIcbper = dto.mtoIcbper !== null ? dto.mtoIcbper : null;
     const [rows] = await repo.query(
-      `CALL sp_guardar_comprobante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `CALL sp_guardar_comprobante(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         dto.sucursalId,
+        dto.clientId,
         dto.tipoComprobante,
         dto.serie,
         dto.fechaEmision,
+        dto.fechaVencimiento,
         dto.moneda,
         dto.totalGravado,
         dto.totalExonerado,
@@ -62,13 +65,12 @@ export class ComprobanteRepositoryImpl
     );
     const response: IResponsePs = {
       correlativo: rows[0].numero_correlativo,
-      comprobanteId: rows[0].comprobante_id,
-      clienteId: rows[0].cliente_id,
+      comprobanteId: rows[0].comprobante_id
     };
     return {
       status: true,
       message: 'Comprobante registrado correctamente',
-      response,
+      data: response,
     };
   }
 
@@ -229,16 +231,18 @@ export class ComprobanteRepositoryImpl
     update: IUpdateComprobante,
   ): Promise<{ status: boolean; message: string }> {
     const repo = await this.getRepository();
+    console.log("update ", update.estado)
     try {
       await repo.update(
         { comprobanteId, sucursalId },
         {
-          estado: Not(update.estado),
+          estado: update.estado,
           descripcionEstado: update.descripcionEstado,
-          fechaUpdate: update.fechaUpdate,
+          //fechaUpdate: update.fechaUpdate,
         },
       );
       // Guardar respuesta SUNAT o registrar error
+      console.log("saveRespuestaSunat ", update.estado)
       await this.saveRespuestaSunat(comprobanteId, sucursalId, update);
 
       return { status: true, message: 'Comprobante actualizado correctamente' };

@@ -41,7 +41,7 @@ import { TenantContextModule } from './tenant-context.module';
 import { ComprobanteRespuestaSunatRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/comprobante-respuesta.sunat.repository.impl';
 import { LogRespuestaSunatRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/log-respuesta-sunat-fallida.repository.impl';
 import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/log-respuesta-sunat-fallida.orm.entity';
-import { SearchDocumentService } from './application/tenant/comprobante/services/search-document.service';
+import { ComprobanteService } from './domain/tenant/comprobante/services/comprobante.service';
 import { SucursalModule } from './sucursal.module';
 import { ClienteService } from './domain/parent/cliente/service/cliente.service';
 @Module({
@@ -64,14 +64,20 @@ import { ClienteService } from './domain/parent/cliente/service/cliente.service'
     ClienteModule,
     TenantConeccionesModule,
     TenantContextModule,
-    SucursalModule
+    SucursalModule,
   ],
   controllers: [ComprobanteController],
   providers: [
     {
-      provide: SearchDocumentService,
-      useFactory: (clienteService: ClienteService ) => new SearchDocumentService(clienteService),
-      inject: [ClienteService],
+      provide: ComprobanteService,
+      useFactory: (
+        clienteService: ClienteService,
+        createComprobanteUseCase: CreateComprobanteUseCase,
+        updateComprobanteUseCase: UpdateComprobanteUseCase,
+        sunatLogRepositori:SunatLogRepositoryImpl,
+        firmaService: FirmaService
+      ) => new ComprobanteService(clienteService, createComprobanteUseCase, updateComprobanteUseCase, sunatLogRepositori, firmaService),
+      inject: [ClienteService, CreateComprobanteUseCase, UpdateComprobanteUseCase, SunatLogRepositoryImpl, FirmaService],
     },
     XmlBuilderInvoiceService,
     XmlBuilderNotaCreditoService,
@@ -96,7 +102,7 @@ import { ClienteService } from './domain/parent/cliente/service/cliente.service'
     FindTasaByCodeUseCase,
     GetValidatedCpeUseCase,
     GetStatusValidateCpeUseCase,
-    FindCatalogosUseCase
+    FindCatalogosUseCase,
   ],
   exports: [
     SunatLogRepositoryImpl,
@@ -113,7 +119,7 @@ import { ClienteService } from './domain/parent/cliente/service/cliente.service'
     LogRespuestaSunatRepositoryImpl,
     TenantConeccionesModule,
     TenantContextModule,
-    SucursalModule
+    SucursalModule,
   ],
 })
 export class ComprobanteModule {}

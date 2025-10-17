@@ -1,6 +1,12 @@
-import { EstadoComunicacionEnvioSunat, EstadoEnumComprobante } from 'src/util/estado.enum';
+import {
+  EstadoComunicacionEnvioSunat,
+  EstadoEnumComprobante,
+} from 'src/util/estado.enum';
 import { ComprobanteResponseDto } from './dto/conprobante.response.dto';
 import { IUpdateComprobante } from './interface/update.interface';
+import { ICreateComprobante } from './interface/create.interface';
+import { IResponsePs } from './interface/response.ps.interface';
+import { GenericResponse } from 'src/adapter/web/response/response.interface';
 export interface ArchivoDescargable {
   fileName: string; // Nombre sugerido del archivo (ej: 20600887735-01-F001-123.xml)
   mimeType: string; // application/xml, application/zip, etc.
@@ -8,6 +14,10 @@ export interface ArchivoDescargable {
 }
 
 export interface ConprobanteRepository {
+  save(
+    dto: ICreateComprobante,
+    payloadJson: any,
+  ): Promise<GenericResponse<IResponsePs>>;
   /**
    * Retorna todos los comprobantes registrados.
    */
@@ -85,7 +95,7 @@ export interface ConprobanteRepository {
     sucursalId: number,
     comprobanteIds: number[],
     nuevoEstado: EstadoEnumComprobante,
-    comunicadoSunat: EstadoComunicacionEnvioSunat
+    comunicadoSunat: EstadoComunicacionEnvioSunat,
   );
   updateBoletaStatus(
     sucursalId: number,
@@ -110,5 +120,5 @@ export interface ConprobanteRepository {
   findBySerieCorrelativos(
     sucursalId: number,
     serieCorrelativos: string[],
-  ): Promise<ComprobanteResponseDto[]>
+  ): Promise<ComprobanteResponseDto[]>;
 }

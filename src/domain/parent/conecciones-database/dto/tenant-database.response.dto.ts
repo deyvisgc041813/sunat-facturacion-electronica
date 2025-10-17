@@ -10,6 +10,6 @@ export class TenantConnectionsResponseDto {
     public readonly dbPassword:string,
     public readonly dbHost:string,
     public readonly dbPort:number,
-    public readonly sucursal: SucursalResponseDto
+    public readonly sucursal?: SucursalResponseDto
   ) {}
 }

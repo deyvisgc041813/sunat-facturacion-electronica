@@ -44,7 +44,7 @@ export class ComprobanteController {
     @Body() body: CreateInvoiceDto,
     @User() auth:IUserPayload
   ) {
-    return this.createInvoiceUseCase.execute(body, auth.empresaId ?? 0, auth.sucursalActiva);
+    return this.createInvoiceUseCase.execute(body, auth);
   }
   @Post('/credit-notes')
   async createNc(

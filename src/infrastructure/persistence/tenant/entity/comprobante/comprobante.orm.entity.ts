@@ -129,12 +129,12 @@ export class ComprobanteOrmEntity {
   serieCorrelativo?: string;
 
   @CreateDateColumn({
-    name: 'fecha_creacion',
+    name: 'fecha_registro',
     type: 'datetime',
   })
   fechaCreate: Date;
   @UpdateDateColumn({
-    name: 'fecha_actualizacion',
+    name: 'fecha_modificacion', 
     type: 'datetime',
     nullable: false,
   })

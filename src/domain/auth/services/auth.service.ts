@@ -100,7 +100,6 @@ export class AuthService {
   }
   async branchActive(
     sucursalId: number,
-    empresaId:number,
     auth: IUserPayload,
     expiraToken: boolean,
   ) {
@@ -115,7 +114,7 @@ export class AuthService {
     
     await this.userRepo.activarSucursal(auth.userId, sucursalId, new Date());
     // Generar nuevo token JWT con la sucursal activa
-    empresaId = auth.empresaId === 0 || !auth.empresaId ? empresaId : auth.empresaId
+    const empresaId = auth.empresaId ?? 0
     const sucursal = await this.sucursalService.getById(
       sucursalId,
       empresaId,

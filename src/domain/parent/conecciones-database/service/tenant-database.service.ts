@@ -7,6 +7,7 @@ import { CryptoUtil } from 'src/util/CryptoUtil';
 import { generateTenantCredentials } from 'src/util/Helpers';
 import { ETablaAudit } from 'src/util/general.enum';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
+import { SQL_EXISTE_SPGC, SQL_SPGUARDAR_COMPROBANTE } from 'src/util/constantes';
 /**
  * Servicio de gestión de bases de datos multi-tenant (una BD por sucursal)
  * - 🔹 Lazy connection (solo conecta cuando se necesita)
@@ -97,7 +98,7 @@ export class TenantDatabaseService {
     const entitiesArray = Array.isArray(tenantEntities)
       ? tenantEntities
       : Object.values(tenantEntities);
-    const options: DataSourceOptions = {
+      const options: DataSourceOptions = {
       type: 'mysql',
       host,
       port,
@@ -117,10 +118,12 @@ export class TenantDatabaseService {
     await dataSource.initialize();
     this.connections.set(subDominio, dataSource);
     this.resetIdleTimer(subDominio);
+ 
     if (tipoOperacion == 'create') {
       await this.autoGenerateAndRunMigrations(dataSource);
       await this.createSpGuardarComprobanteIfNotExists(dataSource, dbName);
       await this.insertDefaultSeries(dataSource, sucursalId, tipoOperacion);
+
     }
     console.log(`Tenant conectado: ${subDominio}`);
     return dataSource;
@@ -216,12 +219,12 @@ export class TenantDatabaseService {
    * Activa un nuevo tenant (crea BD y lo registra)
    * No conecta aún — se conectará cuando se use por primera vez (lazy)
    */
-  async activateTenant(
+  async createTenant(
     sucursalId: number,
     numRuc: string,
     subDominio: string,
   ): Promise<void> {
-    console.log('INICIO activateTenant');
+    console.log('INICIO crear tenant');
     const dbName = `${numRuc}_${subDominio}_db`;
     let { username, password } = generateTenantCredentials(numRuc);
     const existUserDb = await this.tenantRepo.findByDbUser(username);
@@ -341,12 +344,7 @@ export class TenantDatabaseService {
   ): Promise<void> {
     try {
       // Verificar si existe
-      const result: any[] = await tempDS.query(`
-          SELECT COUNT(*) AS total
-          FROM information_schema.ROUTINES
-          WHERE ROUTINE_SCHEMA = DATABASE()
-            AND ROUTINE_NAME = 'sp_guardar_comprobante';
-        `);
+      const result: any[] = await tempDS.query(SQL_EXISTE_SPGC);
       const existe = result[0]?.total > 0;
       if (existe) {
         console.log(
@@ -355,95 +353,8 @@ export class TenantDatabaseService {
         return;
       }
       // Crear procedimiento (solo si no existe)
-      await tempDS.query(`
-          CREATE PROCEDURE \`sp_guardar_comprobante\`(
-            IN p_sucursal_id INT,
-            IN p_cliente_id INT,
-            IN p_tipo_comprobante VARCHAR(2),
-            IN p_serie VARCHAR(4),
-            IN p_fec_emision DATETIME,
-            IN p_moneda VARCHAR(3),
-            IN p_mto_oper_gravadas DECIMAL(12,2),
-            IN p_mto_oper_exoneradas DECIMAL(12,2),
-            IN p_mto_oper_inafectas DECIMAL(12,2),
-            IN p_mto_igv DECIMAL(12,2),
-            IN p_mto_imp_venta DECIMAL(12,2),
-            IN p_mto_icbper DECIMAL(12,2),
-            IN p_cliente_tipo_doc VARCHAR(2),
-            IN p_cliente_num_doc VARCHAR(20),
-            IN p_payload_json JSON
-          )
-          BEGIN
-            DECLARE v_numero INT;
-            DECLARE v_comprobante_id INT;
-            DECLARE v_serie_id INT;
-            DECLARE v_nueva_serie VARCHAR(4);
-
-            SELECT serie_comprobante_id, correlativo_actual + 1
-            INTO v_serie_id, v_numero
-            FROM ${ETablaAudit.SERIE_COMPROBANTE}
-            WHERE sucursal_id = p_sucursal_id
-              AND tipo_comprobante = p_tipo_comprobante
-              AND serie = p_serie
-            FOR UPDATE;
-
-            IF v_serie_id IS NULL THEN
-              SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Serie no encontrada en la tabla series';
-            END IF;
-
-            IF v_numero > 9999999 THEN
-              SET v_nueva_serie = CONCAT(LEFT(p_serie,1), LPAD(CAST(SUBSTRING(p_serie,2,3) AS UNSIGNED) + 1, 3, '0'));
-
-              SELECT serie_comprobante_id, correlativo_actual + 1
-              INTO v_serie_id, v_numero
-              FROM ${ETablaAudit.SERIE_COMPROBANTE}
-              WHERE sucursal_id = p_sucursal_id
-                AND tipo_comprobante = p_tipo_comprobante
-                AND serie = v_nueva_serie
-              FOR UPDATE;
-
-              IF v_serie_id IS NULL THEN
-                INSERT INTO ${ETablaAudit.SERIE_COMPROBANTE} (sucursal_id, tipo_comprobante, serie, correlativo_inicial, correlativo_actual, fecha_creacion, fecha_actualizacion)
-                VALUES (p_sucursal_id, p_tipo_comprobante, v_nueva_serie, 1, 0, NOW(), NOW());
-                
-                SET v_serie_id = LAST_INSERT_ID();
-                SET v_numero = 1;
-              END IF;
-
-              SET p_serie = v_nueva_serie;
-            END IF;
-
-            SET p_payload_json = JSON_SET(p_payload_json, '$.correlativo', v_numero);
-
-            INSERT INTO  ${ETablaAudit.COMPROBANTE} (
-              sucursal_id, cliente_id, serie_comprobante_id, numero_comprobante, fecha_emision, moneda,
-              mto_oper_gravadas, mto_oper_exoneradas, mto_oper_inafectas, mto_igv, mto_imp_venta, icbper, estado,
-              payload_json, serie_correlativo, fecha_creacion, fecha_actualizacion, comunicado_sunat
-            )
-            VALUES (
-              p_sucursal_id, p_cliente_id, v_serie_id, v_numero, p_fec_emision, p_moneda,
-              p_mto_oper_gravadas, p_mto_oper_exoneradas, p_mto_oper_inafectas, p_mto_igv, p_mto_imp_venta, p_mto_icbper, 'PENDIENTE',
-              p_payload_json,
-              CONCAT(p_serie, '-', LPAD(v_numero, 7, '0')),
-              NOW(), NOW(), '0'
-            );
-
-            SET v_comprobante_id = LAST_INSERT_ID();
-
-            UPDATE ${ETablaAudit.SERIE_COMPROBANTE}
-            SET correlativo_actual = v_numero, fecha_actualizacion = NOW()
-            WHERE serie_comprobante_id = v_serie_id;
-
-            SELECT v_comprobante_id AS comprobante_id,
-                  v_numero AS numero_correlativo,
-                  p_serie AS serie,
-                  p_tipo_comprobante AS tipo_comprobante;
-          END;
-        `);
-      console.log(
-        `Procedimiento sp_guardar_comprobante creado exitosamente en ${dbName}`,
-      );
+      await tempDS.query(SQL_SPGUARDAR_COMPROBANTE);
+      console.log(`Procedimiento sp_guardar_comprobante creado exitosamente en ${dbName}`,);
     } finally {
       await tempDS.destroy();
     }
@@ -454,7 +365,6 @@ export class TenantDatabaseService {
     typeOperacion: string,
   ): Promise<void> {
     try {
-      console.log("sucursalid series ", sucursalId)
       if (typeOperacion == 'create') {
         const series = [
           { tipo: TipoComprobanteEnum.FACTURA, serie: 'F001' },

@@ -1,10 +1,11 @@
-import { Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import {
   IsNumber,
   ValidateNested,
   IsArray,
   IsOptional,
   IsNotEmptyObject,
+  IsISO8601,
 } from 'class-validator';
 import { FormaPagoDto } from '../base/forma-pago.dto';
 import { ClienteDto } from '../base/client.dto';
@@ -18,6 +19,14 @@ export class CreateInvoiceDto extends ComprobanteBaseDto {
   @ValidateNested({ message: 'Los datos de forma de pago no son válidos' })
   @Type(() => FormaPagoDto)
   formaPago: FormaPagoDto;
+  
+  @IsISO8601(
+    {},
+    { message: 'La fecha de emisión debe tener formato ISO8601 (YYYY-MM-DD)' },
+  )
+  @Expose({ name: 'fecha_vencimiento' })
+  @Transform(({ value }) => String(value))
+  fechaVencimiento: string;
   @IsNotEmptyObject({}, { message: 'El nodo client es obligatorio' })
   @ValidateNested({ message: 'Los datos del cliente no son válidos' })
   @Type(() => ClienteDto)
