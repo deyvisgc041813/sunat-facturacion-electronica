@@ -22,9 +22,8 @@ export class CreateInvoiceDto extends ComprobanteBaseDto {
   
   @IsISO8601(
     {},
-    { message: 'La fecha de emisión debe tener formato ISO8601 (YYYY-MM-DD)' },
+    { message: 'La fecha de vencimiento debe tener formato ISO8601 (YYYY-MM-DD)' },
   )
-  @Expose({ name: 'fecha_vencimiento' })
   @Transform(({ value }) => String(value))
   fechaVencimiento: string;
   @IsNotEmptyObject({}, { message: 'El nodo client es obligatorio' })

@@ -8,6 +8,7 @@ import { ClienteDto } from 'src/domain/tenant/comprobante/dto/base/client.dto';
 import { CreateInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/create.invoice.dto';
 import { ICreateComprobante } from 'src/domain/tenant/comprobante/interface/create.interface';
 import {
+  TipoCatalogoEnum,
   TipoComprobanteEnum,
   TipoDocumentoIdentidadEnum,
 } from 'src/util/catalogo.enum';
@@ -27,8 +28,19 @@ import { CryptoUtil } from 'src/util/CryptoUtil';
 import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { ZipUtil } from 'src/util/ZipUtil';
 import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
+import { MAP_TRIBUTOS } from 'src/util/constantes';
+import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/catalogo.repository.impl';
+import { TributoTasaRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
+import { FindTasaByCodeUseCase } from 'src/application/parent/Tasa/FindTasaByCodeUseCase';
 const tipoDocDni = new Set(['1', '01']);
 const tipoRucs = new Set(['6', '06']);
+const tasasTributos = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.ICBPER.id];
+const tasasVigentes = [MAP_TRIBUTOS.IGV.id];
+const tiposCatalogos = [
+  TipoCatalogoEnum.UNIDAD_MEDIDA,
+  TipoCatalogoEnum.TIPO_AFECTACION,
+];
+const facturaBoletas = new Set([TipoComprobanteEnum.BOLETA, TipoComprobanteEnum.FACTURA])
 @Injectable()
 export class ComprobanteService {
   constructor(
@@ -37,6 +49,10 @@ export class ComprobanteService {
     protected readonly useUpdateCaseComprobante: UpdateComprobanteUseCase,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
     protected readonly firmaService: FirmaService,
+    protected readonly catalogoRepositoryImpl: CatalogoRepositoryImpl,
+    protected readonly tributoTasaRepositoryImpl: TributoTasaRepositoryImpl,
+    protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
+    protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService
   ) {}
 
   private readonly RENIEC_API = 'https://api.apis.net.pe/v1/dni';
@@ -115,33 +131,33 @@ export class ComprobanteService {
     };
     return this.useCreateComprobanteCase.execute(objComprobante, data);
   }
-  
+
   async actualizarComprobante(
-      comprobanteId: number,
-      sucursalId: number,
-      tipoComprobante: TipoComprobanteEnum,
-      xmlFirmado: string,
-      responseSunat: IResponseSunat,
-    ) {
-      //const cdr = responseSunat.cdr?.toString('base64') ?? null;
-      const hash = (await extraerHashCpe(xmlFirmado)) ?? '';
-      const motivo = responseSunat?.observaciones
-        ? JSON.stringify(responseSunat.observaciones)
-        : null;
-      const objectUpdate = setobjectUpdateComprobante(
-        tipoComprobante,
-        xmlFirmado,
-        responseSunat.cdr,
-        hash,
-        responseSunat.estadoSunat,
-        motivo ?? '',
-      );
-  
-      await this.useUpdateCaseComprobante.execute(
-        comprobanteId,
-        sucursalId,
-        objectUpdate,
-      );
+    comprobanteId: number,
+    sucursalId: number,
+    tipoComprobante: TipoComprobanteEnum,
+    xmlFirmado: string,
+    responseSunat: IResponseSunat,
+  ) {
+    //const cdr = responseSunat.cdr?.toString('base64') ?? null;
+    const hash = (await extraerHashCpe(xmlFirmado)) ?? '';
+    const motivo = responseSunat?.observaciones
+      ? JSON.stringify(responseSunat.observaciones)
+      : null;
+    const objectUpdate = setobjectUpdateComprobante(
+      tipoComprobante,
+      xmlFirmado,
+      responseSunat.cdr,
+      hash,
+      responseSunat.estadoSunat,
+      motivo ?? '',
+    );
+
+    await this.useUpdateCaseComprobante.execute(
+      comprobanteId,
+      sucursalId,
+      objectUpdate,
+    );
   }
   async procesarErrorSunat(
     error: any,
@@ -179,9 +195,9 @@ export class ComprobanteService {
       };
     } else {
       responseSunat = {
-        mensaje: "",
+        mensaje: '',
         estadoSunat: EstadoEnumComprobante.ERROR,
-        codigoResponse: "",
+        codigoResponse: '',
         status: false,
         observaciones: [],
         xmlFirmado,
@@ -202,10 +218,12 @@ export class ComprobanteService {
     data: CreateInvoiceDto,
     certificadoDigital: any,
     claveCertificado: string,
-    xmlService:XmlBuilderInvoiceService
   ) {
     const passwordDecrypt = CryptoUtil.decrypt(claveCertificado);
-    const xml = xmlService.buildXml(data);
+    let xml: string = ""
+    if(facturaBoletas.has(data.tipoComprobante as TipoComprobanteEnum)) {
+      xml = this.xmlInvoiceBuilder.buildXml(data);
+    }
     const xmlFirmado = await this.firmaService.firmarXml(
       xml,
       certificadoDigital,
@@ -214,6 +232,23 @@ export class ComprobanteService {
     const fileName = `${data.company.ruc}-${data.tipoComprobante}-${data.serie}-${data.correlativo}`;
     const zipBuffer = await ZipUtil.createZip(fileName, xmlFirmado);
     return { xmlFirmado, fileName, zipBuffer };
+  }
+  async cargarCatalogosTributarios(): Promise<{
+    catologo: any;
+    tasas: any;
+    tributosTasa: any;
+  }> {
+    const [catologo, tasas, tributosTasa] = await Promise.all([
+      this.catalogoRepositoryImpl.obtenertipoCatalogo(tiposCatalogos),
+      this.tributoTasaRepositoryImpl.findByCodigosSunat(tasasTributos),
+      this.findTasaByCodeUseCase.execute(tasasVigentes),
+    ]);
+
+    return {
+      catologo: catologo ?? [],
+      tasas: tasas ?? [],
+      tributosTasa: tributosTasa ?? [],
+    };
   }
 
   /**

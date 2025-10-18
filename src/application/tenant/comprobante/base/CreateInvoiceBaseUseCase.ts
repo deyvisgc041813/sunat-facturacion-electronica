@@ -1,44 +1,21 @@
-import { FirmaService } from 'src/infrastructure/sunat/firma/firma.service';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException } from '@nestjs/common';
-import {
-  CodigoSunatTasasEnum,
-  TipoCatalogoEnum,
-  TipoComprobanteEnum,
-} from 'src/util/catalogo.enum';
+import {CodigoSunatTasasEnum,TipoComprobanteEnum,} from 'src/util/catalogo.enum';
 import { EstadoEnumComprobante } from 'src/util/estado.enum';
-
-import { XmlBuilderInvoiceService } from 'src/infrastructure/sunat/xml/xml-builder-invoice.service';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
-import { MAP_TRIBUTOS } from 'src/util/constantes';
-import { FindTasaByCodeUseCase } from 'src/application/parent/Tasa/FindTasaByCodeUseCase';
 import { CreateInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/create.invoice.dto';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
-import { ICatalogoRepositoryPort } from 'src/domain/parent/catalogo/port/catalogo.repository.port';
-import { ITributoTasaRepositoryPort } from 'src/domain/parent/tributo-tasa/port/tasa-tributo.repository.port';
 import { ComprobanteService } from '../../../../domain/tenant/comprobante/services/comprobante.service';
 import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
-const tasasTributos = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.ICBPER.id];
-const tasasVigentes = [MAP_TRIBUTOS.IGV.id];
-const tiposCatalogos = [
-  TipoCatalogoEnum.UNIDAD_MEDIDA,
-  TipoCatalogoEnum.TIPO_AFECTACION,
-];
+
 export abstract class CreateInvoiceBaseUseCase {
   constructor(
-    protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService,
-    protected readonly firmaService: FirmaService,
     protected readonly sunatService: SunatService,
     protected readonly sucuralService: SucursalService,
-    protected readonly catalogoRepo: ICatalogoRepositoryPort,
-    protected readonly tributoRepo: ITributoTasaRepositoryPort,
-    protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly comprobanteService: ComprobanteService,
   ) {}
-
-  //protected abstract buildXml(data: CreateInvoiceDto): string;
 
   async execute(
     data: CreateInvoiceDto,
@@ -63,20 +40,14 @@ export abstract class CreateInvoiceBaseUseCase {
         auth,
         data?.client,
       );
-
-      const catologo =
-        (await this.catalogoRepo.obtenertipoCatalogo(tiposCatalogos)) ?? [];
-      const tasas =
-        (await this.tributoRepo.findByCodigosSunat(tasasTributos)) ?? [];
-      const tributosTasa =
-        (await this.findTasaByCodeUseCase.execute(tasasVigentes)) ?? [];
-      const tasaIgv = tributosTasa.get(CodigoSunatTasasEnum.IGV);
+      const catalogosTributos = await this.comprobanteService.cargarCatalogosTributarios()
+      const tasaIgv = catalogosTributos.tributosTasa.get(CodigoSunatTasasEnum.IGV);
       data.porcentajeIgv = tasaIgv == null ? 0.18 : tasaIgv / 100;
       // 1. Validar item de la factura
       const errores = ComprobantesHelper.validarDetalleInvoice(
         data.details,
-        catologo,
-        tasas,
+        catalogosTributos.catologo,
+        catalogosTributos.tasas,
       );
       if (errores.length > 0) {
         throw new BadRequestException({
@@ -106,8 +77,7 @@ export abstract class CreateInvoiceBaseUseCase {
         await this.comprobanteService.prepararXmlFirmado(
           invoice,
           sucursal.certificadoDigital,
-          sucursal.claveCertificado,
-          this.xmlInvoiceBuilder,
+          sucursal.claveCertificado
         );
       contextoError.xmlFirmado = xmlFirmado;
       contextoError.sucursalId = surcursalId;
@@ -115,7 +85,7 @@ export abstract class CreateInvoiceBaseUseCase {
       const claveSecundaria = CryptoUtil.decrypt( sucursal.claveSolSecundario ?? '',
       );
       // 5. Enviar a SUNAT
-      const responseSunat = await this.enviarASunat(
+      const responseSunat = await this.sendSunat(
         xmlFirmado,
         invoice.tipoComprobante,
         fileName,
@@ -146,7 +116,7 @@ export abstract class CreateInvoiceBaseUseCase {
     }
   }
 
-  private async enviarASunat(
+  private async sendSunat(
     xmlFirmado: any,
     tipoComprobante: string,
     fileName: string,

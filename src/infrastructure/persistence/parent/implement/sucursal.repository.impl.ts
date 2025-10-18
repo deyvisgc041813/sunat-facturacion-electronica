@@ -97,8 +97,6 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
     empresaId: number,
     sucursalId: number,
   ): Promise<SucursalResponseDto | null> {
-    console.log("empresaId ", empresaId)
-    console.log("sucursalId ", sucursalId)
     const sucursal = await this.repo.findOne({
       where: {
         sucursalId,

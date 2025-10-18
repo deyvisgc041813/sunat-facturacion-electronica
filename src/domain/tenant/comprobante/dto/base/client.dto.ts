@@ -1,4 +1,4 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   IsEmail,
   IsIn,
@@ -47,10 +47,10 @@ export class ClienteDto {
     message: 'El teléfono solo debe contener números',
   })
   telefono: string;
-
+  @Transform(({ value }) => (value === '' ? undefined : value))
   @IsOptional()
   @IsEmail({}, { message: 'El formato del correo electrónico no es válido.' })
-  correo: string;
+  correo?: string;
 
   @IsOptional() // en boleta puede faltar
   @ValidateNested()

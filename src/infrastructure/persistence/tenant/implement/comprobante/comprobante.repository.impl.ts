@@ -231,7 +231,6 @@ export class ComprobanteRepositoryImpl
     update: IUpdateComprobante,
   ): Promise<{ status: boolean; message: string }> {
     const repo = await this.getRepository();
-    console.log("update ", update.estado)
     try {
       await repo.update(
         { comprobanteId, sucursalId },
@@ -242,7 +241,6 @@ export class ComprobanteRepositoryImpl
         },
       );
       // Guardar respuesta SUNAT o registrar error
-      console.log("saveRespuestaSunat ", update.estado)
       await this.saveRespuestaSunat(comprobanteId, sucursalId, update);
 
       return { status: true, message: 'Comprobante actualizado correctamente' };

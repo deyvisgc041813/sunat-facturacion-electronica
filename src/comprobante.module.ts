@@ -44,6 +44,8 @@ import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/
 import { ComprobanteService } from './domain/tenant/comprobante/services/comprobante.service';
 import { SucursalModule } from './sucursal.module';
 import { ClienteService } from './domain/parent/cliente/service/cliente.service';
+import { CatalogoRepositoryImpl } from './infrastructure/persistence/parent/implement/catalogo.repository.impl';
+import { TributoTasaRepositoryImpl } from './infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -74,10 +76,35 @@ import { ClienteService } from './domain/parent/cliente/service/cliente.service'
         clienteService: ClienteService,
         createComprobanteUseCase: CreateComprobanteUseCase,
         updateComprobanteUseCase: UpdateComprobanteUseCase,
-        sunatLogRepositori:SunatLogRepositoryImpl,
-        firmaService: FirmaService
-      ) => new ComprobanteService(clienteService, createComprobanteUseCase, updateComprobanteUseCase, sunatLogRepositori, firmaService),
-      inject: [ClienteService, CreateComprobanteUseCase, UpdateComprobanteUseCase, SunatLogRepositoryImpl, FirmaService],
+        sunatLogRepositori: SunatLogRepositoryImpl,
+        firmaService: FirmaService,
+        catalogoRepositoryImpl: CatalogoRepositoryImpl,
+        tributoTasaRepositoryImpl: TributoTasaRepositoryImpl,
+        findTasaByCodeUseCase: FindTasaByCodeUseCase,
+        xmlInvoiceBuilder: XmlBuilderInvoiceService,
+      ) =>
+        new ComprobanteService(
+          clienteService,
+          createComprobanteUseCase,
+          updateComprobanteUseCase,
+          sunatLogRepositori,
+          firmaService,
+          catalogoRepositoryImpl,
+          tributoTasaRepositoryImpl,
+          findTasaByCodeUseCase,
+          xmlInvoiceBuilder
+        ),
+      inject: [
+        ClienteService,
+        CreateComprobanteUseCase,
+        UpdateComprobanteUseCase,
+        SunatLogRepositoryImpl,
+        FirmaService,
+        CatalogoRepositoryImpl,
+        TributoTasaRepositoryImpl,
+        FindTasaByCodeUseCase,
+        XmlBuilderInvoiceService
+      ],
     },
     XmlBuilderInvoiceService,
     XmlBuilderNotaCreditoService,
@@ -119,6 +146,7 @@ import { ClienteService } from './domain/parent/cliente/service/cliente.service'
     LogRespuestaSunatRepositoryImpl,
     TenantConeccionesModule,
     TenantContextModule,
+    ComprobanteService,
     SucursalModule,
   ],
 })

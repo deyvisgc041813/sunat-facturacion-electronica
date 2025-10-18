@@ -27,13 +27,6 @@ export enum EEstadosGlobales {
   CERRADA_PERMANENTE = "6",     // La sucursal está cerrada de forma permanente.
 }
 
-
-
-
-
-
-
-
 export enum EstadoEnvioSunat {
   PENDIENTE = 'PENDIENTE',         // Registrado pero aún no enviado
   ENVIADO = 'ENVIADO',             // Enviado a SUNAT, en espera
