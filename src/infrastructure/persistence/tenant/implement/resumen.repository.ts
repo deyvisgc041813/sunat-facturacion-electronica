@@ -8,6 +8,7 @@ import { ResumenResponseDto } from 'src/domain/tenant/resumen/dto/resumen.respon
 import { TenantRepositoryHelper } from 'src/domain/parent/conecciones-database/service/tenant-repository.helper';
 import { TenantContextService } from 'src/domain/parent/conecciones-database/service/tenant-context.service';
 import { BaseTenantRepository } from '../../base/base-tenant.repository';
+import dayjs from 'dayjs';
 
 @Injectable()
 export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOrmEntity> implements IResumenRepository {
@@ -51,6 +52,7 @@ export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOr
     data: Partial<CreateResumenBoletaDto>,
   ): Promise<void> {
     const repo = await this.getRepository();
+    data.fechaRespuestaSunat = dayjs().toDate() 
     await repo.update({ resumenId, sucursalId }, data);
   }
   async updateBySucursalAndTicket(sucursalId:number, ticket: string, data: any) {

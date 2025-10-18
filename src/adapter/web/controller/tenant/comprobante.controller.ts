@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  UseGuards,
+  Res,
+  ForbiddenException,
+} from '@nestjs/common';
 
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { SunatLogRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/auditoria/sunat-log.repository.impl';
@@ -44,9 +51,15 @@ export class ComprobanteController {
   async createInvoice(
     @Body() body: CreateInvoiceDto,
     @User() auth: IUserPayload,
-    @Res() res: Response
+    @Res() res: Response,
   ) {
+    if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
     const invoice = await this.createInvoiceUseCase.execute(body, auth);
+
     if (body.printOptions && '1' === body.printOptions.generatePdf) {
       const useCase = new CreatePdfUseCase(
         this.sucursalRepo,
@@ -57,7 +70,7 @@ export class ComprobanteController {
         auth?.empresaId ?? 0,
         auth?.sucursalActiva,
         invoice.comprobanteId ?? 0,
-        body.printOptions.format ?? "",
+        body.printOptions.format ?? '',
       );
       res.set({
         'Content-Type': 'application/pdf',
@@ -71,6 +84,11 @@ export class ComprobanteController {
   }
   @Post('/credit-notes')
   async createNc(@Body() body: CreateNotaDto, @User() auth: IUserPayload) {
+    if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
     return await this.createNcUseCase.execute(
       body,
       auth.empresaId ?? 0,
@@ -79,6 +97,11 @@ export class ComprobanteController {
   }
   @Post('/debit-notes')
   async createNd(@Body() body: CreateNotaDto, @User() auth: IUserPayload) {
+    if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
     return await this.createNdUseCase.execute(
       body,
       auth.empresaId ?? 0,
@@ -90,6 +113,11 @@ export class ComprobanteController {
     @Body() dto: CancelInvoiceDto,
     @User() auth: IUserPayload,
   ) {
+    if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
     return this.anularComprobante.execute(dto);
   }
   @Post('/validate-cpe')
@@ -97,6 +125,11 @@ export class ComprobanteController {
     @Body() body: ConsultarLoteCpeDto,
     @User() auth: IUserPayload,
   ) {
+    if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
     const useCase = new GetValidatedCpeUseCase(
       this.sunatService,
       this.comprobanteRepo,
@@ -118,6 +151,11 @@ export class ComprobanteController {
     @Body() body: ConsultarCpeDto,
     @User() auth: IUserPayload,
   ) {
+    if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
     const useCase = new GetStatusValidateCpeUseCase(
       this.sunatService,
       this.sunatLogRep,

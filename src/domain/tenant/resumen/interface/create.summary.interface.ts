@@ -10,7 +10,9 @@ export interface CreateResumenBoletaDto {
   xml: string;              // Contenido XML generado 
   ticket:string;
   resumenId:string;
+  detalle: ResumenBoletaDetalleDto[],
   cdr?: string;              // Constancia de Recepción de SUNAT (opcional)
   hashResumen?: string;      // Hash del resumen firmado (opcional)
-  detalle: ResumenBoletaDetalleDto[]
+  fechaRespuestaSunat?:Date
+
 }
