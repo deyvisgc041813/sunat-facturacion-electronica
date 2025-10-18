@@ -46,6 +46,7 @@ import { SucursalModule } from './sucursal.module';
 import { ClienteService } from './domain/parent/cliente/service/cliente.service';
 import { CatalogoRepositoryImpl } from './infrastructure/persistence/parent/implement/catalogo.repository.impl';
 import { TributoTasaRepositoryImpl } from './infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
+import { ComprobantePdfBuilderImpl } from './infrastructure/adapter/PdfServiceImpl';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -109,6 +110,7 @@ import { TributoTasaRepositoryImpl } from './infrastructure/persistence/parent/i
     XmlBuilderInvoiceService,
     XmlBuilderNotaCreditoService,
     XmlBuilderNotaDebitoService,
+    ComprobantePdfBuilderImpl,
     FirmaService,
     SunatService,
     EmpresaRepositoryImpl,

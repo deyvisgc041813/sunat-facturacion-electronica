@@ -28,7 +28,7 @@ export abstract class CreateInvoiceBaseUseCase {
       surcursalId,
       empresaId,
     );
-    const contextoError = {
+    const contexto = {
       comprobanteId: 0,
       sucursalId: 0,
       xmlFirmado: '',
@@ -64,7 +64,7 @@ export abstract class CreateInvoiceBaseUseCase {
         surcursalId,
         client?.clienteId,
       );
-      contextoError.comprobanteId = comprobante.data?.comprobanteId ?? 0;
+      contexto.comprobanteId = comprobante.data?.comprobanteId ?? 0;
       invoice.correlativo = comprobante.data?.correlativo ?? 0;
       // esto tambien agregar en nota de credito y debito , resumens y bajas
       ((invoice.correoEmpresa = sucursal.correo),
@@ -79,8 +79,8 @@ export abstract class CreateInvoiceBaseUseCase {
           sucursal.certificadoDigital,
           sucursal.claveCertificado
         );
-      contextoError.xmlFirmado = xmlFirmado;
-      contextoError.sucursalId = surcursalId;
+      contexto.xmlFirmado = xmlFirmado;
+      contexto.sucursalId = surcursalId;
       const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
       const claveSecundaria = CryptoUtil.decrypt( sucursal.claveSolSecundario ?? '',
       );
@@ -96,21 +96,21 @@ export abstract class CreateInvoiceBaseUseCase {
       responseSunat.xmlFirmado = xmlFirmado;
       // 6. Actualizar comprobante con CDR, Hash y estado
       await this.comprobanteService.actualizarComprobante(
-        contextoError.comprobanteId,
+        contexto.comprobanteId,
         surcursalId,
         invoice.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado,
         responseSunat,
       );
-
+      responseSunat.comprobanteId = contexto.comprobanteId
       return responseSunat;
     } catch (error: any) {
       await this.comprobanteService.procesarErrorSunat(
         error,
-        contextoError.data,
-        contextoError.comprobanteId,
-        contextoError.sucursalId,
-        contextoError.xmlFirmado,
+        contexto.data,
+        contexto.comprobanteId,
+        contexto.sucursalId,
+        contexto.xmlFirmado,
       );
       throw error;
     }

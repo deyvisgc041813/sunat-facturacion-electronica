@@ -7,7 +7,7 @@ import { IPdfService } from 'src/domain/tenant/exportar/pdf/pdf.service';
 import { IComprobantePdfDto } from 'src/domain/tenant/exportar/pdf/pdf.interface';
 
 @Injectable()
-export class PdfServiceImpl implements IPdfService {
+export class ComprobantePdfBuilderImpl implements IPdfService {
   async generarComprobanteA4(datos: IComprobantePdfDto): Promise<Buffer> {
     // 1. Leer plantilla desde disco
     const templatePath = path.join(

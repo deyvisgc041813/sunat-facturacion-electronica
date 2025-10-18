@@ -1,4 +1,3 @@
-
 import { BadRequestException } from '@nestjs/common';
 import QRCode from 'qrcode';
 
@@ -10,7 +9,10 @@ import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante
 import { IPdfService } from 'src/domain/tenant/exportar/pdf/pdf.service';
 import { EmpresaResponseDto } from 'src/domain/parent/empresa/dto/external.response.dto';
 import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
-import { IComprobantePdfDto, ItemComprobante } from 'src/domain/tenant/exportar/pdf/pdf.interface';
+import {
+  IComprobantePdfDto,
+  ItemComprobante,
+} from 'src/domain/tenant/exportar/pdf/pdf.interface';
 import { ComprobanteResponseDto } from 'src/domain/tenant/comprobante/dto/conprobante.response.dto';
 export class CreatePdfUseCase {
   constructor(
@@ -18,26 +20,35 @@ export class CreatePdfUseCase {
     private readonly comprobanteRepo: ConprobanteRepository,
     private readonly pdfService: IPdfService,
   ) {}
-  async execute(empresaId:number, sucursalId: number, comprobanteId: number, tipo: string): Promise<any> {
+  async execute(
+    empresaId: number,
+    sucursalId: number,
+    comprobanteId: number,
+    tipo: string,
+  ): Promise<any> {
     try {
-      const sucursal = await this.sucursalRepo.findSucursalInterna(empresaId, sucursalId);
+      const sucursal = await this.sucursalRepo.findSucursalInterna(
+        empresaId,
+        sucursalId,
+      );
       if (!sucursal) {
         throw new BadRequestException(
           'No se encontró información de la sucursal asociada al usuario actual. No es posible generar el comprobante.',
         );
       }
-      const comprobante = await this.comprobanteRepo.findById(
-        sucursalId,
-        [comprobanteId],
-      );
+      const comprobante = await this.comprobanteRepo.findById(sucursalId, [
+        comprobanteId,
+      ]);
       if (!comprobante || comprobante.length === 0) {
         throw new BadRequestException(
           `No se encontró información del comprobante con ID ${comprobanteId} para la sucursal ${sucursalId}.`,
         );
       }
       const dataComprobante = comprobante[0];
-      const empresa =  sucursal.empresa  as EmpresaResponseDto
-      const itemDetalle: ItemComprobante[] = comprobante[0].payloadJson?.details?.map((com: DetailDto) => {
+      const empresa = sucursal.empresa as EmpresaResponseDto;
+      const payloadJson = JSON.parse(comprobante[0]?.payloadJson)
+      const itemDetalle: ItemComprobante[] =
+        payloadJson?.details?.map((com: DetailDto) => {
           const cantidad = Number(com.cantidad) || 0;
           const pUnit = Number(com.mtoPrecioUnitario) || 0;
           const descuento = Number(com.mtoDescuento) || 0;
@@ -51,34 +62,31 @@ export class CreatePdfUseCase {
           };
         }) ?? [];
 
-
       const qr = await this.generarQRBoleta(
         empresa?.ruc,
         dataComprobante,
-        dataComprobante?.payloadJson,
+        payloadJson,
       );
 
-      const tipoComprobante = dataComprobante?.payloadJson?.tipoComprobante ?? '';
-      const numDocCliente = dataComprobante?.payloadJson?.client?.numDoc ?? '';
-      const clientePayloadJson =
-        dataComprobante?.payloadJson?.client?.rznSocial ?? '';
-      const tipoDocumentoCliente =
-        dataComprobante?.payloadJson?.client?.tipoDoc ?? '';
-      const direccionCliente =
-        dataComprobante?.payloadJson?.client?.address?.direccion ?? '';
-      const telefonoCliente =
-        dataComprobante?.payloadJson?.client?.telefono ?? '';
-      const formaPago = dataComprobante?.payloadJson?.formaPago?.tipo ?? '';
+      const tipoComprobante = payloadJson.tipoComprobante ?? '';
+      const numDocCliente = payloadJson?.client?.numDoc ?? '';
+      const clientePayloadJson = payloadJson?.client?.rznSocial ?? '';
+      const tipoDocumentoCliente = payloadJson?.client?.tipoDoc ?? '';
+      const direccionCliente = payloadJson?.client?.address?.direccion ?? '';
+      const telefonoCliente = payloadJson?.client?.telefono ?? '';
+      const formaPago = payloadJson?.formaPago?.tipo ?? '';
       const TipoDocumentoLabels: Record<string, string> = {
         '0': 'DOC. TRIB. NO DOM. SIN RUC',
         '1': 'DNI',
         '4': 'CARNET DE EXTRANJERÍA',
         '6': 'RUC',
         '7': 'PASAPORTE',
-        A: 'CÉDULA DIPLOMÁTICA',
+        'A': 'CÉDULA DIPLOMÁTICA',
       };
       const data: IComprobantePdfDto = {
-        logo: !empresa?.logo ? 'https://w7.pngwing.com/pngs/902/964/png-transparent-chicken-hot-rooster-fire-logo-thumbnail.png' : empresa.logo,
+        logo: !empresa?.logo
+          ? 'https://w7.pngwing.com/pngs/902/964/png-transparent-chicken-hot-rooster-fire-logo-thumbnail.png'
+          : empresa.logo,
         empresa: empresa?.razonSocial,
         rucEmpresa: empresa.ruc,
         direccionEmpresa: empresa?.direccion ?? '',
@@ -105,14 +113,13 @@ export class CreatePdfUseCase {
         vendedor: '',
         urlConsulta: 'https://rdinversiones.easyfacturasegdt.com/buscar',
         items: itemDetalle,
-        titleComprobante: this.setTitleComprobante(tipoComprobante) ?? ""
+        titleComprobante: this.setTitleComprobante(tipoComprobante) ?? '',
       };
-      if("A4" === tipo){
+      if ('A4' === tipo) {
         return this.pdfService.generarComprobanteA4(data);
       } else {
         return this.pdfService.generarComprobanteTicket(data);
       }
-
     } catch (err) {
       throw err;
     }
@@ -144,19 +151,18 @@ export class CreatePdfUseCase {
       console.error('Error generando QR:', err);
     }
   }
-private setTitleComprobante(tipoComprobante: string): string {
-  let message = "";
-  
-  if (TipoComprobanteEnum.BOLETA === tipoComprobante) {
-    message = "BOLETA DE VENTA";
-  } else if (TipoComprobanteEnum.FACTURA === tipoComprobante) {
-    message = "FACTURA DE VENTA";
-  } else if (TipoComprobanteEnum.NOTA_CREDITO === tipoComprobante) {
-    message = "NOTA DE CRÉDITO";
-  } else if (TipoComprobanteEnum.NOTA_DEBITO === tipoComprobante) {
-    message = "NOTA DE DÉBITO";
-  }
-  return message
-}
+  private setTitleComprobante(tipoComprobante: string): string {
+    let message = '';
 
+    if (TipoComprobanteEnum.BOLETA === tipoComprobante) {
+      message = 'BOLETA DE VENTA';
+    } else if (TipoComprobanteEnum.FACTURA === tipoComprobante) {
+      message = 'FACTURA DE VENTA';
+    } else if (TipoComprobanteEnum.NOTA_CREDITO === tipoComprobante) {
+      message = 'NOTA DE CRÉDITO';
+    } else if (TipoComprobanteEnum.NOTA_DEBITO === tipoComprobante) {
+      message = 'NOTA DE DÉBITO';
+    }
+    return message;
+  }
 }
