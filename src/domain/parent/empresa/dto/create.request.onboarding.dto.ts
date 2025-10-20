@@ -116,15 +116,13 @@ export class CreateEmpresaOnboardingDto {
   })
   readonly entorno: string = 'BETA';
   @Expose({ name: 'generate_sucursal' })
-  @Transform(({ value }) => Boolean(value))
+  @Transform(({ value }) => String(value))
   @IsNotEmpty({ message: 'El campo "generate_sucursal" es obligatorio.' })
-  @IsBoolean({ message: 'El campo "generate_sucursal" debe ser de tipo booleano (true o false).' })
-  generateSucursal: boolean;
+  generateSucursal: string;
   @Expose({ name: 'activar_sucursal' })
-  @Transform(({ value }) => Boolean(value))
+  @Transform(({ value }) => String(value))
   @IsNotEmpty({ message: 'El campo "activar_sucursal" es obligatorio.' })
-  @IsBoolean({ message: 'El campo "activar_sucursal" debe ser de tipo booleano (true o false).' })
-  activarSucursal: boolean;
+  activarSucursal: string;
   @IsOptional()
   logoPublicId: string;
   @IsOptional()

@@ -276,7 +276,7 @@ export class EmpresaService {
       let createSucursal = new CreateSucursalDto();
       const distrito = await this.ubigeoService.getDistritoById(body.distritoId)
 
-      if(body.activarSucursal) {
+      if(body.activarSucursal === "1") {
         createSucursal.empresaId = empresa?.data?.empresaId
         createSucursal.distritoId = body.distritoId,
         createSucursal.nombre = body.razonSocial
@@ -293,8 +293,8 @@ export class EmpresaService {
         createSucursal.estado = EEstadosGlobales.HABILITADA_FACTURACION
         sucursal = await this.sucursalService.create(createSucursal, auth);
       }
+      console.log(sucursal)
       const sucursalId = sucursal?.data?.sucursalId
-      console.log("sucursalId ", sucursalId)
       tenant = await this.tenantService.activateTenant(sucursalId, body?.ruc, subDominioClient.replace(/[^a-z0-9]/g, ''));
       const rsp = await this.authService.branchActive(sucursalId, empresa?.data?.empresaId, auth, false)
       return {
