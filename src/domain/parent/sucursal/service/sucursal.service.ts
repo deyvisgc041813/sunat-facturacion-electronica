@@ -242,7 +242,7 @@ export class SucursalService {
       tenantInvocado = true;
       const numRuc = sucursalHabilitada.empresa?.ruc ?? '';
       const subDominio = sucursalHabilitada.subDominio ?? '';
-      await this.tenantService.activateTenant(sucursalId, numRuc, subDominio);
+      await this.tenantService.createTenant(sucursalId, numRuc, subDominio);
       const accion = 'Activar sucursal para facturacion (estado=2)';
       const logData = buildLogData({
         tablaAfectada: ETablaAudit.SUCURSAL,

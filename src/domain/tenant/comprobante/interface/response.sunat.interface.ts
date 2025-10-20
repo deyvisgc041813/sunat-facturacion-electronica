@@ -7,5 +7,6 @@ export interface IResponseSunat {
   status: boolean;
   xmlFirmado?: any;
   observaciones: string[],
+  comprobanteId?:number,
   cdr?: Buffer | null | undefined
 }

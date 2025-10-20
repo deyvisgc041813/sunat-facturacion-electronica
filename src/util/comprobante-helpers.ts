@@ -82,26 +82,21 @@ export class ComprobantesHelper {
     data.legends = generateLegends(data.mtoImpVenta);
     return data;
   }
-  // validaciones de entrada
-  static validarDetallesCliente(data: CreateInvoiceDto) {
-    if (!data.details || data.details.length === 0) {
-      throw new BadRequestException(
-        'El comprobante debe tener al menos un ítem.',
-      );
-    }
-    data.details.forEach((d, i) => {
-      if (d.cantidad <= 0) {
-        throw new BadRequestException(
-          `El ítem ${i + 1} tiene cantidad inválida.`,
-        );
-      }
-      if (d.mtoValorUnitario < 0) {
-        throw new BadRequestException(
-          `El ítem ${i + 1} tiene precio inválido.`,
-        );
-      }
-    });
-  }
+  // static validarDetallesCliente(data: CreateInvoiceDto) {
+  //   if (!data.details || data.details.length === 0) {
+  //     throw new BadRequestException(
+  //       'El comprobante debe tener al menos un ítem.',
+  //     );
+  //   }
+  //   data.details.forEach((d, i) => {
+  //     if (d.cantidad <= 0) {
+  //       throw new BadRequestException(
+  //         `El ítem ${i + 1} tiene cantidad inválida.`,
+  //       );
+  //     }
+
+  //   });
+  // }
 
   private static round(num: number, places: number = 2): number {
     const factor = 10 ** places;
@@ -142,6 +137,14 @@ export class ComprobantesHelper {
     );
     details.forEach((item, index) => {
       const row = index + 1;
+
+      if (item.mtoValorUnitario < 0) {
+        errores.push({
+          index: row,
+          field: 'mtoValorUnitario',
+          message: 'El precio unitario debe ser mayor a 0.',
+        });
+      }
       // 1. Validar unidad de medida
       if (!codigosUnidades.includes(item.unidad)) {
         errores.push({

@@ -585,6 +585,9 @@ export class SunatService {
   ): Promise<IResponseSunat> {
     usuario = process.env.SUNAT_ENV === 'prod' ? usuario : this.username;
     password = process.env.SUNAT_ENV === 'prod' ? password : this.password;
+    console.log("usuario ", usuario)
+    console.log("password ", password)
+    console.log("ticket ", ticket)
     try {
       const envelope = `<?xml version="1.0" encoding="UTF-8"?>
           <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
@@ -615,7 +618,7 @@ export class SunatService {
         maxContentLength: Infinity,
         validateStatus: () => true,
       });
-
+      console.log("response ", response)
       const xml = response.data;
 
       // obtengo error de sunat

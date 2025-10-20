@@ -12,9 +12,10 @@ import {
 import { IsSerieValida } from 'src/common/validator/validate.series';
 
 export class ComprobanteBaseDto {
-  @IsNotEmpty({ message: 'El ID de la sucursal es obligatorio' })
-  @IsInt({ message: 'El ID de la sucursal debe ser un número entero' })
-  @IsPositive({ message: 'El ID de la sucursal debe ser mayor a 0' })
+  // @IsNotEmpty({ message: 'El ID de la sucursal es obligatorio' })
+  // @IsInt({ message: 'El ID de la sucursal debe ser un número entero' })
+  // @IsPositive({ message: 'El ID de la sucursal debe ser mayor a 0' })
+  @IsOptional()
   sucursalId: number;
 
   @IsString({ message: 'La versión UBL debe ser un texto' })

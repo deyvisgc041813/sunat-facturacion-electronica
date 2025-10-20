@@ -32,13 +32,13 @@ const forge = require('node-forge');
 
 @Injectable()
 export class EmpresaService {
-   private readonly logger = new Logger(EmpresaService.name);
+  private readonly logger = new Logger(EmpresaService.name);
   constructor(
     private readonly empRepo: EmpresaRepositoryImpl,
     private readonly sucursalService: SucursalService,
     private readonly tenantService: TenantDatabaseService,
     private readonly authService: AuthService,
-    private readonly ubigeoService : UbigeoService,
+    private readonly ubigeoService: UbigeoService,
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
@@ -89,7 +89,7 @@ export class EmpresaService {
       });
       data.logo = fileMain?.url;
       data.logoPublicId = fileMain.public_id;
-      data.plan = obtenerDescPlan(data.plan)
+      data.plan = obtenerDescPlan(data.plan);
       const newEmpresa = await this.empRepo.save(data);
       const logData = buildLogData({
         tablaAfectada: ETablaAudit.EMPRESA,
@@ -178,7 +178,7 @@ export class EmpresaService {
     } else {
       delete data.logo;
     }
-    data.plan = obtenerDescPlan(data.plan ?? "")
+    data.plan = obtenerDescPlan(data.plan ?? '');
     const updateEmpresa = await this.empRepo.update(
       empresaEdit.empresaId,
       data,
@@ -206,7 +206,7 @@ export class EmpresaService {
     try {
       const rsp = await this.empRepo.updateStatus(
         empresaId,
-        EEstadosGlobales.ELIMINADO
+        EEstadosGlobales.ELIMINADO,
       );
       const logData = buildLogData({
         tablaAfectada: ETablaAudit.EMPRESA,
@@ -231,17 +231,15 @@ export class EmpresaService {
     auth: IUserPayload,
   ): Promise<GenericResponse<void>> {
     if (
-      ![EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO].includes( nuevoEstado,
+      ![EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO].includes(
+        nuevoEstado,
       )
     ) {
       throw new BadRequestException(
         'El estado solo puede ser 1 (activo) o 0 (inactivo)',
       );
     }
-    const serie = await this.empRepo.updateStatus(
-      empresaId,
-      nuevoEstado,
-    );
+    const serie = await this.empRepo.updateStatus(empresaId, nuevoEstado);
     if (!serie) throw new NotFoundException('Empresa no encontrada');
 
     const accion =
@@ -263,58 +261,74 @@ export class EmpresaService {
       message: accion,
     };
   }
-  async createOnboarding(body: CreateEmpresaOnboardingDto, auth: IUserPayload): Promise<any> {
-    let empresa:any = null;
-    let sucursal:any = null;
+  async createOnboarding(
+    body: CreateEmpresaOnboardingDto,
+    auth: IUserPayload,
+  ): Promise<any> {
+    let empresa: any = null;
+    let sucursal: any = null;
     let tenant: any = null;
-    const dominioBase =  process.env.DOMINIO_PRINCIPAL;
+    let activate: any = null;
+    const dominioBase = process.env.DOMINIO_PRINCIPAL;
     const subDominioClient = body.subDominio.trim().toLowerCase();
-    const subDominioCompleto = `${subDominioClient}.${dominioBase}`
+    const subDominioCompleto = `${subDominioClient}.${dominioBase}`;
     try {
-      const createEmpresa: CreateEmpresaDto  = {... body}
+      const createEmpresa: CreateEmpresaDto = { ...body };
       empresa = await this.save(createEmpresa, auth);
       let createSucursal = new CreateSucursalDto();
-      const distrito = await this.ubigeoService.getDistritoById(body.distritoId)
+      const distrito = await this.ubigeoService.getDistritoById(
+        body.distritoId,
+      );
 
-      if(body.activarSucursal === "1") {
-        createSucursal.empresaId = empresa?.data?.empresaId
-        createSucursal.distritoId = body.distritoId,
-        createSucursal.nombre = body.razonSocial
-        createSucursal.subDominio = subDominioCompleto
-        createSucursal.direccion = body.direccion
-        createSucursal.ubigeo = distrito?.ubigeo
-        createSucursal.telefono = body.telefono
-        createSucursal.email = body.email
-        createSucursal.signatureId = process.env.SIGNATURENOTE ?? "FIRMADIGITALOnboarding"
-        createSucursal.signatureNote =  process.env.SIGNATUREID ?? "DIGITALWEBFACTURALO"
-        createSucursal.codigoEstablecimiento = body.codigoEstablecimiento,
-        createSucursal.entorno = body.entorno
-        createSucursal.usuarioRegistro = "systemOnboarding"
-        createSucursal.estado = EEstadosGlobales.HABILITADA_FACTURACION
+      if (body.activarSucursal === '1') {
+        createSucursal.empresaId = empresa?.data?.empresaId;
+        ((createSucursal.distritoId = body.distritoId),
+          (createSucursal.nombre = body.razonSocial));
+        createSucursal.subDominio = subDominioCompleto;
+        createSucursal.direccion = body.direccion;
+        createSucursal.ubigeo = distrito?.ubigeo;
+        createSucursal.telefono = body.telefono;
+        createSucursal.email = body.email;
+        createSucursal.signatureId =
+          process.env.SIGNATURENOTE ?? 'FIRMADIGITALOnboarding';
+        createSucursal.signatureNote =
+          process.env.SIGNATUREID ?? 'DIGITALWEBFACTURALO';
+        ((createSucursal.codigoEstablecimiento = body.codigoEstablecimiento),
+          (createSucursal.entorno = body.entorno));
+        createSucursal.usuarioRegistro = 'systemOnboarding';
+        createSucursal.estado = EEstadosGlobales.HABILITADA_FACTURACION;
         sucursal = await this.sucursalService.create(createSucursal, auth);
       }
-      console.log(sucursal)
-      const sucursalId = sucursal?.data?.sucursalId
-      tenant = await this.tenantService.activateTenant(sucursalId, body?.ruc, subDominioClient.replace(/[^a-z0-9]/g, ''));
-      const rsp = await this.authService.branchActive(sucursalId, empresa?.data?.empresaId, auth, false)
+      const sucursalId = sucursal?.data?.sucursalId;
+      if (body.activarSucursal === '1') {
+        tenant = await this.tenantService.createTenant(
+          sucursalId,
+          body?.ruc,
+          subDominioClient.replace(/[^a-z0-9]/g, ''),
+        );
+        auth.empresaId = empresa?.data?.empresaId
+        activate = await this.authService.branchActive(
+          sucursalId,
+          auth,
+          false,
+        );
+      }
       return {
         success: true,
-        message: 'Onboarding completado con éxito',
-        rsp
+        message: 'La empresa y su sucursal han sido registradas y habilitadas para emitir comprobantes electrónicos.',
+        activate,
       };
     } catch (error) {
       this.logger.error('Error durante el onboarding', error);
-    // rollback manual
-      if (tenant) {
-        await this.tenantService.deleteTenant(sucursal.data.sucursalId, body.ruc, subDominioClient).catch(e => this.logger.warn('Rollback tenant falló', e));
-      }
-      if (sucursal) {
-        await this.sucursalService.deleteById(sucursal.data.sucursalId, empresa.data.empresaId)
-        .catch(e => this.logger.warn('Rollback sucursal falló', e));
-      }
-      if (empresa) {
-        await this.empRepo.deleteById(empresa.data.empresaId).catch(e => this.logger.warn('Rollback empresa falló', e));
-      }
+      await this.tenantService
+        .deleteTenant(sucursal?.data?.sucursalId, body?.ruc, subDominioClient?.replace(/[^a-z0-9]/g, ''))
+        .catch((e) => this.logger.warn('Rollback tenant falló', e));
+      await this.sucursalService
+        .deleteById(sucursal?.data?.sucursalId, empresa?.data?.empresaId)
+        .catch((e) => this.logger.warn('Rollback sucursal falló', e));
+      await this.empRepo
+        .deleteById(empresa?.data?.empresaId)
+        .catch((e) => this.logger.warn('Rollback empresa falló', e));
       throw error;
     }
   }

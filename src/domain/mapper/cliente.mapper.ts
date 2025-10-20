@@ -18,8 +18,6 @@ export class ClienteMapper {
       orm.correo,
       orm.telefono,
       orm.nombre,
-      orm.apellidoPaterno,
-      orm.apellidoMaterno,
       orm.estadoComtribuyente,
       orm.condicionDomicilio,
       empresa
@@ -36,8 +34,6 @@ export class ClienteMapper {
      object.correo = orm.correo
      object.telefono = orm.telefono
      object.nombre = orm.nombre,
-     object.apellidoPaterno = orm.apellidoPaterno
-     object.apellidoMaterno = orm.apellidoMaterno
      object.estadoComtribuyente = orm.estadoComtribuyente
      object.condicionDomicilio = orm.condicionDomicilio
      return object

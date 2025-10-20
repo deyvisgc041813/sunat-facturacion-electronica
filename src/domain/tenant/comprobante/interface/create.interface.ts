@@ -22,6 +22,7 @@ export interface ICreateComprobante {
     | TipoDocumentoIdentidadEnum.PASAPORTE
     | TipoDocumentoIdentidadEnum.CEDULA_DIPLOMATICA;
   fechaEmision: string;
+  fechaVencimiento: string;
   moneda: string; // PEN, USD
   // Totales
   totalGravado?: number;

@@ -69,9 +69,6 @@ export function validarDatosSegunTipoDocumento(
       if (!cliente.nombre) {
         throw new BadRequestException('El nombre del cliente es obligatorio');
       }
-      if (!cliente.apellidoPaterno || !cliente.apellidoMaterno) {
-        throw new BadRequestException('Los apellidos son obligatorios');
-      }
       break;
 
     case TipoDocumentoIdentidadEnum.RUC:

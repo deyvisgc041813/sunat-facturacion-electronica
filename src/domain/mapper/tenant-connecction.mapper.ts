@@ -4,6 +4,7 @@ import { SucursalMapper } from './sucursal.mapper';
 
 export class TenantConecctionMapper {
   static toDomain(orm: TenantConnectionOrmEntity): TenantConnectionsResponseDto {
+    const sucursal = orm.sucursal ? SucursalMapper.toDomain(orm?.sucursal) : undefined
     return new TenantConnectionsResponseDto(
        orm.coneccionId,
       orm.dbName,
@@ -13,7 +14,7 @@ export class TenantConecctionMapper {
       orm.dbPassword,
       orm.dbHost,
       orm.dbPort,
-      SucursalMapper.toDomain(orm.sucursal)
+      sucursal
     );
   }
 }

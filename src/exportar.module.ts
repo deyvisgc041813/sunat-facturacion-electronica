@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ExportarController } from './adapter/web/controller/tenant/exportar.controller';
-import { PdfServiceImpl } from './infrastructure/adapter/PdfServiceImpl';
+import { ComprobantePdfBuilderImpl } from './infrastructure/adapter/PdfServiceImpl';
 import { SucursalRepositoryImpl } from './infrastructure/persistence/parent/implement/sucursal.repository.impl';
 import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
@@ -31,7 +31,7 @@ import { ComprobanteModule } from './comprobante.module';
   controllers: [ExportarController],
   providers: [
     ComprobanteRepositoryImpl,
-    PdfServiceImpl,
+    ComprobantePdfBuilderImpl,
     CreatePdfUseCase,
     ClienteRepositoryImpl,
     SucursalRepositoryImpl

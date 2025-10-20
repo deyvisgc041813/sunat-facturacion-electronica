@@ -7,7 +7,7 @@ import {
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { PdfServiceImpl } from 'src/infrastructure/adapter/PdfServiceImpl';
+import { ComprobantePdfBuilderImpl } from 'src/infrastructure/adapter/PdfServiceImpl';
 import type { Response } from 'express';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/sucursal.repository.impl';
 import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
@@ -23,7 +23,7 @@ export class ExportarController {
   constructor(
     private readonly sucursalRepo: SucursalRepositoryImpl,
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
-    private readonly pdfImpl: PdfServiceImpl,
+    private readonly comprobantePdfBuilderImpl: ComprobantePdfBuilderImpl,
   ) {}
 
   @Get('/comprobantes/:id/pdf')
@@ -41,7 +41,7 @@ export class ExportarController {
     const useCase = new CreatePdfUseCase(
       this.sucursalRepo,
       this.comprobanteRepo,
-      this.pdfImpl,
+      this.comprobantePdfBuilderImpl,
     );
     const pdfBuffer = await useCase.execute(
       auth?.empresaId ?? 0,

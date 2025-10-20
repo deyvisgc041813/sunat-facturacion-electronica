@@ -25,11 +25,11 @@ export class ResumenBoletasOrmEntity {
 
   @Column({ name: 'fec_referencia', type: 'date' })
   fechaReferencia: Date;
-  @Column({ name: 'fecha_recepcion_sunat', type: 'date' })
+  @Column({ name: 'fecha_recepcion_sunat', type: 'date', nullable: true })
   fechaRespuestaSunat: Date;
-  @Column({ name: 'codigo_respuesta_sunat', type: 'varchar', length: 20 })
+  @Column({ name: 'codigo_respuesta_sunat', type: 'varchar', length: 20, nullable: true })
   codResPuestaSunat: string;
-  @Column({ name: 'mensaje_sunat', type: 'varchar', length: 250 })
+  @Column({ name: 'mensaje_sunat', type: 'varchar', length: 250, nullable: true  })
   mensajeSunat: string;
 
   @Column({ type: 'int' })

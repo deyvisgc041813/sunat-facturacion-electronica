@@ -12,8 +12,6 @@ export class ClienteResponseDto {
     public readonly correo?: string,
     public readonly telefono?: string,
     public readonly nombre?: string,
-    public readonly apellidoPaterno?: string,
-    public readonly apellidoMaterno?: string,
     public readonly estadoComtribuyente?: string,
     public readonly condicionDomicilio?: string,
     public empresa?: EmpresaResponseDto

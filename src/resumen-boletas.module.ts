@@ -14,6 +14,12 @@ import { ResumenController } from './adapter/web/controller/tenant/resumen.contr
 import { CreateResumenUseCase } from './application/tenant/resumen/create/CreateResumenUseCase';
 import { GetNextCorrelativoUseCase } from './application/tenant/resumen/query/GetNextCorrelativoUseCase';
 import { GetStatusResumenUseCase } from './application/tenant/resumen/query/GetStatusResumenUseCase';
+import { ResumenService } from './domain/tenant/resumen/service/resumen.service';
+import { ComprobanteRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/comprobante.repository.impl';
+import { SunatLogRepositoryImpl } from './infrastructure/persistence/tenant/implement/auditoria/sunat-log.repository.impl';
+import { FirmaService } from './infrastructure/sunat/firma/firma.service';
+import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/tenant/implement/serie-comprobante.repository.impl';
+import { SunatService } from './infrastructure/sunat/send/sunat.service';
 
 @Module({
   imports: [
@@ -30,6 +36,36 @@ import { GetStatusResumenUseCase } from './application/tenant/resumen/query/GetS
   ],
   controllers: [ResumenController],
   providers: [
+        {
+          provide: ResumenService,
+          useFactory: (
+            comprobanteRepositoryImpl: ComprobanteRepositoryImpl,
+            resumenRepositoryImpl: ResumenRepositoryImpl,
+            sunatLogRepositoryImpl: SunatLogRepositoryImpl,
+            firmaService: FirmaService,
+            serieComprobanteRepositoryImpl: SerieComprobanteRepositoryImpl,
+            xmlBuilderResumenService: XmlBuilderResumenService,
+            sunatService: SunatService
+          ) =>
+            new ResumenService(
+              comprobanteRepositoryImpl,
+              resumenRepositoryImpl,
+              sunatLogRepositoryImpl,
+              firmaService,
+              serieComprobanteRepositoryImpl,
+              xmlBuilderResumenService,
+              sunatService
+            ),
+          inject: [
+            ComprobanteRepositoryImpl,
+            ResumenRepositoryImpl,
+            SunatLogRepositoryImpl,
+            FirmaService,
+            SerieComprobanteRepositoryImpl,
+            XmlBuilderResumenService,
+            SunatService
+          ],
+        },
     CreateResumenUseCase,
     GetNextCorrelativoUseCase,
     GetStatusResumenUseCase,

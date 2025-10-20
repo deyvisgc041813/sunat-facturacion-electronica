@@ -207,9 +207,9 @@ export abstract class CreateNotaCreditoBaseUseCase {
         sucursalId,
         cliente.clienteId
       );
-      comprobanteId = comprobante.response?.comprobanteId ?? 0;
+      comprobanteId = comprobante.data?.comprobanteId ?? 0;
       jsonFinal.correlativo =
-        comprobante.response?.correlativo ?? jsonFinal.correlativo;
+        comprobante.data?.correlativo ?? jsonFinal.correlativo;
       jsonFinal.correoEmpresa = empresa?.correo ?? '';
       jsonFinal.telefonoEmpresa = empresa?.telefono ?? '';
       jsonFinal.signatureId = sucursal?.signatureId ?? '';
@@ -309,6 +309,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       numeroDocumento: data.client.numDoc,
       tipoDocumento: data.client.tipoDoc as TipoDocumentoIdentidadEnum,
       fechaEmision: DateUtils.toMySQLDateTime(data.fechaEmision),
+      fechaVencimiento: DateUtils.toMySQLDateTime(data?.fechaVencimiento),
       moneda: data.tipoMoneda,
       totalGravado: data.mtoOperGravadas ?? 0,
       totalExonerado: data.mtoOperExoneradas ?? 0,

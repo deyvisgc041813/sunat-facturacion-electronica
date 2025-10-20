@@ -9,6 +9,7 @@ import { ISucursalRepository } from 'src/domain/parent/sucursal/ports/sucursal.r
 import { SucursalResponseDto } from 'src/domain/parent/sucursal/dto/sucursal.response.dto';
 import { CreateSucursalDto } from 'src/domain/parent/sucursal/dto/create.request.dto';
 import { UpdateSucursalDto } from 'src/domain/parent/sucursal/dto/update.request.dto';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 const estadosVisibles = [
   EEstadosGlobales.ACTIVO,
   EEstadosGlobales.INACTIVO,
@@ -105,7 +106,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       relations: ['empresa'],
     });
     if (!sucursal) {
-      throw new NotFoundException(
+     throw new BusinessLogicException(
         'La sucursal actual no se encuentra activa para emitir comprobantes de venta. Verifique el estado o comuníquese con el administrador del sistema.',
       );
     }

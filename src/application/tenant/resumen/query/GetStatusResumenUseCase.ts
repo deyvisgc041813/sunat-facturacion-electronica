@@ -1,23 +1,12 @@
-import { BadRequestException } from '@nestjs/common';
-import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
-import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
-import { ISucursalRepository } from 'src/domain/parent/sucursal/ports/sucursal.repository';
-import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante.repository';
+import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
-import { ResumenResponseDto } from 'src/domain/tenant/resumen/dto/resumen.response.dto';
-import { CreateSunatLogDto } from 'src/domain/tenant/sunat-log/interface/sunat.log.interface';
-import { SunatLogRepository } from 'src/domain/tenant/sunat-log/port/sunat-log.repository.port';
+import { ComprobanteService } from 'src/domain/tenant/comprobante/services/comprobante.service';
+import { ResumenService } from 'src/domain/tenant/resumen/service/resumen.service';
 import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/resumen.repository';
-import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import {
-  codigoRespuestaSunatMap,
-  EstadoComunicacionEnvioSunat,
-  EstadoEnumComprobante,
   EstadoEnvioSunat,
 } from 'src/util/estado.enum';
-import { mapSunatToEstado } from 'src/util/Helpers';
-import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 const estadosFinales = new Set([
   EstadoEnvioSunat.ACEPTADO,
   EstadoEnvioSunat.RECHAZADO,
@@ -25,11 +14,10 @@ const estadosFinales = new Set([
 ]);
 export class GetStatusResumenUseCase {
   constructor(
-    private readonly sunatService: SunatService,
     private readonly resumenRepo: ResumenRepositoryImpl,
-    private readonly sunatLogRepo: SunatLogRepository,
-    private readonly comprobanteRepo: ConprobanteRepository,
-    private readonly sucurSalRepo: ISucursalRepository,
+    protected readonly comprobanteService: ComprobanteService,
+    protected readonly sucuralService: SucursalService,
+    protected readonly resumenService: ResumenService,
   ) {}
 
   async execute(
@@ -37,67 +25,36 @@ export class GetStatusResumenUseCase {
     sucursalId: number,
     ticket: string,
   ): Promise<IResponseSunat> {
-    const sucursal = await this.sucurSalRepo.findSucursalInterna(
+    const sucursal = await this.sucuralService.getDigitalCertificate(
+      sucursalId,
       empresaId,
-      sucursalId,
     );
-    if (!sucursal) {
-      throw new BadRequestException(
-        `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
-      );
-    }
-    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
-    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
-      throw new Error(
-        `No se encontró certificado digital para la sucursal con RUC ${empresa?.ruc}`,
-      );
-    }
 
-    const resumen = await this.resumenRepo.findBySucursalAndTicket(
-      sucursalId,
-      ticket,
-    );
+    const resumen = await this.resumenService.findBySucursalAndTicket(sucursalId, ticket)
     try {
-      if (!resumen) {
-        throw new BadRequestException(
-          `No existe un resumen registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
-        );
-      }
-      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
-      const claveSecundaria = CryptoUtil.decrypt(empresa.claveSolSecundario ?? '');
-      await this.validarEstadoFinalResumen(resumen);
-      const result = await this.sunatService.getStatus(
+      const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(
+        sucursal.claveSolSecundario ?? '',
+      );
+      await this.resumenService.validarEstadoFinalResumen(resumen);
+    
+      const result = await this.resumenService.consultarEstadoTicketSunat(
         ticket,
         usuarioSecundario,
         claveSecundaria,
       );
-
-      // 2. Actualizar estado en la BD según respuesta
-
-      await this.resumenRepo.updateBySucursalAndTicket(sucursalId, ticket, {
-        estado: mapSunatToEstado(result.codigoResponse ?? ''),
-        codResPuestaSunat: result.codigoResponse ?? '',
-        cdr: result.cdr?.toString('base64') ?? null,
-        mensajeSunat: result.mensaje,
-        observacionSunat:
-          result.observaciones.length > 0
-            ? JSON.stringify(result.observaciones)
-            : null,
-        fechaRespuestaSunat: new Date(),
-      });
-
+      console.log("result ", result)
+      await this.resumenService.updateBySucursalAndTicket(
+        sucursalId,
+        ticket,
+        result,
+      );
       // 3. Actualizar boletas
       const boletasIds: number[] = (resumen?.detalles ?? [])
         .map((d) => d.comprobante?.comprobanteId)
         .filter((id): id is number => id !== undefined);
       // esto se debe cambiar con el tocken
-      await this.comprobanteRepo.updateBoletaStatus(
-        sucursalId,
-        boletasIds,
-        EstadoEnumComprobante.ACEPTADO,
-        EstadoComunicacionEnvioSunat.ACEPTADO_PROCESADO,
-      );
-      // 4. Retornar resultado
+      await this.resumenService.updateBoletaStatus(sucursalId, boletasIds);
       return result;
     } catch (error: any) {
       // 9. Actualizar resumen con error
@@ -108,52 +65,16 @@ export class GetStatusResumenUseCase {
             estado: EstadoEnvioSunat.ERROR,
           });
         }
-        await this.procesarErrorResumen(
+        await this.resumenService.procesarErrorResumen(
           error,
           resumen?.resBolId ?? 0,
           resumen?.sucursalId ?? 0,
           resumenId,
           resumen.xml ?? '',
+          resumenId,
         );
       }
       throw error;
-    }
-  }
-  private async procesarErrorResumen(
-    error: any,
-    resumendIdBd: number,
-    sucursalId: number,
-    serie: string,
-    xmlFirmado: string,
-  ) {
-    const rspError = ErrorMapper.mapError(error, {
-      sucursalId,
-      tipo: 'RC', // Resumen
-      serie,
-    });
-
-    if (rspError?.tipoError === OrigenErrorEnum.SUNAT) {
-      const obj = rspError?.create as CreateSunatLogDto;
-      obj.codigoResSunat = JSON.parse(obj.response ?? '')?.code;
-      obj.resumenId = resumendIdBd;
-      obj.serie = serie;
-      obj.request = xmlFirmado;
-      obj.sucursalId = sucursalId;
-      ((obj.intentos = 0), // esto cambiar cuando este ok
-        (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
-      obj.fechaRespuesta = new Date();
-      obj.fechaEnvio = new Date()
-      await this.sunatLogRepo.save(obj);
-    }
-  }
-  private async validarEstadoFinalResumen(resumen: ResumenResponseDto) {
-    const estado = codigoRespuestaSunatMap[resumen?.codigoRespuestaSunat ?? ''];
-
-    if (estadosFinales.has(estado)) {
-      throw new BadRequestException(
-        `El resumen ya fue procesado por SUNAT y se encuentra en estado definitivo (${estado}). ` +
-          `No es posible volver a enviarlo ni consultarlo nuevamente.`,
-      );
     }
   }
 }

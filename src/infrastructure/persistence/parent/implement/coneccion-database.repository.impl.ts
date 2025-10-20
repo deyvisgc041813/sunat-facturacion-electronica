@@ -39,6 +39,7 @@ export class TenantConnectionRepositoryImpl implements ITenantDatabaseRepository
   }
   async findByDbUser(dbUser:string): Promise<TenantConnectionsResponseDto | null> {
     const coneccion = await this.tenantRepo.findOne({ where: { estado: EEstadosGlobales.ACTIVO, dbUser: dbUser }, relations: ["sucursal"] });
+    console.log("coneccion ", coneccion)
     if(!coneccion) return null
     return TenantConecctionMapper.toDomain(coneccion) 
   }
