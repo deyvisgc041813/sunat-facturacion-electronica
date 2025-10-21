@@ -1,5 +1,5 @@
 import { ComunicacionBajaRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/baja.repository.impl';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 import {
   extraerHashCpe,
@@ -46,6 +46,7 @@ export interface IComunicacionIdentificadorResponse {
 }
 @Injectable()
 export class ComunicacionBajaService {
+  private readonly logger = new Logger(ComunicacionBajaService.name);
   constructor(
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
     protected readonly sunatLogRepo: SunatLogRepositoryImpl,
@@ -65,6 +66,7 @@ export class ComunicacionBajaService {
     message: string;
     xmlFirmado: string;
     ticket: string;
+    comprobantesNoProcesados: string[];
   }> {
     const empresaId = auth?.empresaId ?? 0;
     const sucursalId = auth.sucursalActiva ?? 0;
@@ -73,7 +75,7 @@ export class ComunicacionBajaService {
       empresaId,
     );
     const tenantDatabase = auth.subDominio;
-    const comprobante = this.obetnerComprobantes(data);
+    const comprobante = this.obetnerComprobantesDto(data);
     const comprobantesBaja =
       (await this.comprobanteRepo.findById(
         sucursalId,
@@ -81,7 +83,10 @@ export class ComunicacionBajaService {
         tenantDatabase,
       )) ?? [];
     // validar que estos comprobantes ya esten como anulados o enviados
-    this.validarComprobantesParaBaja(data, comprobantesBaja);
+    const bajaProcesable = this.validarComprobantesParaBaja(
+      data,
+      comprobantesBaja,
+    );
 
     const fechas = this.obtenerFechasBaja();
     // Obtener serie y correlativo
@@ -105,7 +110,6 @@ export class ComunicacionBajaService {
       sucursal.certificadoDigital,
       passwordDecript,
     );
-
     // Comprimir ZIP
     const fileName = this.obtenerNombreFile(
       data.company.ruc,
@@ -115,6 +119,13 @@ export class ComunicacionBajaService {
     );
     const zipBuffer = await ZipUtil.createZip(fileName, xmlFirmado);
     // 8. Guardar preliminarmente la baja en BD (estado enviado)
+    // const detalle = bajaProcesable.comprobanteIdsValidos.map(id => {
+    //   const valido = comprobante.detalle.find(cp => cp.comprobanteId == id)
+    //   return valido as IComunicacionBajaDetalle
+    // })
+    const detalle = bajaProcesable.comprobanteIdsValidos
+      .map((id) => data.detalles.find((cp) => cp.comprobanteId == id))
+      .filter((d): d is ComunicacionBajaDetalleDto => !!d);
     const newBaja = await this.saveBaja(
       sucursalId,
       comunicacion,
@@ -122,7 +133,7 @@ export class ComunicacionBajaService {
       fechas.fechaEnvio,
       data.fecReferencia,
       fileName,
-      comprobante.detalle,
+      detalle,
     );
     await this.serieRepo.setNextCorrelativo(
       sucursalId,
@@ -161,12 +172,17 @@ export class ComunicacionBajaService {
         EstadoComunicacionEnvioSunat.ENVIADO,
         tenantDatabase,
       );
+      const comprobantesValidos = bajaProcesable.comprobanteIdsValidos?.length > 0;
       return {
-        status: true,
-        message: `La comunicación de baja fue enviada correctamente a SUNAT. Ticket asignado: ${ticket}`,
-        xmlFirmado,
-        ticket,
+        status: comprobantesValidos,
+        message: comprobantesValidos
+          ? `La comunicación de baja fue enviada correctamente a SUNAT. Ticket asignado: ${ticket}`
+          : 'No se encontraron comprobantes válidos para enviar la comunicación de baja.',
+        xmlFirmado: comprobantesValidos ? xmlFirmado ?? '' : '',
+        ticket: comprobantesValidos ? ticket ?? '' : '',
+        comprobantesNoProcesados: bajaProcesable.errores ?? [],
       };
+
     } catch (error: any) {
       // 9. Actualizar baja con error
       await this.bajaRepo.update(
@@ -333,16 +349,54 @@ export class ComunicacionBajaService {
   //   }
   //   return resumen;
   // }
+  // private validarComprobantesParaBaja(
+  //   data: ComunicacionBajaDto,
+  //   comprobantesBaja: ComprobanteResponseDto[],
+  //   procesoAutomatic:boolean = false
+  // ): boolean {
+  //   const errores: string[] = [];
+  //   for (const item of data.detalles) {
+  //     const comprobante = comprobantesBaja.find(
+  //       (c) => c.comprobanteId === item.comprobanteId,
+  //     );
+
+  //     if (!comprobante) {
+  //       errores.push(`El comprobante con ID ${item.comprobanteId} no existe.`);
+  //       continue;
+  //     }
+
+  //     if (
+  //       [EstadoEnumComprobante.ENVIADO, EstadoEnumComprobante.ANULADO].includes(
+  //         comprobante.estado as EstadoEnumComprobante,
+  //       )
+  //     ) {
+  //       errores.push(
+  //         `El comprobante ${comprobante.serie?.serie}-${comprobante.numeroComprobante} ya fue dado de baja o está en proceso de baja.`,
+  //       );
+  //     }
+  //   }
+  //   if (errores.length > 0) {
+  //     if(!procesoAutomatic ) {
+  //       throw new BusinessLogicObjectException({
+  //         success: false,
+  //         statusCode: 400,
+  //         message: errores,
+  //       });
+  //     }
+  //     //this.logger.warn()
+  //   }
+  //   return true;
+  // }
   private validarComprobantesParaBaja(
     data: ComunicacionBajaDto,
     comprobantesBaja: ComprobanteResponseDto[],
-  ): boolean {
+  ): { comprobanteIdsValidos: number[]; errores: string[] } {
     const errores: string[] = [];
+    const comprobanteIdsValidos: number[] = [];
     for (const item of data.detalles) {
       const comprobante = comprobantesBaja.find(
         (c) => c.comprobanteId === item.comprobanteId,
       );
-
       if (!comprobante) {
         errores.push(`El comprobante con ID ${item.comprobanteId} no existe.`);
         continue;
@@ -356,18 +410,14 @@ export class ComunicacionBajaService {
         errores.push(
           `El comprobante ${comprobante.serie?.serie}-${comprobante.numeroComprobante} ya fue dado de baja o está en proceso de baja.`,
         );
+        continue;
       }
+      comprobanteIdsValidos.push(comprobante.comprobanteId);
     }
-    if (errores.length > 0) {
-      throw new BusinessLogicObjectException({
-        success: false,
-        statusCode: 400,
-        message: errores,
-      });
-    }
-    return true;
+    return { comprobanteIdsValidos, errores };
   }
-  private obetnerComprobantes(data: ComunicacionBajaDto): {
+
+  private obetnerComprobantesDto(data: ComunicacionBajaDto): {
     comprobanteIds: number[];
     detalle: IComunicacionBajaDetalle[];
   } {
