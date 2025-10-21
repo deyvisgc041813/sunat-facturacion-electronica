@@ -1,12 +1,10 @@
-import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { CronService } from './cron-job.service';
 import { CronJobResponseDto } from '../dto/cron-job.response.dto';
 import { SummaryDocumentDto } from 'src/domain/tenant/resumen/dto/summary-document.dto';
 import { getFechaHoraActualLimaFormat } from 'src/util/Helpers';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ResumenService } from 'src/domain/tenant/resumen/service/resumen.service';
-import { ModuleRef, NestFactory } from '@nestjs/core';
-import { ResumenBoletasModule } from 'src/resumen-boletas.module';
 
 @Injectable()
 export class CronRunnerService {
@@ -145,7 +143,7 @@ export class CronRunnerService {
       const data = new SummaryDocumentDto();
       data.ublVersion = '2.0';
       data.customizationID = '1.1';
-      data.fecReferencia = "2025-09-11T12:26:13-05:00",//getFechaHoraActualLimaFormat('YYYY-MM-DDTHH:mm:ssZ');
+      data.fecReferencia = getFechaHoraActualLimaFormat('YYYY-MM-DDTHH:mm:ssZ') //"2025-09-11T12:26:13-05:00";
       data.serieResumen = payload.serieResumen;
       data.company = payload.company;
       data.sucursalId = payload.sucursalId ?? auth.sucursalActiva ?? 1;

@@ -1,4 +1,9 @@
-import { Injectable, HttpException, HttpStatus, Scope } from '@nestjs/common';
+import {
+  Injectable,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import axios from 'axios';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ClienteResponseDto } from 'src/domain/parent/cliente/dto/client.response.dto';
@@ -32,6 +37,7 @@ import { MAP_TRIBUTOS } from 'src/util/constantes';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/catalogo.repository.impl';
 import { TributoTasaRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
 import { FindTasaByCodeUseCase } from 'src/application/parent/Tasa/FindTasaByCodeUseCase';
+import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 const tipoDocDni = new Set(['1', '01']);
 const tipoRucs = new Set(['6', '06']);
 const tasasTributos = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.ICBPER.id];
@@ -40,7 +46,10 @@ const tiposCatalogos = [
   TipoCatalogoEnum.UNIDAD_MEDIDA,
   TipoCatalogoEnum.TIPO_AFECTACION,
 ];
-const facturaBoletas = new Set([TipoComprobanteEnum.BOLETA, TipoComprobanteEnum.FACTURA])
+const facturaBoletas = new Set([
+  TipoComprobanteEnum.BOLETA,
+  TipoComprobanteEnum.FACTURA,
+]);
 @Injectable()
 export class ComprobanteService {
   constructor(
@@ -52,51 +61,51 @@ export class ComprobanteService {
     protected readonly catalogoRepositoryImpl: CatalogoRepositoryImpl,
     protected readonly tributoTasaRepositoryImpl: TributoTasaRepositoryImpl,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
-    protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService
+    protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService,
   ) {}
-
-  private readonly RENIEC_API = 'https://api.apis.net.pe/v1/dni';
-  private readonly SUNAT_API = 'https://api.apis.net.pe/v1/ruc';
-  private readonly TOKEN = process.env.APIS_PERU_TOKEN; // tu token de apis.net.pe
-
-  /**
-   * Método principal unificado.
-   * Detecta si es DNI o RUC y llama al método correspondiente.
-   */
+  private readonly logger = new Logger(ComprobanteService.name);
+  // private readonly RENIEC_API = 'https://api.apis.net.pe/v1/dni';
+  // private readonly SUNAT_API = 'https://api.apis.net.pe/v1/ruc';
+  // private readonly TOKEN = process.env.APIS_PERU_TOKEN; // tu token de apis.net.pe
 
   async consultarDocumento(
     empresaId: number,
     auth: IUserPayload,
-    client: ClienteDto,
+    dtoClient: ClienteDto,
   ) {
     try {
-      let cliente = await this.clientService.getByNumDocumento(client?.numDoc);
+      ComprobantesHelper.validarRucEmision(dtoClient);
+      let cliente = await this.clientService.getByNumDocumento(
+        dtoClient?.numDoc,
+      );
       if (!cliente) {
-        //if (tipoRucs.has(client.)) return await this.buscarRuc(numero);
+        console.log("dtoClient?.tipoDoc ", dtoClient?.tipoDoc)
+        const isFactura = TipoDocumentoIdentidadEnum.RUC === dtoClient?.tipoDoc;
+        console.log(isFactura)
         const save = new CreateClienteDto({
-          nombre:
-            TipoComprobanteEnum.BOLETA === client?.tipoDoc
-              ? client?.rznSocial
-              : '',
-          tipoDocumento: client?.tipoDoc,
-          numeroDocumento: client?.numDoc,
-          razonSocial:
-            TipoComprobanteEnum.FACTURA === client?.tipoDoc
-              ? client?.rznSocial
-              : '',
-          direccion: client?.address?.direccion,
-          correo: client?.correo,
-          telefono: client?.telefono,
+          nombre: isFactura ? "" : dtoClient?.rznSocial,
+          tipoDocumento: dtoClient?.tipoDoc,
+          numeroDocumento: dtoClient?.numDoc,
+          razonSocial: isFactura ? dtoClient?.rznSocial  : '',
+          direccion: dtoClient?.address?.direccion,
+          correo: dtoClient?.correo,
+          telefono: dtoClient?.telefono,
           empresaId,
-          condicionDomicilio: 'HABIDO',
-          estadoComtribuyente: 'A',
-          distrito: client?.address?.distrito,
-          departamento: client?.address.departamento,
-          provincia: client?.address?.provincia,
+          condicionDomicilio: isFactura ? dtoClient.rucCondicion : '',
+          estadoComtribuyente: isFactura ? dtoClient.rucEstado: '',
+          distrito: dtoClient?.address?.distrito,
+          departamento: dtoClient?.address.departamento,
+          provincia: dtoClient?.address?.provincia,
         });
         cliente = (await this.clientService.create(save, auth, 'AUTOMATICO'))
           ?.data as ClienteResponseDto;
       }
+      if (dtoClient.tipoDoc === TipoComprobanteEnum.FACTURA)
+        cliente = await this.sincronizarClienteFactura(
+          cliente,
+          dtoClient,
+          auth,
+        );
       return cliente;
     } catch (error) {
       console.error('Error en consultarDocumento:', error.message);
@@ -220,8 +229,8 @@ export class ComprobanteService {
     claveCertificado: string,
   ) {
     const passwordDecrypt = CryptoUtil.decrypt(claveCertificado);
-    let xml: string = ""
-    if(facturaBoletas.has(data.tipoComprobante as TipoComprobanteEnum)) {
+    let xml: string = '';
+    if (facturaBoletas.has(data.tipoComprobante as TipoComprobanteEnum)) {
       xml = this.xmlInvoiceBuilder.buildXml(data);
     }
     const xmlFirmado = await this.firmaService.firmarXml(
@@ -255,52 +264,88 @@ export class ComprobanteService {
    * Consulta DNI → RENIEC
    */
   private async buscarDni(numero: string) {
-    try {
-      const { data } = await axios.get(`${this.RENIEC_API}?numero=${numero}`, {
-        headers: { Authorization: `Bearer ${this.TOKEN}` },
-      });
+    // try {
+    //   const { data } = await axios.get(`${this.RENIEC_API}?numero=${numero}`, {
+    //     headers: { Authorization: `Bearer ${this.TOKEN}` },
+    //   });
 
-      return {
-        tipoDocumento: '01',
-        numeroDocumento: numero,
-        nombre: `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`,
-        apellidoPaterno: data.apellidoPaterno,
-        apellidoMaterno: data.apellidoMaterno,
-        nombres: data.nombres,
-        fuente: 'RENIEC',
-      };
-    } catch (error) {
-      throw new HttpException(
-        'No se encontró el DNI en RENIEC',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    //   return {
+    //     tipoDocumento: '01',
+    //     numeroDocumento: numero,
+    //     nombre: `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`,
+    //     apellidoPaterno: data.apellidoPaterno,
+    //     apellidoMaterno: data.apellidoMaterno,
+    //     nombres: data.nombres,
+    //     fuente: 'RENIEC',
+    //   };
+    // } catch (error) {
+    //   throw new HttpException(
+    //     'No se encontró el DNI en RENIEC',
+    //     HttpStatus.NOT_FOUND,
+    //   );
+    // }
+  }
+  /**
+   * Sincroniza los datos del cliente con los valores recibidos desde SUNAT o el comprobante,
+   * actualizando la dirección, condición y estado del RUC solo si detecta cambios.
+   *
+   * @param cliente Cliente actual registrado en la base de datos.
+   * @param dtoClient Datos del cliente recibidos desde el comprobante.
+   * @param auth Usuario autenticado que ejecuta la acción.
+   * @returns Cliente actualizado o el mismo si no hubo cambios.
+   */
+  private async sincronizarClienteFactura(
+    cliente: ClienteResponseDto,
+    dtoClient: ClienteDto,
+    auth: IUserPayload,
+  ): Promise<ClienteResponseDto> {
+    const direccionNueva = dtoClient?.address?.direccion?.trim();
+    const condicionNueva = dtoClient?.rucCondicion?.trim();
+    const estadoNuevo = dtoClient?.rucEstado?.trim();
+    const requiereActualizacion =
+      cliente?.direccion?.trim() !== direccionNueva ||
+      cliente?.condicionDomicilio !== condicionNueva ||
+      cliente?.estadoComtribuyente !== estadoNuevo;
+
+    if (!requiereActualizacion) return cliente;
+    const clienteUpdate: Partial<ClienteResponseDto> = {
+      ...cliente,
+      direccion: direccionNueva,
+      condicionDomicilio: condicionNueva,
+      estadoComtribuyente: estadoNuevo,
+    };
+
+    await this.clientService.update(cliente.clienteId, auth, clienteUpdate);
+    this.logger?.warn?.(
+      `Cliente ${cliente.numeroDocumento} actualizado automáticamente por diferencias en datos SUNAT.`,
+    );
+    return clienteUpdate as ClienteResponseDto;
   }
 
   /**
    * Consulta RUC → SUNAT
    */
   private async buscarRuc(numero: string) {
-    try {
-      const { data } = await axios.get(`${this.SUNAT_API}?numero=${numero}`, {
-        headers: { Authorization: `Bearer ${this.TOKEN}` },
-      });
+    // try {
+    //   const { data } = await axios.get(`${this.SUNAT_API}?numero=${numero}`, {
+    //     headers: { Authorization: `Bearer ${this.TOKEN}` },
+    //   });
 
-      return {
-        tipoDocumento: '06',
-        numeroDocumento: numero,
-        razonSocial: data.nombre,
-        direccion: data.direccion,
-        estado: data.estado,
-        condicion: data.condicion,
-        ubigeo: data.ubigeo,
-        fuente: 'SUNAT',
-      };
-    } catch (error) {
-      throw new HttpException(
-        'No se encontró el RUC en SUNAT',
-        HttpStatus.NOT_FOUND,
-      );
-    }
+    //   return {
+    //     tipoDocumento: '06',
+    //     numeroDocumento: numero,
+    //     razonSocial: data.nombre,
+    //     direccion: data.direccion,
+    //     estado: data.estado,
+    //     condicion: data.condicion,
+    //     ubigeo: data.ubigeo,
+    //     fuente: 'SUNAT',
+    //   };
+    // } catch (error) {
+    //   throw new HttpException(
+    //     'No se encontró el RUC en SUNAT',
+    //     HttpStatus.NOT_FOUND,
+    //   );
+    // }
   }
 }

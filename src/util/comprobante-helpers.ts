@@ -1,15 +1,18 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 import { generateLegends } from './Helpers';
+import { TipoCatalogoEnum, TipoComprobanteEnum } from './catalogo.enum';
 import {
-  TipoCatalogoEnum,
-  TipoComprobanteEnum,
-} from './catalogo.enum';
-import { MAP_TRIBUTOS, TIPO_AFECTACION_EXONERADAS, TIPO_AFECTACION_GRAVADAS, TIPO_AFECTACION_INAFECTAS } from './constantes';
+  MAP_TRIBUTOS,
+  TIPO_AFECTACION_EXONERADAS,
+  TIPO_AFECTACION_GRAVADAS,
+  TIPO_AFECTACION_INAFECTAS,
+} from './constantes';
 import { CreateInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/create.invoice.dto';
 import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
 import { ResponseCatalogoTipoDTO } from 'src/domain/parent/catalogo/dto/catalogo.response';
 import { TributoTasaResponseDto } from 'src/domain/parent/tributo-tasa/dto/response.tributo-tasa.dto';
 import { CreateNotaDto } from 'src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto';
+import { ClienteDto } from 'src/domain/tenant/comprobante/dto/base/client.dto';
 interface ValidationError {
   index: number; // índice del detalle
   field: string; // campo validado
@@ -273,6 +276,20 @@ export class ComprobantesHelper {
         message: 'Errores en detalles',
         errors: errores,
       });
+    }
+  }
+  static validarRucEmision(dtoClient: ClienteDto) {
+    if (dtoClient.tipoDoc === TipoComprobanteEnum.FACTURA) {
+      if (dtoClient.rucEstado?.toUpperCase() !== 'ACTIVO') {
+        throw new Error(
+          `El RUC ${dtoClient.numDoc} no puede emitir factura. Estado actual: ${dtoClient.rucEstado}`,
+        );
+      }
+      if (dtoClient.rucCondicion?.toUpperCase() !== 'HABIDO') {
+        console.log(
+          `El RUC ${dtoClient.numDoc} tiene domicilio ${dtoClient.rucCondicion}. Factura podría ser observada por SUNAT.`,
+        );
+      }
     }
   }
 }

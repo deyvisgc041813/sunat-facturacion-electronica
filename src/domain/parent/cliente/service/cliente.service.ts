@@ -75,7 +75,7 @@ export class ClienteService {
   }
   async getByNumDocumento(numDoc: string): Promise<ClienteResponseDto | null> {
     const cliente = await this.clienteRepo.findByDocumento(numDoc);
-    if (!cliente) throw new NotFoundException('Cliente no encontrado.');
+    if (!cliente) return null;
     return cliente;
   }
 

@@ -10,11 +10,9 @@ import { CronRunnerService } from './domain/parent/scheduler/service/cron-job-ru
 import { startScheduler } from './startScheduler';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
     // Prefijo global para el facturador
   app.setGlobalPrefix('api/v1', {
     exclude: [
-      // excluye health si quieres
       { path: 'health', method: RequestMethod.GET },
     ],
   });

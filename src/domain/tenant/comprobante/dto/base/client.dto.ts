@@ -38,7 +38,15 @@ export class ClienteDto {
     message: 'La razón social o el nombre debe tener entre 2 y 250 caracteres',
   })
   rznSocial: string;
+  @IsNotEmpty({
+    message: 'El estado del RUC es obligatorio.',
+  })
+  rucEstado: string;
 
+  @IsNotEmpty({
+    message: 'La condición del domicilio fiscal es obligatoria.',
+  })
+  rucCondicion: string;
   @IsOptional()
   @MaxLength(9, {
     message: 'El teléfono no puede tener más de 9 dígitos',
