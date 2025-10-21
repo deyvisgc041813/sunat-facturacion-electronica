@@ -40,11 +40,7 @@ export class ResumenController {
         `No tienes autorización para realizar esta acción desde la sucursal actual.`,
       );
     }
-    const useCase = new CreateResumenUseCase(
-      this.comprobanteService,
-      this.resumenService,
-      this.sucuralService
-    );
+    const useCase = new CreateResumenUseCase( this.resumenService );
     return await useCase.execute(body, auth);
   }
   @Get('status/:ticket')

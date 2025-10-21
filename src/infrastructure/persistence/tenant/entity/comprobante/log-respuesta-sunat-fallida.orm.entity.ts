@@ -34,6 +34,6 @@ export class LogRespuestaSunatOrmEntity {
   @Column({ name: 'error_mensaje', type: 'text', nullable: true })
   errorMensaje: string | null;
 
-  @CreateDateColumn({ name: 'fecha_error', type: "datetime" })
+  @CreateDateColumn({ name: 'fecha_error', type: "datetime", nullable: true })
   fechaError: Date;
 }

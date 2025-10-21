@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
+import {
+  OperacionResumenEnum,
+  TipoComprobanteEnum,
+} from 'src/util/catalogo.enum';
 import {
   extraerHashCpe,
   getFechaHoraActualLima,
@@ -34,6 +37,9 @@ import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { ResumenResponseDto } from '../dto/resumen.response.dto';
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 import { IResponseSunat } from '../../comprobante/interface/response.sunat.interface';
+import { SummaryDocumentDto } from '../dto/summary-document.dto';
+import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
+import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 export interface ISunatPayloadData {
   signedXml: string;
   fileName: string;
@@ -61,7 +67,106 @@ export class ResumenService {
     private readonly serieRepo: SerieComprobanteRepositoryImpl,
     private readonly xmlBuilderResumenBpService: XmlBuilderResumenService,
     private readonly sunatService: SunatService,
+    protected readonly sucursalService: SucursalService,
   ) {}
+
+  async iniciarProceso(
+    data: SummaryDocumentDto,
+    auth: IUserPayload,
+  ): Promise<{
+    status: boolean;
+    message: string;
+    xmlFirmado: string;
+    ticket: string;
+  }> {
+    const empresaId = auth?.empresaId ?? 0;
+    const sucursalId = auth.sucursalActiva ?? 0;
+    const sucursal = await this.sucursalService.getDigitalCertificate(
+      sucursalId,
+      empresaId,
+    );
+    const tenantDatabase = auth.subDominio;
+    const fechas = this.obtenerFechasResumen();
+    // 1. Obtener correlativo y boletas
+    const resumen = await this.obtenerResumenId(
+      sucursalId,
+      fechas.fechaEnvioResumen,
+      data.serieResumen,
+      tenantDatabase,
+    );
+
+    const boletas = await this.obtenerBoletasPendientes(
+      sucursalId,
+      data.serie ?? 'B001',
+      data.fecReferencia,
+      tenantDatabase,
+    );
+    if (!boletas.length) {
+      return {
+        status: false,
+        message: 'No existen boletas pendientes para enviar en el resumen.',
+        xmlFirmado: '',
+        ticket: '',
+      };
+    }
+
+    // 2. Mapear documentos y armar resumen
+    const documentos = this.mapearDocumentos(boletas);
+    const objectSummary: ISummaryDocument = {
+      ublVersion: data.ublVersion,
+      customizationID: data.customizationID,
+      resumenId: resumen.resumenId,
+      fechaEnvio: fechas.fechaEnvio,
+      fecReferencia: new Date(data.fecReferencia),
+      company: data.company,
+      documentos,
+      signatureId: sucursal?.signatureId ?? '',
+      signatureNote: sucursal?.signatureNote ?? '',
+    };
+    const builResumen = await this.buildSunatSubmissionPayload(
+      objectSummary,
+      sucursal.certificadoDigital,
+      sucursal.claveCertificado,
+      fechas.fechaEnvioResumen,
+      resumen.correlativo,
+      data.serieResumen,
+    );
+    const detalle: ResumenBoletaDetalleDto[] = objectSummary.documentos.map(
+      (bol: IDocumento) => ({
+        comprobanteId: bol.comprobanteId,
+        operacion: OperacionResumenEnum.ADICIONAR,
+      }),
+    );
+    const resumenSave = await this.createResumen(
+      sucursalId,
+      resumen.correlativo,
+      fechas.fechaEnvio,
+      objectSummary.fecReferencia,
+      builResumen?.fileName,
+      builResumen?.signedXml,
+      builResumen?.hash,
+      resumen?.resumenId,
+      detalle,
+      tenantDatabase
+    );
+    await this.setNextCorrelativo(
+      sucursalId,
+      resumen?.serieId,
+      resumen?.correlativo,
+      tenantDatabase
+    );
+    const rpta = this.submitResumenSunat(
+      sucursalId,
+      sucursal,
+      builResumen,
+      resumen,
+      detalle,
+      resumenSave.data ?? 0,
+      data.serie ?? '',
+      tenantDatabase
+    );
+    return rpta;
+  }
 
   async buildSunatSubmissionPayload(
     objectSummary: ISummaryDocument,
@@ -101,11 +206,13 @@ export class ResumenService {
     sucursalId: number,
     fecResumen: string,
     serie: string,
+    tenantDatabase?: string,
   ): Promise<IResumenIdentificadorResponse> {
     const rsp = await this.serieRepo.getNextCorrelativo(
       sucursalId,
       TipoComprobanteEnum.RESUMEN_DIARIO,
       serie,
+      tenantDatabase,
     );
     return {
       resumenId: `${serie}-${fecResumen}-${rsp.correlativo}`,
@@ -117,11 +224,13 @@ export class ResumenService {
     sucursalId: number,
     serie: string,
     fechaReferencia: string,
+    tenantDatabase?: string,
   ) {
     const rspSerie = await this.serieRepo.findBySucursalTipCompSerie(
       sucursalId,
       TipoComprobanteEnum.BOLETA,
       serie,
+      tenantDatabase,
     );
     const serieId = rspSerie?.serieId ?? 0;
 
@@ -130,6 +239,7 @@ export class ResumenService {
       serieId,
       fechaReferencia,
       [EstadoEnumComprobante.PENDIENTE, EstadoEnumComprobante.ANULADO],
+      tenantDatabase
     );
   }
   async procesarErrorResumen(
@@ -139,13 +249,13 @@ export class ResumenService {
     resumenId: string,
     xmlFirmado: string,
     serie: string,
+    tenantDatabase?:string
   ) {
     const rspError = ErrorMapper.mapError(error, {
       sucursalId,
       tipo: serie, // Resumen
       serie: resumenId,
     });
-
     if (rspError?.tipoError === OrigenErrorEnum.SUNAT) {
       const obj = rspError?.create as CreateSunatLogDto;
       obj.resumenId = resumendIdBd;
@@ -156,7 +266,7 @@ export class ResumenService {
         (obj.usuarioEnvio = 'DEYVISGC')); // esto cambiar cuando este ok
       obj.fechaRespuesta = new Date();
       obj.fechaEnvio = new Date();
-      await this.sunatLogRepo.save(obj);
+      await this.sunatLogRepo.save(obj, tenantDatabase);
     }
   }
   mapearDocumentos(boletas: any[]): IDocumento[] {
@@ -214,6 +324,7 @@ export class ResumenService {
     hash: string,
     resumenId: string,
     detalle: ResumenBoletaDetalleDto[],
+    tenantDatabase?: string,
   ) {
     const resumenEntity: CreateResumenBoletaDto = {
       sucursalId,
@@ -229,7 +340,10 @@ export class ResumenService {
       detalle,
     };
 
-    const savedResumen = await this.resumenRepo.save(resumenEntity);
+    const savedResumen = await this.resumenRepo.save(
+      resumenEntity,
+      tenantDatabase,
+    );
     return savedResumen;
   }
 
@@ -237,11 +351,13 @@ export class ResumenService {
     sucursalId: number,
     serieId: number,
     newCorrelativo: number,
+    tenantDatabase?:string
   ) {
     await this.serieRepo.setNextCorrelativo(
       sucursalId,
       serieId,
       newCorrelativo,
+      tenantDatabase
     );
   }
   async submitResumenSunat(
@@ -252,6 +368,7 @@ export class ResumenService {
     detalle: ResumenBoletaDetalleDto[],
     resumenIdBd: number,
     serie: string,
+    tenantDatabase?:string
   ) {
     try {
       const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
@@ -273,11 +390,12 @@ export class ResumenService {
           estado: EstadoEnvioSunat.ENVIADO,
           ticket,
         },
+        tenantDatabase
       );
 
       // 8. Actualizar boletas
       const boletasIds = detalle.map((d) => d.comprobanteId);
-      await this.updateBoletaStatus(sucursalId, boletasIds);
+      await this.updateBoletaStatus(sucursalId, boletasIds, tenantDatabase);
       return {
         status: true,
         message: `Resumen diario enviado correctamente. Ticket: ${ticket}`,
@@ -292,6 +410,7 @@ export class ResumenService {
         {
           estado: EstadoEnvioSunat.ERROR,
         },
+        tenantDatabase
       );
       await this.procesarErrorResumen(
         error,
@@ -304,12 +423,13 @@ export class ResumenService {
       throw error;
     }
   }
-  async updateBoletaStatus(sucursalId: number, boletasIds: number[]) {
+  async updateBoletaStatus(sucursalId: number, boletasIds: number[], tenantDatabase?:string) {
     await this.comprobanteRepo.updateBoletaStatus(
       sucursalId,
       boletasIds,
       EstadoEnumComprobante.ENVIADO,
       EstadoComunicacionEnvioSunat.ENVIADO,
+      tenantDatabase
     );
   }
   async validarEstadoFinalResumen(resumen: ResumenResponseDto | null) {
@@ -325,19 +445,24 @@ export class ResumenService {
   async consultarEstadoTicketSunat(
     ticket: string,
     usuarioSecundario: string,
-    claveSecundaria: string,
+    claveSecundaria: string
   ) {
-    const result = await this.sunatService.getStatus(
-      ticket,
-      usuarioSecundario,
-      claveSecundaria,
-    );
-    return result;
+    try {
+      const result = await this.sunatService.getStatus(
+        ticket,
+        usuarioSecundario,
+        claveSecundaria,
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
   }
   async updateBySucursalAndTicket(
     sucursalId: number,
     ticket: string,
     result: IResponseSunat,
+    tenantDatabase?:string
   ) {
     await this.resumenRepo.updateBySucursalAndTicket(sucursalId, ticket, {
       estado: mapSunatToEstado(result.codigoResponse ?? ''),
@@ -349,18 +474,23 @@ export class ResumenService {
           ? JSON.stringify(result.observaciones)
           : null,
       fechaRespuestaSunat: new Date(),
-    });
+    }, tenantDatabase);
   }
-  async findBySucursalAndTicket(sucursalId: number, ticket: string): Promise<ResumenResponseDto | null>  {
+  async findBySucursalAndTicket(
+    sucursalId: number,
+    ticket: string,
+    tenantDatabase?:string
+  ): Promise<ResumenResponseDto | null> {
     const resumen = await this.resumenRepo.findBySucursalAndTicket(
       sucursalId,
       ticket,
+      tenantDatabase
     );
     if (!resumen) {
       throw new BusinessLogicException(
         `No existe un resumen registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
       );
     }
-    return resumen
+    return resumen;
   }
 }

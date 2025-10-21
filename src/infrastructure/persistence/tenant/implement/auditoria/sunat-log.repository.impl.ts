@@ -16,8 +16,8 @@ export class SunatLogRepositoryImpl extends BaseTenantRepository<SunatLogOrmEnti
     super(tenantContext, tenantRepositoryHelper, SunatLogOrmEntity);
   }
 
-  async save(log: CreateSunatLogDto): Promise<{ status: boolean; message: string; data?: SunatLogResponseDto }> {
-      const repo = await this.getRepository();
+  async save(log: CreateSunatLogDto, tenantDatabase?:string): Promise<{ status: boolean; message: string; data?: SunatLogResponseDto }> {
+      const repo = await this.getRepository(tenantDatabase);
      await repo.save(SunatLogMapper.dtoToOrmCreate(log));
     return {
       status: true,

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ResumenBoletasOrmEntity } from './infrastructure/persistence/tenant/entity/resumen/resumen-bp.orm.entity';
 import { ResumenBoletasDetalleOrmEntity } from './infrastructure/persistence/tenant/entity/resumen/resumen-bp-detalle.orm.entity';
@@ -20,7 +20,8 @@ import { SunatLogRepositoryImpl } from './infrastructure/persistence/tenant/impl
 import { FirmaService } from './infrastructure/sunat/firma/firma.service';
 import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/tenant/implement/serie-comprobante.repository.impl';
 import { SunatService } from './infrastructure/sunat/send/sunat.service';
-
+import { SucursalModule } from './sucursal.module';
+import { SucursalService } from './domain/parent/sucursal/service/sucursal.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -29,49 +30,74 @@ import { SunatService } from './infrastructure/sunat/send/sunat.service';
       EmpresaOrmEntity,
       ComprobanteOrmEntity,
       ComprobanteRespuestaSunatOrmEntity,
-      SunatLogOrmEntity
+      SunatLogOrmEntity,
     ]),
     CatalogoModule,
     ComprobanteModule,
+    SucursalModule,
   ],
   controllers: [ResumenController],
   providers: [
-        {
-          provide: ResumenService,
-          useFactory: (
-            comprobanteRepositoryImpl: ComprobanteRepositoryImpl,
-            resumenRepositoryImpl: ResumenRepositoryImpl,
-            sunatLogRepositoryImpl: SunatLogRepositoryImpl,
-            firmaService: FirmaService,
-            serieComprobanteRepositoryImpl: SerieComprobanteRepositoryImpl,
-            xmlBuilderResumenService: XmlBuilderResumenService,
-            sunatService: SunatService
-          ) =>
-            new ResumenService(
-              comprobanteRepositoryImpl,
-              resumenRepositoryImpl,
-              sunatLogRepositoryImpl,
-              firmaService,
-              serieComprobanteRepositoryImpl,
-              xmlBuilderResumenService,
-              sunatService
-            ),
-          inject: [
-            ComprobanteRepositoryImpl,
-            ResumenRepositoryImpl,
-            SunatLogRepositoryImpl,
-            FirmaService,
-            SerieComprobanteRepositoryImpl,
-            XmlBuilderResumenService,
-            SunatService
-          ],
-        },
+    ResumenService,
     CreateResumenUseCase,
     GetNextCorrelativoUseCase,
     GetStatusResumenUseCase,
     XmlBuilderResumenService,
-    ResumenRepositoryImpl
+    ResumenRepositoryImpl,
+    ComprobanteRepositoryImpl,
+    SunatLogRepositoryImpl,
+    FirmaService,
+    SerieComprobanteRepositoryImpl,
+    SunatService,
+    SucursalService,
   ],
-  exports: [ResumenRepositoryImpl],
+  // providers: [
+  //       // {
+  //       //   provide: ResumenService,
+  //       //   useFactory: (
+  //       //     comprobanteRepositoryImpl: ComprobanteRepositoryImpl,
+  //       //     resumenRepositoryImpl: ResumenRepositoryImpl,
+  //       //     sunatLogRepositoryImpl: SunatLogRepositoryImpl,
+  //       //     firmaService: FirmaService,
+  //       //     serieComprobanteRepositoryImpl: SerieComprobanteRepositoryImpl,
+  //       //     xmlBuilderResumenService: XmlBuilderResumenService,
+  //       //     sunatService: SunatService,
+  //       //     sucursalService:SucursalService
+  //       //   ) =>
+  //       //     new ResumenService(
+  //       //       comprobanteRepositoryImpl,
+  //       //       resumenRepositoryImpl,
+  //       //       sunatLogRepositoryImpl,
+  //       //       firmaService,
+  //       //       serieComprobanteRepositoryImpl,
+  //       //       xmlBuilderResumenService,
+  //       //       sunatService,
+  //       //       sucursalService
+  //       //     ),
+  //       //   inject: [
+  //       //     ComprobanteRepositoryImpl,
+  //       //     ResumenRepositoryImpl,
+  //       //     SunatLogRepositoryImpl,
+  //       //     FirmaService,
+  //       //     SerieComprobanteRepositoryImpl,
+  //       //     XmlBuilderResumenService,
+  //       //     SunatService,
+  //       //     SucursalService
+  //       //   ],
+  //       // },
+  //     ResumenService, // ✅ cambia esto
+  //   CreateResumenUseCase,
+  //   GetNextCorrelativoUseCase,
+  //   GetStatusResumenUseCase,
+  //   XmlBuilderResumenService,
+  //   ResumenRepositoryImpl,
+  // ],
+  exports: [
+    ResumenService,
+    ResumenRepositoryImpl,
+    CreateResumenUseCase,
+    GetStatusResumenUseCase,
+    ComprobanteModule
+  ],
 })
 export class ResumenBoletasModule {}

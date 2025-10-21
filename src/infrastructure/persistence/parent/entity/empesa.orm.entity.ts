@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { ClienteOrmEntity } from './cliente.orm.entity';
 import { SucursalOrmEntity } from './sucursal.orm.entity';
+import { CronJobOrmEntity } from './scheduler/cron_job.orm.entity';
 @Entity('empresas')
 @Unique(['ruc', 'razonSocial'])
 export class EmpresaOrmEntity {
@@ -132,6 +133,10 @@ export class EmpresaOrmEntity {
     (cliente: ClienteOrmEntity) => cliente.empresa,
   )
   clientes: ClienteOrmEntity[];
+
+  @OneToMany(() => CronJobOrmEntity, (cronJob) => cronJob.empresa)
+  cronJob: CronJobOrmEntity[];
+
   @OneToMany(() => SucursalOrmEntity, (sucursal) => sucursal.empresa)
   sucursales: SucursalOrmEntity[];
 }

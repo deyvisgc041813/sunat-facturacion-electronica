@@ -29,7 +29,6 @@ export class SunatLogMapper {
     object.resumenId = data?.resumenId ? data.resumenId : null;
     object.codigoResSunat = data?.codigoResSunat;
     object.sucursalId = data?.sucursalId;
-    object.intento = data?.intentos;
     object.usuarioEnvio = data?.usuarioEnvio
     object.fechaRespuesta = data?.fechaRespuesta;
     object.serie = data?.serie;

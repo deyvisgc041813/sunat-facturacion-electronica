@@ -1,443 +1,3 @@
-// import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-// import axios from 'axios';
-// import AdmZip from 'adm-zip';
-// import { parseStringPromise } from 'xml2js';
-// import { IResponseSunat } from 'src/domain/comprobante/interface/response.sunat.interface';
-// import {
-//   formatDateToDDMMYYYY,
-//   mapResponseCodeToEstado,
-// } from 'src/util/Helpers';
-// import { CpeDto } from 'src/domain/comprobante/dto/cpe/ConsultarLoteCpeDto';
-// import path from 'path';
-// import { createWorker } from 'tesseract.js';
-// import * as fs from 'fs';
-// import * as cheerio from 'cheerio';
-// import { ErrorCatalogService } from 'src/util/conversion.error';
-// import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
-// export interface ResultadoCpe {
-//   estado: string;
-//   descripcion: string;
-//   codigoRespuesta: string;
-//   raw?: string;
-//   error?: string;
-// }
-// const URL_CONSULT =
-//   'https://e-consulta.sunat.gob.pe/ol-ti-itconsvalicpe/ConsValiCpe.htm';
-// const URL_CAPTCHA =
-//   'https://e-consulta.sunat.gob.pe/ol-ti-itconsvalicpe/captcha?accion=image';
-// @Injectable()
-// export class SunatService {
-//   private readonly url: string;
-//   private readonly username: string;
-//   private readonly password: string;
-//   constructor() {
-//     // Cambia según el ambiente
-//     this.url =
-//       process.env.SUNAT_ENV === 'prod'
-//         ? 'https://e-factura.sunat.gob.pe/ol-ti-itcpfegem/billService'
-//         : 'https://e-beta.sunat.gob.pe/ol-ti-itcpfegem-beta/billService';
-
-//     this.username = process.env.SUNAT_USER || '20000000001MODDATOS'; // pruebas
-//     this.password = process.env.SUNAT_PASSWORD || 'moddatos'; // pruebas
-//   }
-
-//   /** Enviar comprobante individual (Factura/Boleta/NC/ND) */
-//   // async sendBill(fileName: string, zipBuffer: Buffer): Promise<IResponseSunat> {
-//   //   const envelope = `
-//   //   <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-//   //                     xmlns:ser="http://service.sunat.gob.pe">
-//   //      <soapenv:Header/>
-//   //      <soapenv:Body>
-//   //         <ser:sendBill>
-//   //            <fileName>${fileName}</fileName>
-//   //            <contentFile>${zipBuffer.toString('base64')}</contentFile>
-//   //         </ser:sendBill>
-//   //      </soapenv:Body>
-//   //   </soapenv:Envelope>`;
-
-//   //   try {
-//   //     const response = await axios.post(this.url, envelope, {
-//   //       headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
-//   //       auth: {
-//   //         username: this.username,
-//   //         password: this.password,
-//   //       },
-//   //       validateStatus: () => true, // evita que Axios lance error en 500
-//   //     });
-
-//   //     // Buscar si hay Fault en el response
-//   //     const faultMatch = response.data.match(
-//   //       /<soap-env:Fault[\s\S]*?<\/soap-env:Fault>/,
-//   //     );
-//   //     if (faultMatch) {
-//   //       const faultCodeMatch = response.data.match(
-//   //         /<faultcode>(.*?)<\/faultcode>/,
-//   //       );
-//   //       const faultStringMatch = response.data.match(
-//   //         /<faultstring>(.*?)<\/faultstring>/,
-//   //       );
-
-//   //       const error = {
-//   //         code: faultCodeMatch ? faultCodeMatch[1] : 'UNKNOWN',
-//   //         message: faultStringMatch ? faultStringMatch[1] : 'Error desconocido',
-//   //       };
-
-//   //       // Aquí lo guardas en DB o lo retornas
-//   //       throw new Error(JSON.stringify(error));
-//   //     }
-//   //     // Si no hay Fault, buscar applicationResponse
-//   //     const match = response.data.match(
-//   //       /<applicationResponse>([\s\S]*?)<\/applicationResponse>/,
-//   //     );
-//   //     if (!match) {
-//   //       throw new Error('SUNAT no devolvió CDR');
-//   //     }
-//   //     const cdrZip = Buffer.from(match[1], 'base64');
-//   //     const rpta = await this.extraerDatosCdr(cdrZip);
-//   //     return rpta;
-//   //   } catch (err) {
-//   //     console.error('Error SUNAT:', err.message || err);
-//   //     throw err;
-//   //   }
-//   // }
-//   /** Enviar comprobante individual (Factura/Boleta/NC/ND) */
-//   async sendBill(fileName: string, zipBuffer: Buffer): Promise<IResponseSunat> {
-//     const envelope = `
-//     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-//                       xmlns:ser="http://service.sunat.gob.pe">
-//        <soapenv:Header/>
-//        <soapenv:Body>
-//           <ser:sendBill>
-//              <fileName>${fileName}</fileName>
-//              <contentFile>${zipBuffer.toString('base64')}</contentFile>
-//           </ser:sendBill>
-//        </soapenv:Body>
-//     </soapenv:Envelope>`;
-
-//     try {
-//       const response = await axios.post(this.url, envelope, {
-//         headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
-//         auth: {
-//           username: this.username,
-//           password: this.password,
-//         },
-//         validateStatus: () => true, // evita que Axios lance error en 500
-//       });
-
-//       // 🔎 Buscar si hay Fault en el response
-//       const faultMatch = response.data.match(
-//         /<soap-env:Fault[\s\S]*?<\/soap-env:Fault>/,
-//       );
-//       if (faultMatch) {
-//         const faultCodeMatch = response.data.match(
-//           /<faultcode>(.*?)<\/faultcode>/,
-//         );
-//         const faultStringMatch = response.data.match(
-//           /<faultstring>(.*?)<\/faultstring>/,
-//         );
-
-//         const codeRaw = faultCodeMatch ? faultCodeMatch[1] : 'UNKNOWN';
-//         // extraer número (ej. soap-env:Client.2936 → 2936)
-//         const codeMatch = codeRaw.match(/(\d+)/);
-//         const code = codeMatch ? codeMatch[1] : codeRaw;
-
-//         // const mensajeCatalogo = ErrorCatalogService.getMensajeError(code);
-
-//         const mensajeCatalogo = ErrorCatalogService.getMensajeError(code);
-
-//         // fallback: si no existe en catálogo, usa el texto real de SUNAT
-//         const mensajeFinal =
-//           mensajeCatalogo === 'Error desconocido' && faultStringMatch
-//             ? faultStringMatch[1] // solo el contenido, no las etiquetas
-//             : mensajeCatalogo;
-
-//         // limpiar el faultstring (quita etiquetas <faultstring>)
-//         // const detalleLimpio = faultStringMatch
-//         //   ? faultStringMatch[1].replace(/<\/?faultstring>/g, '')
-//         //   : 'Error desconocido';
-
-//         const error = {
-//           origen: OrigenErrorEnum.SUNAT,
-//           code,
-//           message: mensajeFinal,
-//           //detalle: detalleLimpio,
-//         };
-//         throw new HttpException(error, HttpStatus.BAD_REQUEST);
-//       }
-
-//       // Si no hay Fault, buscar applicationResponse
-//       const match = response.data.match(
-//         /<applicationResponse>([\s\S]*?)<\/applicationResponse>/,
-//       );
-//       if (!match) {
-//         throw new Error('SUNAT no devolvió CDR');
-//       }
-//       // Extraer el CDR
-//       const cdrZip = Buffer.from(match[1], 'base64');
-//       const rpta = await this.extraerDatosCdr(cdrZip);
-//       return rpta;
-//     } catch (err: any) {
-//       console.error('Error SUNAT:', err.message || err);
-//       throw err;
-//     }
-//   }
-
-//   /** Enviar Resumen (Boletas diarias, bajas, etc.) → devuelve ticket */
-//   async sendSummary(fileName: string, zipBuffer: Buffer): Promise<string> {
-//     const envelope = `
-//     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-//                       xmlns:ser="http://service.sunat.gob.pe">
-//        <soapenv:Header/>
-//        <soapenv:Body>
-//           <ser:sendSummary>
-//              <fileName>${fileName}</fileName>
-//              <contentFile>${zipBuffer.toString('base64')}</contentFile>
-//           </ser:sendSummary>
-//        </soapenv:Body>
-//     </soapenv:Envelope>`;
-
-//     try {
-//       const response = await axios.post(this.url, envelope, {
-//         headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
-//         auth: { username: this.username, password: this.password },
-//       });
-//       return this.parseSunatResponse(response.data);
-//     } catch (err) {
-//       if (err.response && err.response.data) {
-//         // Caso SUNAT devolvió SOAP Fault con 500
-//         return this.parseSunatResponse(err.response.data);
-//       }
-//       console.error('Error inesperado:', err.message || err);
-//       throw err;
-//     }
-//   }
-//   /** Consultar estado de Resumen (con ticket) → devuelve CDR */
-//   async getStatus(ticket: string): Promise<IResponseSunat> {
-//     try {
-//       const envelope = `<?xml version="1.0" encoding="UTF-8"?>
-// <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-//                   xmlns:ser="http://service.sunat.gob.pe"
-//                   xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-//    <soapenv:Header>
-//       <wsse:Security>
-//          <wsse:UsernameToken>
-//             <wsse:Username>${this.username}</wsse:Username>
-//             <wsse:Password>${this.password}</wsse:Password>
-//          </wsse:UsernameToken>
-//       </wsse:Security>
-//    </soapenv:Header>
-//    <soapenv:Body>
-//       <ser:getStatus>
-//          <ticket>${ticket}</ticket>
-//       </ser:getStatus>
-//    </soapenv:Body>
-// </soapenv:Envelope>`;
-
-//       const response = await axios.post(this.url, envelope, {
-//         headers: {
-//           'Content-Type': 'text/xml; charset=utf-8',
-//           SOAPAction: 'urn:getStatus',
-//         },
-//         timeout: 30000,
-//         maxBodyLength: Infinity,
-//         maxContentLength: Infinity,
-//         validateStatus: () => true,
-//       });
-
-//       const xml = response.data;
-
-//       // Ver si SUNAT devolvió un Fault
-//       const faultCode = xml.match(/<faultcode>(.*?)<\/faultcode>/)?.[1];
-//       const faultString = xml.match(/<faultstring>(.*?)<\/faultstring>/)?.[1];
-//       if (faultCode || faultString) {
-//         throw new Error(
-//           JSON.stringify({
-//             code: faultCode || '99',
-//             message: faultString || 'Error desconocido en SUNAT',
-//           }),
-//         );
-//       }
-
-//       // Extraer statusCode
-//       const codeMatch = xml.match(/<statusCode>(.*?)<\/statusCode>/);
-//       const statusCode = codeMatch ? codeMatch[1] : '99';
-
-//       // Extraer contenido
-//       const contentMatch = xml.match(/<content>([\s\S]*?)<\/content>/);
-//       let statusMessage = 'SUNAT no devolvió mensaje';
-//       let cdr: Buffer | undefined;
-
-//       if (contentMatch) {
-//         const content = contentMatch[1].trim();
-//         const isBase64 = /^[A-Za-z0-9+/=]+$/.test(content);
-
-//         if (isBase64) {
-//           // Caso exitoso → CDR
-//           cdr = Buffer.from(content, 'base64');
-//           statusMessage = 'CDR recibido correctamente';
-//         } else {
-//           // Caso error → mensaje plano
-//           throw new Error(
-//             JSON.stringify({
-//               code: statusCode,
-//               message: content,
-//             }),
-//           );
-//         }
-//       }
-
-//       // Si existe statusMessage explícito en XML, usarlo
-//       const messageMatch = xml.match(/<statusMessage>(.*?)<\/statusMessage>/);
-//       if (messageMatch) {
-//         statusMessage = messageMatch[1];
-//       }
-//       const rpta = await this.extraerDatosCdr(cdr);
-//       return rpta;
-//       //return { statusCode, statusMessage, cdr };
-//     } catch (error: any) {
-//       console.error('Error en getStatus:', error.message || error);
-//       // Propagar hacia arriba con formato uniforme
-//       throw error;
-//     }
-//   }
-//   // 🔹 Tu método optimizado de antes
-//   async consultarCpe(cp: CpeDto, maxReintentos = 3): Promise<ResultadoCpe> {
-//     const intentos = Array.from({ length: maxReintentos }, async () => {
-//       const captcha = await this.getCaptchaText();
-//       const [serie, correlativoStr] = cp.serieNumero.split('-');
-//       const correlativo = parseInt(correlativoStr, 10);
-//       const formData = new URLSearchParams();
-//       formData.append('accion', 'CapturaCriterioValidez');
-//       formData.append('num_ruc', cp.ruc);
-//       formData.append('tipocomprobante', cp.tipo === '01' ? '03' : '06');
-//       formData.append('num_serie', serie);
-//       formData.append('num_comprob', String(correlativo));
-//       formData.append('fec_emision', formatDateToDDMMYYYY(cp.fechaEmisionCpe));
-//       formData.append('cantidad', cp.monto.toFixed(2));
-//       formData.append('codigo', captcha);
-//       const resp = (await Promise.race([
-//         axios.post(URL_CONSULT, formData.toString(), {
-//           headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-//           timeout: 300000,
-//         }),
-//         new Promise((_, reject) =>
-//           setTimeout(() => reject(new Error('Timeout interno')), 400000),
-//         ),
-//       ])) as { data: string };
-//       //Parsear con Cheerio
-//       const $ = cheerio.load(resp?.data);
-//       const mensaje = $('td.bgn').first().text().trim() || 'Sin respuesta';
-
-//       const { codigo, estado } = this.mapearCodigo(mensaje);
-
-//       return {
-//         descripcion: mensaje,
-//         estado,
-//         codigoRespuesta: codigo,
-//       };
-//     });
-//     return Promise.any(intentos);
-//   }
-
-//   async extraerDatosCdr(cdrZip: any): Promise<IResponseSunat> {
-//     // Descomprimir el ZIP y leer el estado del CDR
-//     const zip = new AdmZip(cdrZip);
-//     const entries = zip.getEntries();
-//     const xmlEntry = entries.find((e) => e.entryName.endsWith('.xml'));
-//     if (!xmlEntry) throw new Error('El CDR no contiene XML');
-//     const cdrXml = xmlEntry.getData().toString('utf-8');
-//     const cdrJson = await parseStringPromise(cdrXml, { explicitArray: false });
-//     const responseCode =
-//       cdrJson['ar:ApplicationResponse']['cac:DocumentResponse']['cac:Response'][
-//         'cbc:ResponseCode'
-//       ];
-//     const description =
-//       cdrJson['ar:ApplicationResponse']['cac:DocumentResponse']['cac:Response'][
-//         'cbc:Description'
-//       ];
-//     const notes =
-//       cdrJson['ar:ApplicationResponse']['cac:DocumentResponse']['cac:Response'][
-//         'cbc:Note'
-//       ];
-//     // Estado SUNAT
-//     const estadoResult = mapResponseCodeToEstado(
-//       responseCode,
-//       description,
-//       notes,
-//     );
-
-//     const rpta: IResponseSunat = {
-//       estadoSunat: estadoResult.estado,
-//       codigoResponse: estadoResult.codigo,
-//       mensaje: estadoResult.mensaje,
-//       observaciones: estadoResult.observaciones
-//         ? Array.isArray(estadoResult.observaciones)
-//           ? estadoResult.observaciones
-//           : [estadoResult.observaciones]
-//         : [],
-//       status: true,
-//       cdr: cdrZip?.toString('base64'),
-//     };
-//     return rpta;
-//   }
-//   private parseSunatResponse(xml: string): string {
-//     // Si hay Fault
-//     const faultMatch = xml.match(/<soap-env:Fault[\s\S]*?<\/soap-env:Fault>/);
-//     if (faultMatch) {
-//       const faultCode =
-//         xml.match(/<faultcode>(.*?)<\/faultcode>/)?.[1] ?? 'UNKNOWN';
-//       const faultString =
-//         xml.match(/<faultstring>(.*?)<\/faultstring>/)?.[1] ??
-//         'Error desconocido';
-
-//       throw new Error(
-//         JSON.stringify({ code: faultCode, message: faultString }),
-//       );
-//     }
-
-//     // Si hay ticket
-//     const match = xml.match(/<ticket>(.*?)<\/ticket>/);
-//     if (!match) throw new Error('SUNAT no devolvió ticket');
-
-//     return match[1];
-//   }
-//   // 1. Descargar captcha y resolver con Tesseract
-//   private async getCaptchaText() {
-//     const resp = await axios.get(URL_CAPTCHA, { responseType: 'arraybuffer' });
-//     const tempFile = path.join(__dirname, 'captcha.jpg');
-//     fs.writeFileSync(tempFile, resp.data);
-
-//     const worker = await createWorker('eng'); // ⚠️ a veces es mejor entrenar para números
-//     const {
-//       data: { text },
-//     } = await worker.recognize(tempFile);
-//     await worker.terminate();
-
-//     return text.trim();
-//   }
-//   private mapearCodigo(mensaje: string): { codigo: string; estado: string } {
-//     const msg = mensaje.toLowerCase();
-//     const msgNormalizado = msg.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-//     if (/valido/i.test(msgNormalizado)) {
-//       return { codigo: '00', estado: 'ACEPTADO' };
-//     }
-//     if (/no existe/i.test(msgNormalizado)) {
-//       return { codigo: '01', estado: 'INEXISTENTE' };
-//     }
-//     if (/anulad/i.test(msgNormalizado)) {
-//       return { codigo: '02', estado: 'ANULADO' };
-//     }
-//     if (/no es valido|no tiene validez|rechazad/i.test(msgNormalizado)) {
-//       return { codigo: '03', estado: 'RECHAZADO' };
-//     }
-//     if (/codigo ingresado es incorrecto|captcha/i.test(msgNormalizado)) {
-//       return { codigo: '98', estado: 'CAPTCHA' };
-//     }
-
-//     return { codigo: '99', estado: 'ERROR' };
-//   }
-// }
-
 import { HttpException, Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
@@ -451,6 +11,7 @@ import https from 'https';
 import { SendCommon } from './common/send-common';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
 import { CpeDto } from 'src/domain/tenant/comprobante/dto/cpe/consultar-lote.cpe.dto';
+import { retryAsync } from '../reintentos';
 export interface ResultadoCpe {
   estado: string;
   descripcion: string;
@@ -484,7 +45,12 @@ export class SunatService {
   }
 
   /** Enviar comprobante individual (Factura/Boleta/NC/ND) */
-  async sendBill(fileName: string, zipBuffer: Buffer, usuario: string, password: string): Promise<IResponseSunat> {
+  async sendBill(
+    fileName: string,
+    zipBuffer: Buffer,
+    usuario: string,
+    password: string,
+  ): Promise<IResponseSunat> {
     usuario = process.env.SUNAT_ENV === 'prod' ? usuario : this.username;
     password = process.env.SUNAT_ENV === 'prod' ? password : this.password;
     const envelope = `
@@ -545,7 +111,12 @@ export class SunatService {
   }
 
   /** Enviar Resumen (Boletas diarias, bajas, etc.) */
-  async sendSummary(fileName: string, zipBuffer: Buffer, usuario: string, password: string): Promise<string> {
+  async sendSummary(
+    fileName: string,
+    zipBuffer: Buffer,
+    usuario: string,
+    password: string,
+  ): Promise<string> {
     usuario = process.env.SUNAT_ENV === 'prod' ? usuario : this.username;
     password = process.env.SUNAT_ENV === 'prod' ? password : this.password;
     const envelope = `
@@ -561,13 +132,44 @@ export class SunatService {
     </soapenv:Envelope>`;
 
     try {
-      const response = await axios.post(this.url, envelope, {
-        headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
-        auth: { username: usuario, password: password },
-        validateStatus: () => true,
-      });
-
-      return SendCommon.parseSunatResponse(response.data);
+      const response = await retryAsync(
+        async () => {
+         const res =  await axios.post(this.url, envelope, {
+            headers: { 'Content-Type': 'text/xml;charset=UTF-8' },
+            auth: { username: usuario, password: password },
+            timeout: 90000,
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+            validateStatus: () => true,
+          });
+          const errorXml = res.data;
+          const faultCode = errorXml.match(
+            /<faultcode>(.*?)<\/faultcode>/,
+          )?.[1];
+          const faultString = errorXml.match(
+            /<faultstring>(.*?)<\/faultstring>/,
+          )?.[1];
+          if (faultCode || faultString) {
+            const retryable = this.isRetryableSunatError(
+              res.status,
+              faultCode,
+              faultString,
+            );
+            if (retryable) {
+              throw SendCommon.buildSunatError(faultCode, faultString);
+            } else {
+              throw SendCommon.buildSunatError(
+                faultCode ?? '99',
+                faultString ?? 'Error desconocido en SUNAT',
+              );
+            }
+          }
+          return res;
+        },
+        3,
+        3000,
+      )
+      return SendCommon.parseSunatResponse(response?.data);
     } catch (err: any) {
       console.error(
         'Error en sendSummary:',
@@ -577,7 +179,6 @@ export class SunatService {
     }
   }
 
-  /** Consultar estado de Resumen (con ticket) → devuelve CDR */
   async getStatus(
     ticket: string,
     usuario: string,
@@ -585,60 +186,81 @@ export class SunatService {
   ): Promise<IResponseSunat> {
     usuario = process.env.SUNAT_ENV === 'prod' ? usuario : this.username;
     password = process.env.SUNAT_ENV === 'prod' ? password : this.password;
-    console.log("usuario ", usuario)
-    console.log("password ", password)
-    console.log("ticket ", ticket)
+    console.log('usuario ', usuario);
+    console.log('password ', password);
+    console.log('ticket ', ticket);
+
+    const envelope = `
+ <?xml version="1.0" encoding="UTF-8"?>
+    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+                      xmlns:ser="http://service.sunat.gob.pe"
+                      xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+      <soapenv:Header>
+          <wsse:Security>
+            <wsse:UsernameToken>
+                <wsse:Username>${usuario}</wsse:Username>
+                <wsse:Password>${password}</wsse:Password>
+            </wsse:UsernameToken>
+          </wsse:Security>
+      </soapenv:Header>
+      <soapenv:Body>
+          <ser:getStatus>
+            <ticket>${ticket}</ticket>
+          </ser:getStatus>
+      </soapenv:Body>
+    </soapenv:Envelope>
+    `;
+
     try {
-      const envelope = `<?xml version="1.0" encoding="UTF-8"?>
-          <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-                            xmlns:ser="http://service.sunat.gob.pe"
-                            xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-            <soapenv:Header>
-                <wsse:Security>
-                  <wsse:UsernameToken>
-                      <wsse:Username>${usuario}</wsse:Username>
-                      <wsse:Password>${password}</wsse:Password>
-                  </wsse:UsernameToken>
-                </wsse:Security>
-            </soapenv:Header>
-            <soapenv:Body>
-                <ser:getStatus>
-                  <ticket>${ticket}</ticket>
-                </ser:getStatus>
-            </soapenv:Body>
-          </soapenv:Envelope>`;
+      const response = await retryAsync(
+        async () => {
+          const res = await axios.post(this.url, envelope, {
+            headers: {
+              'Content-Type': 'text/xml; charset=utf-8',
+              SOAPAction: 'urn:getStatus',
+            },
+            timeout: 90000, // 90 segundos (recomendado)
+            maxBodyLength: Infinity,
+            maxContentLength: Infinity,
+            validateStatus: () => true,
+          });
+          const errorXml = res.data;
+          const faultCode = errorXml.match(
+            /<faultcode>(.*?)<\/faultcode>/,
+          )?.[1];
+          const faultString = errorXml.match(
+            /<faultstring>(.*?)<\/faultstring>/,
+          )?.[1];
 
-      const response = await axios.post(this.url, envelope, {
-        headers: {
-          'Content-Type': 'text/xml; charset=utf-8',
-          SOAPAction: 'urn:getStatus',
+          if (faultCode || faultString) {
+            const retryable = this.isRetryableSunatError(
+              res.status,
+              faultCode,
+              faultString,
+            );
+
+            if (retryable) {
+              throw SendCommon.buildSunatError(faultCode, faultString);
+            } else {
+              throw SendCommon.buildSunatError(
+                faultCode ?? '99',
+                faultString ?? 'Error desconocido en SUNAT',
+              );
+            }
+          }
+          return res;
         },
-        timeout: 30000,
-        maxBodyLength: Infinity,
-        maxContentLength: Infinity,
-        validateStatus: () => true,
-      });
-      console.log("response ", response)
-      const xml = response.data;
-
-      // obtengo error de sunat
-      const faultCode = xml.match(/<faultcode>(.*?)<\/faultcode>/)?.[1];
-      const faultString = xml.match(/<faultstring>(.*?)<\/faultstring>/)?.[1];
-      if (faultCode || faultString) {
-        throw SendCommon.buildSunatError(
-          faultCode ?? '99',
-          faultString ?? 'Error desconocido en SUNAT',
-        );
-      }
+        3,
+        3000,
+      );
+      const xmlResponse = response.data;
       const statusCode =
-        xml.match(/<statusCode>(.*?)<\/statusCode>/)?.[1] ?? '99';
-      const contentMatch = xml.match(/<content>([\s\S]*?)<\/content>/);
-
+        xmlResponse.match(/<statusCode>(.*?)<\/statusCode>/)?.[1] ?? '99';
+      const contentMatch = xmlResponse.match(/<content>([\s\S]*?)<\/content>/);
       let cdr: Buffer | undefined;
       if (contentMatch) {
         const content = contentMatch[1].trim();
         const isBase64 = /^[A-Za-z0-9+/=]+$/.test(content);
-
         if (isBase64) {
           cdr = Buffer.from(content, 'base64');
         } else {
@@ -724,7 +346,6 @@ export class SunatService {
 </soapenv:Envelope>`;
 
     try {
-      
       const { data } = await axios.post(
         'https://e-factura.sunat.gob.pe/ol-it-wsconscpegem/billConsultService', //
         envelope,
@@ -764,9 +385,10 @@ export class SunatService {
     usuario: string,
     passwrod: string,
   ): Promise<IResponseSunat> {
-    console.log(usuario)
-    console.log(passwrod)
-    const url ='https://e-factura.sunat.gob.pe/ol-it-wsconscpegem/billConsultService';
+    console.log(usuario);
+    console.log(passwrod);
+    const url =
+      'https://e-factura.sunat.gob.pe/ol-it-wsconscpegem/billConsultService';
     const [serie, correlativoStr] = cp.serieNumero.split('-');
     const correlativo = parseInt(correlativoStr, 10);
     const soapRequest = `<?xml version="1.0" encoding="utf-8"?>
@@ -799,7 +421,6 @@ export class SunatService {
           SOAPAction: 'urn:getStatus',
         },
         body: soapRequest,
-        
       });
       if (!response.ok) {
         throw SendCommon.buildSunatError(
@@ -842,7 +463,7 @@ export class SunatService {
         cdr: null,
       };
     } catch (error: any) {
-      console.log("error ", error)
+      console.log('error ', error);
       if (error instanceof HttpException) {
         throw error;
       }
@@ -851,5 +472,43 @@ export class SunatService {
         (error as Error).message,
       );
     }
+  }
+  private isRetryableSunatError(
+    httpStatus?: number,
+    faultCode?: string,
+    faultString?: string,
+  ): boolean {
+    // Errores HTTP típicos del backend SUNAT
+    if (httpStatus && [500, 502, 503, 504].includes(httpStatus)) return true;
+
+    //Normaliza el faultCode
+    if (!faultCode) return false;
+    const normalized = faultCode.replace(/^soap-env:Server\./i, '').trim();
+    const num = parseInt(normalized.padStart(4, '0'), 10);
+
+    //Rango de errores de sistema SUNAT (de tu CodeErrors.xml)
+    const systemRanges = [
+      [100, 139],
+      [200, 252],
+      [305, 306],
+    ];
+    const fixed = [
+      109, 130, 131, 132, 133, 134, 135, 136, 137, 138, 2317, 2322, 2347, 2380,
+    ];
+
+    if (
+      systemRanges.some(([min, max]) => num >= min && num <= max) ||
+      fixed.includes(num)
+    )
+      return true;
+
+    //Algunos mensajes también indican error del sistema
+    const transientPatterns = [
+      'Failed to establish a backside connection',
+      'Internal Server Error',
+      'No se pudo recibir una respuesta',
+      'Error en proceso batch',
+    ];
+    return transientPatterns.some((t) => faultString?.includes(t));
   }
 }

@@ -448,62 +448,12 @@ export function generarTributosRC(boleta: IDocumento) {
       },
     }));
 }
-// export function getFechaHoraActualLima(): string {
-//   const ahora = new Date();
-
-//   const opciones: Intl.DateTimeFormatOptions = {
-//     timeZone: 'America/Lima',
-//     year: 'numeric',
-//     month: '2-digit',
-//     day: '2-digit',
-//     hour: '2-digit',
-//     minute: '2-digit',
-//     second: '2-digit',
-//     hour12: false,
-//   };
-
-//   const formato = new Intl.DateTimeFormat('en-CA', opciones).formatToParts(
-//     ahora,
-//   );
-
-//   const get = (tipo: string) =>
-//     formato.find((p) => p.type === tipo)?.value || '00';
-
-//   let year = parseInt(get('year'));
-//   let month = parseInt(get('month'));
-//   let day = parseInt(get('day'));
-//   let hour = parseInt(get('hour'));
-//   const minute = get('minute');
-//   const second = get('second');
-
-//   // ⚡ Normalizamos la hora = 24 → 00 del día siguiente
-//   if (hour === 24) {
-//     hour = 0;
-//     const d = new Date(year, month - 1, day);
-//     d.setDate(d.getDate() + 1);
-//     year = d.getFullYear();
-//     month = d.getMonth() + 1;
-//     day = d.getDate();
-//   }
-
-//   const fecha = `${year.toString().padStart(4, '0')}-${month
-//     .toString()
-//     .padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-//   const hora = `${hour.toString().padStart(2, '0')}:${minute}:${second}`;
-
-//   return `${fecha}T${hora}-05:00`;
-// }
-// 🔹 Devuelve Date ajustado a Lima
 export function getFechaHoraActualLima(): Date {
   return dayjs().tz('America/Lima').startOf('day').toDate();
 }
 
-export function mapEstadoRC(estado: string): string {
-  // Normalizamos el nombre a mayúsculas para evitar problemas
-  const key = estado.toUpperCase() as keyof typeof EstadoComprobanteEnumSunat;
-  return (
-    EstadoComprobanteEnumSunat[key] ?? EstadoComprobanteEnumSunat.PENDIENTE
-  );
+export function getFechaHoraActualLimaFormat(format:string): string {
+  return dayjs.tz(dayjs(), 'America/Lima').format(format);
 }
 // Para resumenId y nombre de archivo
 export function getFechaHoyYYYYMMDD(): string {
@@ -517,6 +467,14 @@ export function mapSunatToEstado(codigo: string): EstadoEnvioSunat {
 }
 export function formatDateToDDMMYYYY(date: Date | string): string {
   return dayjs(date).tz('America/Lima').format('DD/MM/YYYY');
+}
+
+export function mapEstadoRC(estado: string): string {
+  // Normalizamos el nombre a mayúsculas para evitar problemas
+  const key = estado.toUpperCase() as keyof typeof EstadoComprobanteEnumSunat;
+  return (
+    EstadoComprobanteEnumSunat[key] ?? EstadoComprobanteEnumSunat.PENDIENTE
+  );
 }
 export function obtenerTiposAfectacion(catalogos: ResponseCatalogoTipoDTO[]): {
   tipoAfectacionGravada: number[];
