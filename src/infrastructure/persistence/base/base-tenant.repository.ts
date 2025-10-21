@@ -11,11 +11,10 @@ export abstract class BaseTenantRepository<T> {
     private readonly entity: new () => T,
   ) {}
 
-  protected async getRepository() {
+  protected async getRepository(tenantDatabase?:string) {
     if (!this.repository) {
-      const subDominio = this.tenantContext.getSubDominio() ?? '';
+      const subDominio = this.tenantContext.getSubDominio() ?? tenantDatabase;
       const sucursalId = this.tenantContext.getSucursalId()
-
       this.repository = await this.tenantRepositoryHelper.getTenantRepository(subDominio, this.entity, sucursalId);
     }
     return this.repository;

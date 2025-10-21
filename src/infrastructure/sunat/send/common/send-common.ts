@@ -113,6 +113,7 @@ export class SendCommon {
     code: string,
     message: string,
     status: number = HttpStatus.BAD_REQUEST,
+    reintentos?:number
   ) {
     return new HttpException(
       {
@@ -120,6 +121,7 @@ export class SendCommon {
         origen: OrigenErrorEnum.SUNAT,
         code,
         message,
+        reintentos
       },
       status,
     );

@@ -11,7 +11,8 @@ export enum ETablaAudit {
   COMPROBANTE = 'comprobantes',
   CLIENTE = 'clientes',
   PRODUCTO = 'productos',
-  SERIE_COMPROBANTE = 'series_comprobantes'
+  SERIE_COMPROBANTE = 'series_comprobantes',
+  CRON_JOB = 'cron_jobs'
 }
 export enum EAccionAudit {
   INSERT = 'INSERT',

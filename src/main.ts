@@ -6,6 +6,8 @@ import { EliminaArraysVaciosInterceptor } from './adapter/web/interceptor/elimin
 import { v2 as cloudinary } from 'cloudinary';
 import { HttpErrorFilter } from './domain/exception/http-error.filter';
 import { TenantGuard } from './adapter/guards/tenant.guard';
+import { CronRunnerService } from './domain/parent/scheduler/service/cron-job-runner.service';
+import { startScheduler } from './startScheduler';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
@@ -37,6 +39,7 @@ async function bootstrap() {
   app.useGlobalInterceptors(new EliminaArraysVaciosInterceptor());
   registerHandlebarsHelpers();
   app.useGlobalGuards(app.get(TenantGuard));
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

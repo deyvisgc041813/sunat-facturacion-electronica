@@ -84,8 +84,9 @@ export class SerieComprobanteRepositoryImpl extends BaseTenantRepository<SerieOr
     sucursalId: number,
     tipoComprobante: string,
     serie: string,
+    tenantDatabase?:string
   ): Promise<SerieResponseDto | null> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     const rsp = await repo.findOne({
       where: {
         sucursalId,
@@ -162,9 +163,10 @@ export class SerieComprobanteRepositoryImpl extends BaseTenantRepository<SerieOr
     sucursalId: number,
     serieId: number,
     newCorrelativo: number,
+    tenantDatabase?:string
   ): Promise<void> {
     try {
-      const repo = await this.getRepository();
+      const repo = await this.getRepository(tenantDatabase);
       await repo.update(
         { serieId, sucursalId},
         { correlativoActual: newCorrelativo, fechaModificacion: new Date() },
@@ -178,9 +180,10 @@ export class SerieComprobanteRepositoryImpl extends BaseTenantRepository<SerieOr
     sucursalId: number,
     tipoComprobante: string,
     serie: string,
+    tenantDatabase?:string
   ): Promise<{ correlativo: number; serieId: number }> {
     try {
-      const repo = await this.getRepository();
+      const repo = await this.getRepository(tenantDatabase);
       const rsp = await repo.findOne({
         where: {
           sucursalId,

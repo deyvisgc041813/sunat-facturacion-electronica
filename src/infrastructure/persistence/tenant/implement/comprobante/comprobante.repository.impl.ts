@@ -326,8 +326,9 @@ export class ComprobanteRepositoryImpl
     serieId: number,
     fechaResumen: string,
     estados: EstadoEnumComprobante[],
+    tenantDatabase?:string
   ): Promise<ComprobanteResponseDto[]> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     const fecha = new Date(fechaResumen);
     const inicioDelDia = new Date(fecha);
     inicioDelDia.setHours(0, 0, 0, 0);
@@ -352,8 +353,9 @@ export class ComprobanteRepositoryImpl
     boletasIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat,
+    tenantDatabase?:string
   ) {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     await repo
       .createQueryBuilder()
       .update()

@@ -25,6 +25,8 @@ import { AuthModule } from './auth.module';
 import { CreateEmpresaBoardingUseCase } from './application/parent/empresa/create.empresa-boarding.usecase';
 import { UbigeoService } from './domain/parent/ubigeo/services/ubigeo.service';
 import { UbigeoModule } from './ubigeo.module';
+import { CronJobOrmEntity } from './infrastructure/persistence/parent/entity/scheduler/cron_job.orm.entity';
+import { SchedulerModule } from './scheduler.module';
 
 @Module({
   imports: [
@@ -32,7 +34,7 @@ import { UbigeoModule } from './ubigeo.module';
       EmpresaOrmEntity,
       ClienteOrmEntity,
       ComprobanteOrmEntity,
-      ProductoOrmEntity,
+      ProductoOrmEntity
     ]),
     SucursalModule,
     TenantConeccionesModule,
@@ -123,6 +125,6 @@ import { UbigeoModule } from './ubigeo.module';
     
     EmpresaRepositoryImpl,
   ],
-  exports: [EmpresaRepositoryImpl],
+  exports: [EmpresaRepositoryImpl, EmpresaService],
 })
 export class EmpresaModule {}

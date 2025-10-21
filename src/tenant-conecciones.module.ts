@@ -27,6 +27,6 @@ import { TenantContextService } from './domain/parent/conecciones-database/servi
      
     TenantConnectionRepositoryImpl,
   ],
-  exports: [TenantDatabaseService, TenantRepositoryHelper],
+  exports: [TenantDatabaseService, TenantRepositoryHelper,],
 })
 export class TenantConeccionesModule {}

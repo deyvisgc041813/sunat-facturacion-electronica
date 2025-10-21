@@ -24,11 +24,12 @@ import { CoreModuleModule } from './core-module.module';
 import { TenantConeccionesModule } from './tenant-conecciones.module';
 import { TenantContextModule } from './tenant-context.module';
 import { TenantGuard } from './adapter/guards/tenant.guard';
-
+import { SchedulerModule } from './scheduler.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
-   TypeOrmModule.forRoot({
+    //ScheduleModule.forRoot(),
+    TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT ?? '3306', 10) || 3306,
@@ -38,29 +39,29 @@ import { TenantGuard } from './adapter/guards/tenant.guard';
       autoLoadEntities: true,
       synchronize: false, // ponlo en true solo en desarrollo
     }),
-   ClienteModule,
-   ProductoModule,
-   EmpresaModule,
-   CatalogoModule,
-   SerieComprobanteModule,
-   SerieAuditoriaModule,
-   ComprobanteModule,
-   TasaTributoModule,
-   ResumenBoletasModule,
-   ComunicacionBajaModule,
-   ExportarModule,
-   SucursalModule,
-   AuthModule,
-   UsuarioModule,
-   UbigeoModule,
-   CoreModuleModule,
-   TenantConeccionesModule,
-   TenantContextModule,
-   
+    ClienteModule,
+    ProductoModule,
+    EmpresaModule,
+    CatalogoModule,
+    SerieComprobanteModule,
+    SerieAuditoriaModule,
+    ComprobanteModule,
+    TasaTributoModule,
+    ResumenBoletasModule,
+    ComunicacionBajaModule,
+    ExportarModule,
+    SucursalModule,
+    AuthModule,
+    UsuarioModule,
+    UbigeoModule,
+    CoreModuleModule,
+    TenantConeccionesModule,
+    TenantContextModule,
+    SchedulerModule
   ],
-  
+
   controllers: [AppController],
   providers: [AppService, TenantGuard],
-  exports: [TenantGuard]
+  exports: [TenantGuard],
 })
 export class AppModule {}

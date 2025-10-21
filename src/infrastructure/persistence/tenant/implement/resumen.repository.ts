@@ -20,8 +20,9 @@ export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOr
     }
   async save(
     resumen: CreateResumenBoletaDto,
+    tenantDatabase?:string
   ): Promise<GenericResponse<number>> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     const data = ResumenBPMaper.dtoToOrmCreate(resumen);
     const newResumen = await repo.save(data);
     return {
@@ -50,13 +51,14 @@ export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOr
     resumenId: string | '',
     sucursalId: number,
     data: Partial<CreateResumenBoletaDto>,
+    tenantDatabase?:string
   ): Promise<void> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     data.fechaRespuestaSunat = dayjs().toDate() 
     await repo.update({ resumenId, sucursalId }, data);
   }
-  async updateBySucursalAndTicket(sucursalId:number, ticket: string, data: any) {
-    const repo = await this.getRepository();
+  async updateBySucursalAndTicket(sucursalId:number, ticket: string, data: any, tenantDatabase?:string) {
+    const repo = await this.getRepository(tenantDatabase);
     await repo
       .createQueryBuilder()
       .update()
@@ -65,8 +67,8 @@ export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOr
       .andWhere('sucursal_id = :sucursalId', { sucursalId })
       .execute();
   }
-  async findBySucursalAndTicket(sucursalId: number, ticket: string): Promise<ResumenResponseDto | null> {
-    const repo = await this.getRepository();
+  async findBySucursalAndTicket(sucursalId: number, ticket: string, tenantDatabase?:string): Promise<ResumenResponseDto | null> {
+    const repo = await this.getRepository(tenantDatabase);
     const resumen = await repo.findOne({ where: { ticket, sucursalId }, relations: ['detalles', 'detalles.comprobante']});
     return resumen ? ResumenBPMaper.toDomain(resumen) : null;
   }

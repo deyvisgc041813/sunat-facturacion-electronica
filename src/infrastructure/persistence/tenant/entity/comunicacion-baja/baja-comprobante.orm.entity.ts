@@ -45,11 +45,11 @@ export class BajaComprobanteOrmEntity {
     nullable: true,
   })
   hashComunicacion?: string;
-  @Column({ name: 'fecha_recepcion_sunat', type: 'date' })
+  @Column({ name: 'fecha_recepcion_sunat', type: 'date', nullable: true })
   fechaRespuestaSunat: Date;
-  @Column({ name: 'codigo_respuesta_sunat', type: 'varchar', length: 5 })
+  @Column({ name: 'codigo_respuesta_sunat', type: 'varchar', length: 5, nullable: true })
   codResPuestaSunat: string;
-  @Column({ name: 'mensaje_sunat', type: 'varchar', length: 250 })
+  @Column({ name: 'mensaje_sunat', type: 'varchar', length: 250, nullable: true })
   mensajeSunat: string;
   @Column({ name: 'observaciones_sunat', type: 'longtext', nullable: true })
   observacionSunat?: string;

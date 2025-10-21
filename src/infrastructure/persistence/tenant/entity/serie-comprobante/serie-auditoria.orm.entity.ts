@@ -11,9 +11,9 @@ import { SerieOrmEntity } from './serie-comprobante.orm.entity';
 export class SerieAuditoriaOrmEntity {
   @PrimaryGeneratedColumn({ name: 'id' })
   serieAuditoriaId: number;
-  @Column({ name: 'usuario_id' })
+  @Column({ name: 'usuario_id', nullable: true})
   usuarioId: number;
-  @Column({ name: 'sucursal_id' })
+  @Column({ name: 'sucursal_id', nullable:true })
   sucursalId: number;
   @Column({ name: 'correlativo_anterior' })
   correlativoAnterior: number;
@@ -24,7 +24,6 @@ export class SerieAuditoriaOrmEntity {
   @CreateDateColumn({
     name: 'fecha_cambio',
     type: 'datetime',
-    // default: () => 'CURRENT_TIMESTAMP',
   })
   fechaCambio: Date;
   @ManyToOne(() => SerieOrmEntity, (serie: SerieOrmEntity) => serie.auditorias)

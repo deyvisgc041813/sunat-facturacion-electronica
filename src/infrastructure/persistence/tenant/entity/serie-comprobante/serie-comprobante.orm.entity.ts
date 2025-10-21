@@ -22,7 +22,7 @@ export class SerieOrmEntity {
   @Column({ name: "estado", type: 'char', length: 1, 'default': "1" })
   estado: string;
 
-  @Column({ name: "usuario_registro", type: 'varchar', length: 50})
+  @Column({ name: "usuario_registro", type: 'varchar', length: 50, nullable: true})
   usuarioRegistro: string;
   @Column({ name: "usuario_modificacion", type: 'varchar', length: 50, nullable: true})
   usuarioModificacion: string;

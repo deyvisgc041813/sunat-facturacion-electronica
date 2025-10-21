@@ -26,7 +26,15 @@ export enum EEstadosGlobales {
   SUSPENDIDA_TEMPORAL = "5",    // La sucursal está suspendida temporalmente.
   CERRADA_PERMANENTE = "6",     // La sucursal está cerrada de forma permanente.
 }
-
+export enum EEstadosCronJob {
+  PENDIENTE = '001',         // El cron fue creado, aún no se ha ejecutado
+  PROGRAMADO = '002',        // Tiene una fecha de próxima ejecución definida
+  EN_PROCESO = '010',        // Actualmente ejecutándose
+  EJECUTADO = '100',         // Ejecución finalizada correctamente
+  CANCELADO = '200',         // Se detuvo manualmente o por condición
+  ERROR = '500',             // Falló durante la ejecución
+  DESHABILITADO = '900',     // Inactivo, no se ejecuta más
+}
 export enum EstadoEnvioSunat {
   PENDIENTE = 'PENDIENTE',         // Registrado pero aún no enviado
   ENVIADO = 'ENVIADO',             // Enviado a SUNAT, en espera

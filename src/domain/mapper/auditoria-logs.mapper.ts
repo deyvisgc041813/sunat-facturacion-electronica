@@ -1,5 +1,5 @@
 
-import { AuditoriaLogOrmEntity } from "src/infrastructure/persistence/parent/entity/auditoria.log-orm.entity";
+import { AuditoriaLogOrmEntity } from "src/infrastructure/persistence/parent/entity/auditoria.log.orm.entity";
 import { AuditoriaLogsResponseDto } from "../parent/core/logs/dto/auditoria-logs.response.dto";
 import { ICreateAuditoriaLog } from "../parent/core/logs/dto/create.auditoria-logs";
 

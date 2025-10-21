@@ -2,7 +2,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { AuditoriaLogsMapper } from 'src/domain/mapper/auditoria-logs.mapper';
 
-import { AuditoriaLogOrmEntity } from '../entity/auditoria.log-orm.entity';
+import { AuditoriaLogOrmEntity } from '../entity/auditoria.log.orm.entity';
 import { IAuditoriaLogsRepositoryPort } from 'src/domain/parent/core/logs/ports/auditoria-logs.port';
 import { ICreateAuditoriaLog } from 'src/domain/parent/core/logs/dto/create.auditoria-logs';
 import { AuditoriaLogsResponseDto } from 'src/domain/parent/core/logs/dto/auditoria-logs.response.dto';
