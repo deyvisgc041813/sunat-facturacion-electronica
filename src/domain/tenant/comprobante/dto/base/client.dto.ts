@@ -8,6 +8,7 @@ import {
   Length,
   Matches,
   MaxLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { AddressDto } from './addres.dto';
@@ -38,15 +39,19 @@ export class ClienteDto {
     message: 'La razón social o el nombre debe tener entre 2 y 250 caracteres',
   })
   rznSocial: string;
+  @ValidateIf((o) => o.tipoDoc === '6')
   @IsNotEmpty({
-    message: 'El estado del RUC es obligatorio.',
+    message: 'El estado del RUC es obligatorio para documentos tipo RUC (6).',
   })
+  @IsString({ message: 'El estado del RUC debe ser un texto.' })
   rucEstado: string;
 
+  @ValidateIf((o) => o.tipoDoc === '6')
   @IsNotEmpty({
-    message: 'La condición del domicilio fiscal es obligatoria.',
+    message: 'La condición del domicilio fiscal es obligatoria para RUC (6).',
   })
-  rucCondicion: string;
+  @IsString({ message: 'La condición del domicilio fiscal debe ser un texto.' })
+  rucCondicion?: string;
   @IsOptional()
   @MaxLength(9, {
     message: 'El teléfono no puede tener más de 9 dígitos',

@@ -22,8 +22,9 @@ export class ComunicacionBajaRepositoryImpl extends BaseTenantRepository<BajaCom
 
   async save(
     resumen: CreateComunicacionBajaDto,
+    tenantDatabase?:string
   ): Promise<GenericResponse<number>> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     const data = ComunicacionBajaMaper.dtoToOrmCreate(resumen);
     const newBaja = await repo.save(data);
     return {
@@ -63,8 +64,9 @@ export class ComunicacionBajaRepositoryImpl extends BaseTenantRepository<BajaCom
     serie: string | '',
     sucursalId: number,
     data: Partial<CreateComunicacionBajaDto>,
+    tenantDatabase?:string
   ): Promise<void> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     await repo.update({ serie: serie, sucursalId }, data);
   }
   async updateBySucursalAndTicket(sucursalId: number, ticket: string, data: any) {

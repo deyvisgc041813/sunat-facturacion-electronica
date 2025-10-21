@@ -30,6 +30,7 @@ export interface ConprobanteRepository {
   findById(
     sucursalId: number,
     comprobanteIds: number[],
+    tenantDatabase?:string,
   ): Promise<ComprobanteResponseDto[] | null>;
 
   //XML firmado
