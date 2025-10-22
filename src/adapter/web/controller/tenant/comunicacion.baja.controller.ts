@@ -22,6 +22,7 @@ import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import type { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { TenantGuard } from 'src/adapter/guards/tenant.guard';
 import { ComunicacionBajaService } from 'src/domain/tenant/comunicacion-baja/service/comunicacion-baja.service';
+import { BusinessLogicException } from '../../exception/exeception-dynamic';
 @Controller('companies/branch/voided-documents')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class ComunicaciomBajaController {
@@ -44,7 +45,7 @@ export class ComunicaciomBajaController {
   @Get('status/:ticket')
   async getStatus(@Param('ticket') ticket: string, @User() auth: IUserPayload) {
     if (!ticket || ticket.trim().length === 0) {
-      throw new BadRequestException('El ticket es obligatorio');
+      throw new BusinessLogicException('El ticket es obligatorio');
     }
     if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
         throw new ForbiddenException(

@@ -1,8 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
-  Injectable,
-  NotFoundException,
+  Injectable
 } from '@nestjs/common';
 import { SucursalRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/sucursal.repository.impl';
 import { CreateSucursalDto } from '../dto/create.request.dto';
@@ -19,6 +18,7 @@ import { TenantDatabaseService } from '../../conecciones-database/service/tenant
 import { DataSource } from 'typeorm';
 import { EmpresaInternaResponseDto } from '../../empresa/dto/internal.response.dto';
 import { GetCertificadoDto } from '../../empresa/dto/obtner-certificado.dto';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class SucursalService {
@@ -74,7 +74,7 @@ export class SucursalService {
       sucursalId,
       empresaId,
     );
-    if (!sucursal) throw new NotFoundException('Sucursal no encontrada.');
+    if (!sucursal) throw new BusinessLogicException('Sucursal no encontrada.');
     return sucursal;
   }
   async update(
@@ -89,10 +89,10 @@ export class SucursalService {
         empresaId,
       );
       if (!sucursal) {
-        throw new NotFoundException('Sucursal no encontrada.');
+        throw new BusinessLogicException('Sucursal no encontrada.');
       }
       if (sucursal.subDominio == dto.subDominio) {
-        throw new NotFoundException(
+        throw new BusinessLogicException(
           `El sub dominio ${dto?.subDominio} ya se encuentra asignada a la succursal ${sucursal?.nombre}.`,
         );
       }
@@ -174,7 +174,7 @@ export class SucursalService {
       auth.correo,
     );
 
-    if (!sucursal) throw new NotFoundException('Sucursal no encontrada');
+    if (!sucursal) throw new BusinessLogicException('Sucursal no encontrada');
 
     const accion =
       nuevoEstado === EEstadosGlobales.ACTIVO
@@ -209,7 +209,7 @@ export class SucursalService {
       );
       if (!sucursalHabilitada) {
         // Si la sucursal no fue encontrada, lanzamos una excepción NotFound con un mensaje detallado
-        throw new NotFoundException(
+        throw new BusinessLogicException(
           `No se encontró la sucursal con el ID ${sucursalId} no esta asociada a la empresaId ${auth.empresaId}. Asegúrese de que el ID de la sucursal sea correcto y que exista en la base de datos.`,
         );
       }
@@ -221,7 +221,7 @@ export class SucursalService {
       }
       if (sucursalHabilitada.estado == EEstadosGlobales.INACTIVO) {
         // Si la sucursal está deshabilitada, lanzamos un error NotFound con detalles
-        throw new NotFoundException(
+        throw new BusinessLogicException(
           `La sucursal ${sucursalHabilitada?.nombre} está actualmente deshabilitada. Para habilitarla, contacte con el administrador o revise su configuración.`,
         );
       }
@@ -288,7 +288,7 @@ export class SucursalService {
     }
     const empresa = sucursal.empresa as EmpresaInternaResponseDto;
     if (!empresa.certificadoDigital || !empresa?.claveCertificado) {
-      throw new Error(
+      throw new BadRequestException(
         `No se encontró certificado digital para la sucursal con RUC ${sucursal.nombre}`,
       );
     }

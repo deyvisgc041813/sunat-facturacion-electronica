@@ -3,6 +3,7 @@ import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import pLimit from 'p-limit';
 import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante.repository';
 import { ConsultarLoteCpeDto, CpeDto } from 'src/domain/tenant/comprobante/dto/cpe/consultar-lote.cpe.dto';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 export class CpeValidadoDto extends CpeDto {
   existe: boolean;
   mensaje: string;
@@ -44,7 +45,7 @@ export class GetValidatedCpeUseCase {
     // 1. Validar que todos sean del mismo tipo
     const tipos = new Set(dto.cpes.map((c) => c.tipo));
     if (tipos.size > 1) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         'Todos los comprobantes deben ser del mismo tipo (ej. solo facturas o solo boletas).',
       );
     }

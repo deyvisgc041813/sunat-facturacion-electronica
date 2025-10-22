@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+
 import QRCode from 'qrcode';
 
 import { formatDateForSunat, formatDateToDDMMYYYY } from 'src/util/Helpers';
@@ -14,6 +14,7 @@ import {
   ItemComprobante,
 } from 'src/domain/tenant/exportar/pdf/pdf.interface';
 import { ComprobanteResponseDto } from 'src/domain/tenant/comprobante/dto/conprobante.response.dto';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 export class CreatePdfUseCase {
   constructor(
     private readonly sucursalRepo: ISucursalRepository,
@@ -25,6 +26,7 @@ export class CreatePdfUseCase {
     sucursalId: number,
     comprobanteId: number,
     tipo: string,
+    contexto:string
   ): Promise<any> {
     try {
       const sucursal = await this.sucursalRepo.findSucursalInterna(
@@ -32,15 +34,22 @@ export class CreatePdfUseCase {
         sucursalId,
       );
       if (!sucursal) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           'No se encontró información de la sucursal asociada al usuario actual. No es posible generar el comprobante.',
         );
       }
-      const comprobante = await this.comprobanteRepo.findById(sucursalId, [
-        comprobanteId,
-      ]);
+
+      let comprobante: any 
+      if(contexto === "comprobante") {
+         comprobante = await this.comprobanteRepo.findById(sucursalId, [
+          comprobanteId,
+        ]);
+      } else {
+        comprobante = await this.comprobanteRepo.findByPedidoIntegracion(sucursalId, comprobanteId);
+      }
+      console.log(comprobante)
       if (!comprobante || comprobante.length === 0) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `No se encontró información del comprobante con ID ${comprobanteId} para la sucursal ${sucursalId}.`,
         );
       }

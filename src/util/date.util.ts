@@ -1,5 +1,6 @@
 // src/common/utils/date-utils.ts
 import dayjs from 'dayjs';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 export class DateUtils {
 
   /**
@@ -8,7 +9,7 @@ export class DateUtils {
    */
   static toMySQLDateTime(isoDate: string): string {
     if (!isoDate) {
-      throw new Error('Fecha inválida');
+      throw new BusinessLogicException('Fecha inválida');
     }
     return dayjs(isoDate).format('YYYY-MM-DD HH:mm:ss');
   }

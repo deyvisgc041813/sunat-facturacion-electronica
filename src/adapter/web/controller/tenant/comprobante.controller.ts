@@ -71,6 +71,7 @@ export class ComprobanteController {
         auth?.sucursalActiva,
         invoice.comprobanteId ?? 0,
         body.printOptions.format ?? '',
+        "comprobante"
       );
       res.set({
         'Content-Type': 'application/pdf',

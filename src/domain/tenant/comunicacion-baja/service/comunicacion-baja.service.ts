@@ -5,11 +5,13 @@ import {
   extraerHashCpe,
   getFechaHoraActualLima,
   getFechaHoyYYYYMMDD,
+  mapSunatToEstado,
 } from 'src/util/Helpers';
 import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
 import { CreateSunatLogDto } from 'src/domain/tenant/sunat-log/interface/sunat.log.interface';
 import {
+  codigoRespuestaSunatMap,
   EstadoComunicacionEnvioSunat,
   EstadoEnumComprobante,
   EstadoEnvioSunat,
@@ -21,7 +23,10 @@ import { ZipUtil } from 'src/util/ZipUtil';
 import { SerieComprobanteRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/serie-comprobante.repository.impl';
 import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/comprobante/comprobante.repository.impl';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
-import { BusinessLogicObjectException } from 'src/adapter/web/exception/exeception-dynamic';
+import {
+  BusinessLogicException,
+  BusinessLogicObjectException,
+} from 'src/adapter/web/exception/exeception-dynamic';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 import { IComunicacionBajaDetalle } from '../interface/baja.detalle.interface';
@@ -33,6 +38,13 @@ import { ComprobanteResponseDto } from '../../comprobante/dto/conprobante.respon
 import { XmlBuilderComunicacionBajaService } from 'src/infrastructure/sunat/xml/xml-builder-comunicacion-baja.service';
 import { CreateComunicacionBajaDto } from '../interface/create.comunicacion.interface';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
+import { BajaComprobanteResponseDto } from '../dto/ComunicacionBajaResponseDto';
+const estadosFinales = new Set([
+  EstadoEnvioSunat.ACEPTADO,
+  EstadoEnvioSunat.RECHAZADO,
+  EstadoEnvioSunat.ERROR,
+  EstadoEnvioSunat.OBSERVADO,
+]);
 export interface ISunatPayloadData {
   signedXml: string;
   fileName: string;
@@ -58,7 +70,7 @@ export class ComunicacionBajaService {
     protected readonly sucursalService: SucursalService,
   ) {}
 
-  async iniciarProceso(
+  async createComunicacionBajaSunat(
     data: ComunicacionBajaDto,
     auth: IUserPayload,
   ): Promise<{
@@ -172,17 +184,17 @@ export class ComunicacionBajaService {
         EstadoComunicacionEnvioSunat.ENVIADO,
         tenantDatabase,
       );
-      const comprobantesValidos = bajaProcesable.comprobanteIdsValidos?.length > 0;
+      const comprobantesValidos =
+        bajaProcesable.comprobanteIdsValidos?.length > 0;
       return {
         status: comprobantesValidos,
         message: comprobantesValidos
           ? `La comunicación de baja fue enviada correctamente a SUNAT. Ticket asignado: ${ticket}`
           : 'No se encontraron comprobantes válidos para enviar la comunicación de baja.',
-        xmlFirmado: comprobantesValidos ? xmlFirmado ?? '' : '',
-        ticket: comprobantesValidos ? ticket ?? '' : '',
+        xmlFirmado: comprobantesValidos ? (xmlFirmado ?? '') : '',
+        ticket: comprobantesValidos ? (ticket ?? '') : '',
         comprobantesNoProcesados: bajaProcesable.errores ?? [],
       };
-
     } catch (error: any) {
       // 9. Actualizar baja con error
       await this.bajaRepo.update(
@@ -293,100 +305,171 @@ export class ComunicacionBajaService {
     return `${ruc}-${tipoDocumento}-${fecReferencia}-${correlativo}`;
   }
 
-  // async consultarEstadoTicketSunat(
-  //   ticket: string,
-  //   usuarioSecundario: string,
-  //   claveSecundaria: string,
-  // ) {
-  //   try {
-  //     const result = await this.sunatService.getStatus(
-  //       ticket,
-  //       usuarioSecundario,
-  //       claveSecundaria,
-  //     );
-  //     return result;
-  //   } catch (error) {
-  //     throw error;
-  //   }
-  // }
-  // async updateBySucursalAndTicket(
-  //   sucursalId: number,
-  //   ticket: string,
-  //   result: IResponseSunat,
-  //   tenantDatabase?: string,
-  // ) {
-  //   await this.resumenRepo.updateBySucursalAndTicket(
-  //     sucursalId,
-  //     ticket,
-  //     {
-  //       estado: mapSunatToEstado(result.codigoResponse ?? ''),
-  //       codResPuestaSunat: result.codigoResponse ?? '',
-  //       cdr: result.cdr?.toString('base64') ?? null,
-  //       mensajeSunat: result.mensaje,
-  //       observacionSunat:
-  //         result.observaciones.length > 0
-  //           ? JSON.stringify(result.observaciones)
-  //           : null,
-  //       fechaRespuestaSunat: new Date(),
-  //     },
-  //     tenantDatabase,
-  //   );
-  // }
-  // async findBySucursalAndTicket(
-  //   sucursalId: number,
-  //   ticket: string,
-  //   tenantDatabase?: string,
-  // ): Promise<ResumenResponseDto | null> {
-  //   const resumen = await this.resumenRepo.findBySucursalAndTicket(
-  //     sucursalId,
-  //     ticket,
-  //     tenantDatabase,
-  //   );
-  //   if (!resumen) {
-  //     throw new BusinessLogicException(
-  //       `No existe un resumen registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
-  //     );
-  //   }
-  //   return resumen;
-  // }
-  // private validarComprobantesParaBaja(
-  //   data: ComunicacionBajaDto,
-  //   comprobantesBaja: ComprobanteResponseDto[],
-  //   procesoAutomatic:boolean = false
-  // ): boolean {
-  //   const errores: string[] = [];
-  //   for (const item of data.detalles) {
-  //     const comprobante = comprobantesBaja.find(
-  //       (c) => c.comprobanteId === item.comprobanteId,
-  //     );
+  async consultarTicketBajaSunat(auth: IUserPayload, ticket?: string) {
+    const empresaId = auth?.empresaId ?? 0;
+    const sucursalId = auth.sucursalActiva ?? 0;
+    const sucursal = await this.sucursalService.getDigitalCertificate(
+      sucursalId,
+      empresaId,
+    );
+    const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
+    const claveSecundaria = CryptoUtil.decrypt(
+      sucursal.claveSolSecundario ?? '',
+    );
+    if (ticket) {
+      return this.consultarTicketResumenSunatIndividual(
+        sucursalId,
+        ticket,
+        usuarioSecundario,
+        claveSecundaria,
+      );
+    } else {
+      // Caso masivo
+      return this.consultarTicketResumenSunatMasivo(
+        sucursalId,
+        usuarioSecundario,
+        claveSecundaria,
+        auth.subDominio,
+      );
+    }
+  }
+  private async consultarTicketResumenSunatIndividual(
+    sucursalId: number,
+    ticket: string,
+    usuarioSecundario: string,
+    claveSecundaria: string,
+  ) {
+    const baja = await this.bajaRepo.findBySucursalAndTicket(
+      sucursalId,
+      ticket,
+    );
+    if (!baja)
+      throw new BusinessLogicException(
+        `No existe una solicitud de comunicacion baja registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
+      );
+    try {
+      await this.validarEstadoFinalBaja(baja);
+      const result = await this.procesarConsultaEstadoBajas(
+        baja,
+        ticket,
+        usuarioSecundario,
+        claveSecundaria,
+        sucursalId,
+      );
+      return result;
+    } catch (error: any) {
+      if (baja) {
+        if (!estadosFinales.has(baja.estado as EstadoEnvioSunat)) {
+          await this.bajaRepo.update(baja?.serie, sucursalId, {
+            estado: EstadoEnvioSunat.ERROR,
+          });
+        }
+        await this.procesarErrorBaja(
+          error,
+          0,
+          sucursalId ?? 0,
+          baja?.serie,
+          baja.xml ?? '',
+          'RA',
+        );
+      }
+      throw error;
+    }
+  }
+  private async consultarTicketResumenSunatMasivo(
+    sucursalId: number,
+    usuarioSecundario: string,
+    claveSecundaria: string,
+    tenantDatabase: string,
+  ): Promise<void> {
+    const resultados: any[] = [];
+    const errores: string[] = [];
+    //"2025-09-11T12:26:13-05:00";
+    const bajas = await this.bajaRepo.findByFecha(
+      sucursalId,
+      getFechaHoraActualLima(),
+      EstadoEnumComprobante.ENVIADO,
+      tenantDatabase,
+    );
+    if (bajas.length === 0) {
+      this.logger.warn(
+        `[SUNAT] No se encontraron registros de bajas pendientes para validar el estado de ticket en la sucursal ${sucursalId}.`,
+      );
 
-  //     if (!comprobante) {
-  //       errores.push(`El comprobante con ID ${item.comprobanteId} no existe.`);
-  //       continue;
-  //     }
+      return;
+    }
+    this.logger.log(
+      `[SUNAT] Iniciando validación automática de tickets (${bajas.length}) en la sucursal ${sucursalId}.`,
+    );
 
-  //     if (
-  //       [EstadoEnumComprobante.ENVIADO, EstadoEnumComprobante.ANULADO].includes(
-  //         comprobante.estado as EstadoEnumComprobante,
-  //       )
-  //     ) {
-  //       errores.push(
-  //         `El comprobante ${comprobante.serie?.serie}-${comprobante.numeroComprobante} ya fue dado de baja o está en proceso de baja.`,
-  //       );
-  //     }
-  //   }
-  //   if (errores.length > 0) {
-  //     if(!procesoAutomatic ) {
-  //       throw new BusinessLogicObjectException({
-  //         success: false,
-  //         statusCode: 400,
-  //         message: errores,
-  //       });
-  //     }
-  //     //this.logger.warn()
-  //   }
-  //   return true;
-  // }
+    for (const baja of bajas) {
+      const ticket = baja.ticket ?? '';
+
+      if (!ticket) {
+        this.logger.warn(
+          `[SUNAT] La comunicacion baja ${baja.bajaComprobanteId ?? '—'}-${baja.correlativo ?? ''} no tiene ticket asignado. Se omitió la validación (sucursal: ${sucursalId}).`,
+        );
+        continue;
+      }
+
+      try {
+        const result = await this.procesarConsultaEstadoBajas(
+          baja,
+          ticket,
+          usuarioSecundario,
+          claveSecundaria,
+          sucursalId,
+        );
+        resultados.push({ ticket, estado: result?.estadoSunat });
+        this.logger.log(
+          `[SUNAT]Ticket ${ticket} de la baja ${baja.bajaComprobanteId ?? '—'}-${baja.correlativo ?? ''} validado correctamente. Estado: ${result?.estadoSunat}.`,
+        );
+      } catch (error: any) {
+        errores.push(`Ticket ${ticket}: ${error.message}`);
+        this.logger.error(
+          `[SUNAT] Error al consultar ticket ${ticket} (baja ${baja?.bajaComprobanteId ?? '—'}-${baja?.correlativo ?? ''}): ${error.message}`,
+        );
+      }
+    }
+    this.logger.log(
+      `[SUNAT] Finalizó validación automática de tickets. Total: ${bajas.length}, procesados: ${resultados.length}, fallidos: ${errores.length}.`,
+    );
+  }
+  private async procesarConsultaEstadoBajas(
+    baja: BajaComprobanteResponseDto,
+    ticket: string,
+    usuarioSecundario: string,
+    claveSecundaria: string,
+    sucursalId: number,
+  ) {
+    const result = await this.sunatService.getStatus(
+      ticket,
+      usuarioSecundario,
+      claveSecundaria,
+    );
+    await this.bajaRepo.updateBySucursalAndTicket(sucursalId, ticket, {
+      estado: mapSunatToEstado(result.codigoResponse ?? ''),
+      codResPuestaSunat: result.codigoResponse,
+      cdr: result.cdr,
+      mensajeSunat: result.mensaje,
+      fechaRespuestaSunat: new Date(),
+      observacionSunat:
+        result.observaciones.length > 0
+          ? JSON.stringify(result.observaciones)
+          : null,
+    });
+    const comprobantesIds: number[] = (baja?.detalles ?? [])
+      .map((d) => d.comprobante?.comprobanteId)
+      .filter((id): id is number => id !== undefined);
+    await this.comprobanteRepo.updateComprobanteStatusMultiple(
+      sucursalId,
+      comprobantesIds,
+      EstadoEnumComprobante.ANULADO,
+      EstadoComunicacionEnvioSunat.ACEPTADO_PROCESADO,
+    );
+    return result;
+  }
+
   private validarComprobantesParaBaja(
     data: ComunicacionBajaDto,
     comprobantesBaja: ComprobanteResponseDto[],
@@ -434,5 +517,14 @@ export class ComunicacionBajaService {
       comprobanteIds,
       detalle,
     };
+  }
+  private validarEstadoFinalBaja(baja: BajaComprobanteResponseDto) {
+    const estado = codigoRespuestaSunatMap[baja?.codigoRespuestaSunat ?? ''];
+    if (estadosFinales.has(estado)) {
+      throw new BusinessLogicException(
+        `La solicitud de baja ya fue procesada por SUNAT y se encuentra en estado definitivo (${estado}). ` +
+          `No es posible volver a enviarla ni consultarla nuevamente.`,
+      );
+    }
   }
 }

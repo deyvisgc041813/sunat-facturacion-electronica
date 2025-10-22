@@ -8,6 +8,8 @@ import { IComunicacionBajaRepository } from 'src/domain/tenant/comunicacion-baja
 import { TenantRepositoryHelper } from 'src/domain/parent/conecciones-database/service/tenant-repository.helper';
 import { TenantContextService } from 'src/domain/parent/conecciones-database/service/tenant-context.service';
 import { BaseTenantRepository } from '../../base/base-tenant.repository';
+import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import { Between } from 'typeorm';
 
 @Injectable()
 export class ComunicacionBajaRepositoryImpl extends BaseTenantRepository<BajaComprobanteOrmEntity> 
@@ -40,19 +42,31 @@ export class ComunicacionBajaRepositoryImpl extends BaseTenantRepository<BajaCom
   ): Promise<BajaComprobanteResponseDto | null> {
     throw new Error('Method not implemented.');
   }
-  findByFecha(
+ async findByFecha(
     sucursalId: number,
-    fecha: string,
+    fechaResumen: Date,
+    estado: EstadoEnumComprobante,
+    tenantDatabase?: string,
   ): Promise<BajaComprobanteResponseDto[]> {
-    throw new Error('Method not implemented.');
+    const repo = await this.getRepository(tenantDatabase);
+    const inicioDelDia = new Date(fechaResumen);
+    inicioDelDia.setHours(0, 0, 0, 0);
+    const finDelDia = new Date(fechaResumen);
+    finDelDia.setHours(23, 59, 59, 999);
+    const rsp = await repo.find({
+      where: {
+        sucursalId,
+        fechaGeneracion: Between(inicioDelDia, finDelDia),
+        estado: estado,
+      },
+      order: {
+        fechaGeneracion: 'ASC',
+      },
+    });
+    return rsp.map(ComunicacionBajaMaper.toDomain);
   }
   async getNextCorrelativo(sucursalId: number): Promise<number> {
     const repo = await this.getRepository();
-    // const result = await repo
-    // .createQueryBuilder('baja')
-    // .select('MAX(baja.correlativo)', 'max')
-    // .where('baja.sucursal_id = :sucursalId', { sucursalId })
-    // .getRawOne<{ max: number }>() ;
     const result = await repo
     .createQueryBuilder('baja')
     .select('MAX(baja.correlativo)', 'max')

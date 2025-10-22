@@ -1,9 +1,7 @@
 import {
   BadRequestException,
   Injectable,
-  Logger,
-  NotFoundException,
-  UnauthorizedException,
+  Logger
 } from '@nestjs/common';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { CryptoUtil } from 'src/util/CryptoUtil';
@@ -27,6 +25,7 @@ import { CreateEmpresaOnboardingDto } from '../dto/create.request.onboarding.dto
 import { TenantDatabaseService } from '../../conecciones-database/service/tenant-database.service';
 import { AuthService } from 'src/domain/auth/services/auth.service';
 import { UbigeoService } from '../../ubigeo/services/ubigeo.service';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 // import forge from 'node-forge';
 const forge = require('node-forge');
 
@@ -49,7 +48,7 @@ export class EmpresaService {
     try {
       // 1. Validar archivo
       if (!this.esArchivoPfxValido(data.certificado_digital)) {
-        throw new BadRequestException('El archivo no es un certificado válido');
+        throw new BusinessLogicException('El archivo no es un certificado válido');
       }
       // 2. Validar clave con node-forge
       const metadatos = this.validarClaveCertificado(
@@ -57,7 +56,7 @@ export class EmpresaService {
         data.claveCertificado,
       );
       if (!metadatos.status) {
-        throw new UnauthorizedException(
+        throw new  BusinessLogicException(
           'La clave del certificado es incorrecta',
         );
       }
@@ -140,7 +139,7 @@ export class EmpresaService {
           data.claveCertificado ?? '',
         );
         if (!metadatos.status) {
-          throw new UnauthorizedException(
+          throw new BusinessLogicException(
             'La clave del certificado es incorrecta',
           );
         }
@@ -240,7 +239,7 @@ export class EmpresaService {
       );
     }
     const serie = await this.empRepo.updateStatus(empresaId, nuevoEstado);
-    if (!serie) throw new NotFoundException('Empresa no encontrada');
+    if (!serie) throw new BusinessLogicException('Empresa no encontrada');
 
     const accion =
       nuevoEstado === EEstadosGlobales.ACTIVO

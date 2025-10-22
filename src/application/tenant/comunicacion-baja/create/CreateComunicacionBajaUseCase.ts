@@ -17,7 +17,7 @@ export class CreateComunicacionBajaUseCase {
     xmlFirmado: string;
     ticket: string;
   }> {
-   return this.comunicacionService.iniciarProceso(data, auth)
+   return this.comunicacionService.createComunicacionBajaSunat(data, auth)
 
     // const sucursal = await this.sucurSalRepo.findSucursalInterna(empresaId, sucursalId);
     // if (!sucursal) {

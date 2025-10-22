@@ -3,6 +3,7 @@ import * as forge from 'node-forge';
 import { SignedXml } from 'xml-crypto';
 import { createPrivateKey } from 'crypto';
 import { DOMParser, XMLSerializer } from 'xmldom';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 class CertKeyInfoProvider {
   constructor(private cert: string) {}
 
@@ -40,7 +41,7 @@ export class FirmaService {
       keyBagsKey[forge.pki.oids.keyBag]?.[0];
 
     if (!bag?.key) {
-      throw new Error('No se encontró la clave privada en el PFX.');
+      throw new BusinessLogicException('No se encontró la clave privada en el PFX.');
     }
 
     const privateKeyPem = forge.pki.privateKeyToPem(bag.key);
@@ -55,7 +56,7 @@ export class FirmaService {
     const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
     const cert = certBags[forge.pki.oids.certBag]?.[0]?.cert;
     if (!cert) {
-      throw new Error('No se encontró el certificado en el PFX.');
+      throw new BusinessLogicException('No se encontró el certificado en el PFX.');
     }
     const certificatePem = forge.pki.certificateToPem(cert);
     const certBase64 = certificatePem

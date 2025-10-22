@@ -6,13 +6,12 @@ import { UsuarioMapper } from 'src/domain/mapper/usuario.mapper';
 import { CreateUsuarioDto } from 'src/domain/auth/dto/usuario/create.request.dto';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { UpdateUsuarioDto } from 'src/domain/auth/dto/usuario/update.request.dto';
-import { NotFoundException } from '@nestjs/common';
 import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/sucursal.orm.entity';
 import { UsuariosOrmEntity } from '../usuario.orm.entity';
 import { RolesOrmEntity } from '../role.orm.entity';
 import { UserRolesOrmEntity } from '../user-role.orm.entity';
 import { UserSucursalesOrmEntity } from '../user-sucursal.orm.entity';
-import { EEstadosGlobales } from 'src/util/estado.enum';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 export class UserRepositoryImpl implements IUsuarioRepositoryPort {
   constructor(
@@ -65,7 +64,7 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
       relations: ['roles', 'sucursales'],
     });
     if (!usuario)
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `No se encontró el usuario con ID ${usuarioId}`,
       );
     return UsuarioMapper.toDomain(usuario);
@@ -170,7 +169,7 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
     });
 
     if (!usuario) {
-      throw new NotFoundException(`Usuario con ID ${usuarioId} no encontrado`);
+      throw new BusinessLogicException(`Usuario con ID ${usuarioId} no encontrado`);
     }
     const result: any = await this.repo.update(
       { usuarioId },

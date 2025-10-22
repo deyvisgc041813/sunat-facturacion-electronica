@@ -10,6 +10,7 @@ import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response
 import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ComprobanteService } from 'src/domain/tenant/comprobante/services/comprobante.service';
+import { BusinessLogicException, BusinessLogicObjectException } from 'src/adapter/web/exception/exeception-dynamic';
 
 
 export abstract class CreateInvoiceBaseUseCase {
@@ -52,8 +53,9 @@ export abstract class CreateInvoiceBaseUseCase {
         catalogosTributos.tasas,
       );
       if (errores.length > 0) {
-        throw new BadRequestException({
-          statusCode: 400,
+        throw new BusinessLogicObjectException({
+          success: false,
+          statusCode: 422,
           message: 'Error de validación en los detalles del comprobante',
           errors: errores,
         });

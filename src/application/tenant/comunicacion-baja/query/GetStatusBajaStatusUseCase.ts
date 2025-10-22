@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
 import { ISucursalRepository } from 'src/domain/parent/sucursal/ports/sucursal.repository';
@@ -43,7 +43,7 @@ export class GetStatusBajaStatusUseCase {
       sucursalId,
     );
     if (!sucursal) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
       );
     }
@@ -60,7 +60,7 @@ export class GetStatusBajaStatusUseCase {
 
     try {
       if (!baja) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `No existe una solicitud de comunicacion baja registrado con el ticket ${ticket}. Verifique que el número de ticket proporcionado sea correcto.`,
         );
       }
@@ -150,7 +150,7 @@ export class GetStatusBajaStatusUseCase {
   private async validarEstadoFinalBaja(baja: BajaComprobanteResponseDto) {
     const estado = codigoRespuestaSunatMap[baja?.codigoRespuestaSunat ?? ''];
     if (estadosFinales.has(estado)) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `La solicitud de baja ya fue procesada por SUNAT y se encuentra en estado definitivo (${estado}). ` +
           `No es posible volver a enviarla ni consultarla nuevamente.`,
       );

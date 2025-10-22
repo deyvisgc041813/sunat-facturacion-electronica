@@ -17,7 +17,6 @@ export class ComprobanteBaseDto {
   // @IsPositive({ message: 'El ID de la sucursal debe ser mayor a 0' })
   @IsOptional()
   sucursalId: number;
-
   @IsString({ message: 'La versión UBL debe ser un texto' })
   @IsNotEmpty({ message: 'La versión UBL es obligatoria' })
   @IsIn(['2.1'], { message: 'La versión UBL debe ser 2.1' })

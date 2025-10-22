@@ -1,7 +1,8 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ICreateAuditoriaLog } from '../dto/create.auditoria-logs';
 import { AuditoriaLogsResponseDto } from '../dto/auditoria-logs.response.dto';
 import { AuditoriaLogsRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/auditoria-log.repository';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 @Injectable()
 export class AuditoriaService {
   private readonly logger = new Logger(AuditoriaService.name);
@@ -27,7 +28,7 @@ export class AuditoriaService {
   async findById(idLog: number): Promise<AuditoriaLogsResponseDto> {
     const log = await this.logsRepo.findById(idLog);
     if (!log) {
-      throw new NotFoundException(`No se encontró el log con id ${idLog}`);
+      throw new BusinessLogicException(`No se encontró el log con id ${idLog}`);
     }
     return log;
   }

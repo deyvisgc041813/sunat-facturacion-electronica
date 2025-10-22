@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+
 import {
   CodigoProductoNotaDebito,
   LegendCodeEnum,
@@ -31,6 +31,7 @@ import { IMtoGloables } from 'src/domain/tenant/comprobante/interface/mtos-globa
 import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
 import { IDocumento } from 'src/domain/tenant/resumen/interface/sunat.summary.interface';
 import { ResponseCatalogoTipoDTO } from 'src/domain/parent/catalogo/dto/catalogo.response';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -42,7 +43,7 @@ export function validarSoloNumeros(
 ) {
   const regex = new RegExp(`^\\d{${longitud}}$`);
   if (!regex.test(valor)) {
-    throw new BadRequestException(mensaje);
+    throw new BusinessLogicException(mensaje);
   }
 }
 
@@ -52,7 +53,7 @@ export function validarLongitudMinima(
   mensaje: string,
 ) {
   if (!valor || valor.length < longitud) {
-    throw new BadRequestException(mensaje);
+    throw new BusinessLogicException(mensaje);
   }
 }
 export function validarDatosSegunTipoDocumento(
@@ -67,7 +68,7 @@ export function validarDatosSegunTipoDocumento(
         'El DNI debe tener 8 dígitos numéricos',
       );
       if (!cliente.nombre) {
-        throw new BadRequestException('El nombre del cliente es obligatorio');
+        throw new BusinessLogicException('El nombre del cliente es obligatorio');
       }
       break;
 
@@ -78,7 +79,7 @@ export function validarDatosSegunTipoDocumento(
         'El RUC debe tener 11 dígitos numéricos',
       );
       if (!cliente.razonSocial) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           'La razón social del cliente es obligatoria',
         );
       }
@@ -113,7 +114,7 @@ export function validarDatosSegunTipoDocumento(
       break;
 
     default:
-      throw new BadRequestException('Tipo de documento no soportado');
+      throw new BusinessLogicException('Tipo de documento no soportado');
   }
 }
 /**
@@ -290,7 +291,7 @@ export function identificarTipoAumentoNotaDebito(
   notaDebito: DetailDto[],
 ): TipoNotaDebito {
   if (!notaDebito || notaDebito.length === 0) {
-    throw new BadRequestException('La nota de débito no tiene detalles');
+    throw new BusinessLogicException('La nota de débito no tiene detalles');
   }
 
   // Caso 1: Aumento global → exactamente 1 item con AU001
@@ -312,7 +313,7 @@ export function identificarTipoAumentoNotaDebito(
     return TipoAumentoNotaDebito.ITEM;
   }
   // Caso 3: Inválido → mezcla de AU001 + productos o productos inexistentes
-  throw new BadRequestException(
+  throw new BusinessLogicException(
     'Nota de débito inválida: el detalle contiene códigos de producto que no existen en la factura original o una mezcla de ajuste global con ítems específicos.',
   );
 }
@@ -322,14 +323,14 @@ export function validateLegends(
   mtoImpVentaEsperado: number,
 ) {
   if (!legends || legends.length === 0) {
-    throw new BadRequestException(
+    throw new BusinessLogicException(
       `La Nota es inválida: debe incluir al menos la leyenda de monto en letras (code=1000).`,
     );
   }
 
   const legendMonto = legends.find((l) => l.code === '1000');
   if (!legendMonto) {
-    throw new BadRequestException(
+    throw new BusinessLogicException(
       `La Nota es inválida: falta la leyenda obligatoria de monto en letras (code=1000).`,
     );
   }
@@ -340,7 +341,7 @@ export function validateLegends(
     legendMonto?.value?.trim().toUpperCase() !==
     montoEnLetrasEsperado?.trim().toUpperCase()
   ) {
-    throw new BadRequestException(
+    throw new BusinessLogicException(
       `La leyenda de monto en letras no coincide con el total calculado. 
       Esperado "${montoEnLetrasEsperado}", recibido "${legendMonto.value}".`,
     );
@@ -357,7 +358,7 @@ export function validateCodigoProductoNotaDebito(
   switch (tipoNotaDebito) {
     case '01': // Intereses por mora
       if (codProducto !== CodigoProductoNotaDebito.INTERES_POR_MORA) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El código de producto ${codProducto} no es válido para una Nota de Débito por Mora. Debe ser ${CodigoProductoNotaDebito.INTERES_POR_MORA}.`,
         );
       }
@@ -368,7 +369,7 @@ export function validateCodigoProductoNotaDebito(
         codProducto !== CodigoProductoNotaDebito.AJUSTE_GLOBAL_OPERACION &&
         !existeEnFactura
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El código de producto ${codProducto} no es válido para una Nota de Débito por Aumento. 
           Debe ser ${CodigoProductoNotaDebito.AJUSTE_GLOBAL_OPERACION} (ajuste global) o un producto existente en la factura original.`,
         );
@@ -377,14 +378,14 @@ export function validateCodigoProductoNotaDebito(
 
     case '03': // Penalidades
       if (codProducto !== CodigoProductoNotaDebito.PENALIDAD_CONTRATO) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El código de producto ${codProducto} no es válido para una Nota de Débito por Penalidad. Debe ser ${CodigoProductoNotaDebito.PENALIDAD_CONTRATO}.`,
         );
       }
       break;
 
     default:
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `Tipo de Nota de Débito ${tipoNotaDebito} no soportado para validación de códigos.`,
       );
   }
@@ -394,13 +395,13 @@ export function validateCodigoProductoNotaDebito(
  * Valida que el comprobante original tenga un único tipo de afectación IGV
  * y retorna dicho tipo.
  *
- * @throws BadRequestException si existen múltiples tipos de afectación en la factura original
+ * @throws BusinessLogicException si existen múltiples tipos de afectación en la factura original
  */
 // export function validarTipoAfectacionUnico(details: DetailDto[]): any {
 //   const tiposAfeOriginales = [...new Set(details.map((d) => d.tipAfeIgv))];
 
 //   if (tiposAfeOriginales.length > 1) {
-//     throw new BadRequestException(
+//     throw new BusinessLogicException(
 //       `El comprobante original contiene ítems con diferentes tipos de afectación IGV (${tiposAfeOriginales.join(
 //         ', ',
 //       )}). No es posible generar una Nota de Débito global.`,
@@ -420,7 +421,7 @@ export function validarNumeroDocumentoCliente(
 ) {
   // 1. Validar cliente
   if (numDocNd !== numDocOriginal) {
-    throw new BadRequestException(
+    throw new BusinessLogicException(
       `El RUC/DNI del cliente en la ${tipo} (${numDocNd}) no coincide con el de la factura original (${numDocOriginal}).`,
     );
   }

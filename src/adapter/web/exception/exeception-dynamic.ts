@@ -3,6 +3,7 @@ interface IBusinessError {
   success: boolean;
   statusCode: number;
   message: string | string[];
+  errors: any
 }
 
 export class BusinessLogicException extends HttpException {

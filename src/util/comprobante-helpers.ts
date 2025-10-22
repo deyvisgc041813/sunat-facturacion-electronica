@@ -13,6 +13,7 @@ import { ResponseCatalogoTipoDTO } from 'src/domain/parent/catalogo/dto/catalogo
 import { TributoTasaResponseDto } from 'src/domain/parent/tributo-tasa/dto/response.tributo-tasa.dto';
 import { CreateNotaDto } from 'src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto';
 import { ClienteDto } from 'src/domain/tenant/comprobante/dto/base/client.dto';
+import { BusinessLogicException, BusinessLogicObjectException } from 'src/adapter/web/exception/exeception-dynamic';
 interface ValidationError {
   index: number; // índice del detalle
   field: string; // campo validado
@@ -272,7 +273,9 @@ export class ComprobantesHelper {
       }
     });
     if (errores.length > 0) {
-      throw new BadRequestException({
+      throw new BusinessLogicObjectException({
+        success: false,
+        statusCode: 422,
         message: 'Errores en detalles',
         errors: errores,
       });
@@ -281,7 +284,7 @@ export class ComprobantesHelper {
   static validarRucEmision(dtoClient: ClienteDto) {
     if (dtoClient.tipoDoc === TipoComprobanteEnum.FACTURA) {
       if (dtoClient.rucEstado?.toUpperCase() !== 'ACTIVO') {
-        throw new Error(
+        throw new BusinessLogicException(
           `El RUC ${dtoClient.numDoc} no puede emitir factura. Estado actual: ${dtoClient.rucEstado}`,
         );
       }

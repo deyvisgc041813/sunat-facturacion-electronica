@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { SerieAuditoriaOrmEntity } from '../../entity/serie-comprobante/serie-auditoria.orm.entity';
 import { SerieAuditoriaMapper } from 'src/domain/mapper/serie-auditoria.mapper';
 import { SerieAuditoriaRepository } from 'src/domain/tenant/series-auditoria/port/serie-auditoria.repository.port';
@@ -8,6 +8,7 @@ import { UpdateSerieDto } from 'src/domain/tenant/serie-comprobante/dto/update.r
 import { TenantRepositoryHelper } from 'src/domain/parent/conecciones-database/service/tenant-repository.helper';
 import { TenantContextService } from 'src/domain/parent/conecciones-database/service/tenant-context.service';
 import { BaseTenantRepository } from 'src/infrastructure/persistence/base/base-tenant.repository';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class SerieAuditoriaRepositoryImpl extends BaseTenantRepository<SerieAuditoriaOrmEntity>  implements SerieAuditoriaRepository {
@@ -43,7 +44,7 @@ export class SerieAuditoriaRepositoryImpl extends BaseTenantRepository<SerieAudi
       relations: ['serie'],
     });
     if (!serie) {
-      throw new NotFoundException(`Log con id ${serieId} no encontrado`);
+      throw new BusinessLogicException(`Log con id ${serieId} no encontrado`);
     }
     return SerieAuditoriaMapper.toDomain(serie)
   }

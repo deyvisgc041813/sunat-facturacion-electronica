@@ -32,7 +32,10 @@ export interface ConprobanteRepository {
     comprobanteIds: number[],
     tenantDatabase?:string,
   ): Promise<ComprobanteResponseDto[] | null>;
-
+  findByPedidoIntegracion(
+    sucursalId: number,
+    pedidoId: number,
+  ): Promise<ComprobanteResponseDto | null>
   //XML firmado
   getXmlFirmado(
     comprobanteId: number,
@@ -114,7 +117,6 @@ export interface ConprobanteRepository {
   ): Promise<ComprobanteResponseDto | null>;
   findBoletasForResumen(
     sucursalId: number,
-    serieId: number,
     fechaResumen: string,
     estados: EstadoEnumComprobante[],
   ): Promise<ComprobanteResponseDto[]>;

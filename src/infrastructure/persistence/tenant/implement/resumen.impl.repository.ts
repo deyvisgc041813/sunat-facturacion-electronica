@@ -9,18 +9,23 @@ import { TenantRepositoryHelper } from 'src/domain/parent/conecciones-database/s
 import { TenantContextService } from 'src/domain/parent/conecciones-database/service/tenant-context.service';
 import { BaseTenantRepository } from '../../base/base-tenant.repository';
 import dayjs from 'dayjs';
+import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import { Between } from 'typeorm';
 
 @Injectable()
-export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOrmEntity> implements IResumenRepository {
-    constructor(
-      tenantRepositoryHelper: TenantRepositoryHelper,
-      tenantContext: TenantContextService,
-    ) {
-      super(tenantContext, tenantRepositoryHelper, ResumenBoletasOrmEntity);
-    }
+export class ResumenRepositoryImpl
+  extends BaseTenantRepository<ResumenBoletasOrmEntity>
+  implements IResumenRepository
+{
+  constructor(
+    tenantRepositoryHelper: TenantRepositoryHelper,
+    tenantContext: TenantContextService,
+  ) {
+    super(tenantContext, tenantRepositoryHelper, ResumenBoletasOrmEntity);
+  }
   async save(
     resumen: CreateResumenBoletaDto,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ): Promise<GenericResponse<number>> {
     const repo = await this.getRepository(tenantDatabase);
     const data = ResumenBPMaper.dtoToOrmCreate(resumen);
@@ -31,33 +36,59 @@ export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOr
       data: ResumenBPMaper.toDomain(newResumen).resBolId,
     };
   }
-  findById(sucursalId:number, id: number): Promise<ResumenResponseDto | null> {
+  findById(sucursalId: number, id: number): Promise<ResumenResponseDto | null> {
     throw new Error('Method not implemented.');
   }
-  findByFecha(sucursalId: number, fecha: string): Promise<ResumenResponseDto[]> {
-    throw new Error('Method not implemented.');
+  async findByFecha(
+    sucursalId: number,
+    fechaResumen: Date,
+    estado: EstadoEnumComprobante,
+    tenantDatabase?: string,
+  ): Promise<ResumenResponseDto[]> {
+    const repo = await this.getRepository(tenantDatabase);
+    const inicioDelDia = new Date(fechaResumen);
+    inicioDelDia.setHours(0, 0, 0, 0);
+    const finDelDia = new Date(fechaResumen);
+    finDelDia.setHours(23, 59, 59, 999);
+    const rsp = await repo.find({
+      where: {
+        sucursalId,
+        fechaGeneracion: Between(inicioDelDia, finDelDia),
+        estado: estado,
+      },
+      order: {
+        fechaGeneracion: 'ASC',
+      },
+    });
+    return rsp.map(ResumenBPMaper.toDomain);
   }
+
   async getNextCorrelativo(sucursalId: number): Promise<number> {
     const repo = await this.getRepository();
-    const result = await repo
+    const result = (await repo
       .createQueryBuilder('resumen')
       .select('MAX(resumen.correlativo)', 'max')
       .where('resumen.sucursal_id = :sucursalId', { sucursalId })
       // .getRawOne<{ max: number }>();
-      .getRawOne() as { max: number | null };
+      .getRawOne()) as { max: number | null };
     return result?.max ? Number(result.max) + 1 : 1;
   }
   async update(
     resumenId: string | '',
     sucursalId: number,
     data: Partial<CreateResumenBoletaDto>,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ): Promise<void> {
     const repo = await this.getRepository(tenantDatabase);
-    data.fechaRespuestaSunat = dayjs().toDate() 
+    data.fechaRespuestaSunat = dayjs().toDate();
     await repo.update({ resumenId, sucursalId }, data);
   }
-  async updateBySucursalAndTicket(sucursalId:number, ticket: string, data: any, tenantDatabase?:string) {
+  async updateBySucursalAndTicket(
+    sucursalId: number,
+    ticket: string,
+    data: any,
+    tenantDatabase?: string,
+  ) {
     const repo = await this.getRepository(tenantDatabase);
     await repo
       .createQueryBuilder()
@@ -67,9 +98,16 @@ export class ResumenRepositoryImpl extends BaseTenantRepository<ResumenBoletasOr
       .andWhere('sucursal_id = :sucursalId', { sucursalId })
       .execute();
   }
-  async findBySucursalAndTicket(sucursalId: number, ticket: string, tenantDatabase?:string): Promise<ResumenResponseDto | null> {
+  async findBySucursalAndTicket(
+    sucursalId: number,
+    ticket: string,
+    tenantDatabase?: string,
+  ): Promise<ResumenResponseDto | null> {
     const repo = await this.getRepository(tenantDatabase);
-    const resumen = await repo.findOne({ where: { ticket, sucursalId }, relations: ['detalles', 'detalles.comprobante']});
+    const resumen = await repo.findOne({
+      where: { ticket, sucursalId },
+      relations: ['detalles', 'detalles.comprobante'],
+    });
     return resumen ? ResumenBPMaper.toDomain(resumen) : null;
   }
 }

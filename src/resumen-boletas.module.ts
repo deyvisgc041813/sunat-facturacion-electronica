@@ -9,7 +9,7 @@ import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/emp
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/conprobante-respuesta-sunat.orm.entity';
 import { SunatLogOrmEntity } from './infrastructure/persistence/tenant/entity/sunat-log.orm.entity';
-import { ResumenRepositoryImpl } from './infrastructure/persistence/tenant/implement/resumen.repository';
+import { ResumenRepositoryImpl } from './infrastructure/persistence/tenant/implement/resumen.impl.repository';
 import { ResumenController } from './adapter/web/controller/tenant/resumen.controller';
 import { CreateResumenUseCase } from './application/tenant/resumen/create/CreateResumenUseCase';
 import { GetNextCorrelativoUseCase } from './application/tenant/resumen/query/GetNextCorrelativoUseCase';

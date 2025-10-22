@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante.repository';
 import { ComprobanteResponseDto } from 'src/domain/tenant/comprobante/dto/conprobante.response.dto';
 
@@ -11,7 +11,7 @@ export class GetByIdComprobantesUseCase {
   ): Promise<ComprobanteResponseDto | null> {
     const rpta = await this.comprobante.findById(surcursalId, [ comprobanteId ]);
     if (!rpta || rpta.length === 0) {
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `Comprobante con id ${comprobanteId} no encontrado para la sucursal ${surcursalId}`,
       );
     }

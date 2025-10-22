@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { In } from 'typeorm';
 import { ProductoMapper } from 'src/domain/mapper/producto.mapper';
@@ -13,6 +12,7 @@ import { EEstadosGlobales } from 'src/util/estado.enum';
 import { TenantRepositoryHelper } from 'src/domain/parent/conecciones-database/service/tenant-repository.helper';
 import { BaseTenantRepository } from 'src/infrastructure/persistence/base/base-tenant.repository';
 import { TenantContextService } from 'src/domain/parent/conecciones-database/service/tenant-context.service';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class ProductoRepositoryImpl  extends BaseTenantRepository<ProductoOrmEntity>  implements ProductoRepository {
@@ -54,7 +54,7 @@ export class ProductoRepositoryImpl  extends BaseTenantRepository<ProductoOrmEnt
       where: { sucursalId, productoId, estado: In([EEstadosGlobales.ACTIVO]) },
     });
     if (!producto) {
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `Producto con id ${productoId} no encontrado`,
       );
     }

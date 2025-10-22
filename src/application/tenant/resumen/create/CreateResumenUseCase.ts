@@ -16,6 +16,6 @@ export class CreateResumenUseCase {
     xmlFirmado: string;
     ticket: string;
   }> {
-   return this.resumenService.iniciarProceso(data, auth)
+   return this.resumenService.createResumenenSunat(data, auth)
   }
 }

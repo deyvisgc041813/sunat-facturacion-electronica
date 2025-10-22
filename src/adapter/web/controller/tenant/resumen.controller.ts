@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   ForbiddenException,
@@ -11,7 +10,7 @@ import {
 
 import { JwtAuthGuard } from 'src/adapter/guards/jwt.auth.guard';
 import { User } from 'src/adapter/decorator/user.decorator';
-import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/resumen.repository';
+import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/resumen.impl.repository';
 import { SummaryDocumentDto } from 'src/domain/tenant/resumen/dto/summary-document.dto';
 import { CreateResumenUseCase } from 'src/application/tenant/resumen/create/CreateResumenUseCase';
 import { GetStatusResumenUseCase } from 'src/application/tenant/resumen/query/GetStatusResumenUseCase';
@@ -20,6 +19,7 @@ import type { IUserPayload } from 'src/adapter/decorator/user.decorator.interfac
 import { ComprobanteService } from 'src/domain/tenant/comprobante/services/comprobante.service';
 import { ResumenService } from 'src/domain/tenant/resumen/service/resumen.service';
 import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
+import { BusinessLogicException } from '../../exception/exeception-dynamic';
 
 @Controller('companies/branch/summaries')
 @UseGuards(JwtAuthGuard, TenantGuard)
@@ -50,7 +50,7 @@ export class ResumenController {
   ) {
     // 1. Consultar en SUNAT
     if (!ticket || ticket.trim().length === 0) {
-      throw new BadRequestException('El ticket es obligatorio');
+      throw new BusinessLogicException('El ticket es obligatorio');
     }
     if (!auth?.sucursalActiva || auth?.sucursalActiva == 0) {
         throw new ForbiddenException(

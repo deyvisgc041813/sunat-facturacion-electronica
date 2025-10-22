@@ -12,6 +12,7 @@ import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { RefreshTokenRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/refresh-token.repository.impl';
 import { UserRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/user.repository.impl';
 import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 @Injectable()
 export class AuthService {
   constructor(
@@ -77,7 +78,7 @@ export class AuthService {
   async refresh(refreshToken: string) {
     const stored = await this.refreshRepo.find(refreshToken);
     if (!stored || stored.expiresAt < new Date()) {
-      throw new BadRequestException('Refresh token inválido');
+      throw new BusinessLogicException('Refresh token inválido');
     }
     // Verificar firma y extraer payload
     const decoded = this.tokenService.verify(refreshToken);

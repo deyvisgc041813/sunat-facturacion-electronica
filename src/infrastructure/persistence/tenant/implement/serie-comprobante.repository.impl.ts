@@ -1,7 +1,6 @@
 import {
   BadRequestException,
-  Injectable,
-  NotFoundException,
+  Injectable
 } from '@nestjs/common';
 import { In } from 'typeorm';
 import { SerieMapper } from 'src/domain/mapper/serie-comprobante.mapper';
@@ -18,6 +17,7 @@ import { CreateSerieAuditoriaDto } from 'src/domain/tenant/series-auditoria/dto/
 import { TenantRepositoryHelper } from 'src/domain/parent/conecciones-database/service/tenant-repository.helper';
 import { TenantContextService } from 'src/domain/parent/conecciones-database/service/tenant-context.service';
 import { BaseTenantRepository } from '../../base/base-tenant.repository';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class SerieComprobanteRepositoryImpl extends BaseTenantRepository<SerieOrmEntity> 
@@ -65,7 +65,7 @@ export class SerieComprobanteRepositoryImpl extends BaseTenantRepository<SerieOr
       },
     });
     if (!serie) {
-      throw new NotFoundException(`Serie con id ${serieId} no encontrado`);
+      throw new BusinessLogicException(`Serie con id ${serieId} no encontrado`);
     }
     return SerieMapper.toDomain(serie);
   }
@@ -214,7 +214,7 @@ export class SerieComprobanteRepositoryImpl extends BaseTenantRepository<SerieOr
     });
 
     if (!serie) {
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `La serie con ID ${serieId} no existe o no pertenece a la sucursal ${sucursalId}.`,
       );
     }

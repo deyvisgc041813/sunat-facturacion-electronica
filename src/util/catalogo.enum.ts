@@ -133,3 +133,40 @@ export enum PriceTypeCode {
   CON_IGV = '01',    // Valor unitario con IGV (operación gravada, exonerada, inafecta)
   GRATUITA = '02',   // Valor referencial para operaciones gratuitas
 }
+
+export enum CronTaskType {
+  /** Genera el Resumen Diario (RC) por sucursal y fecha. */
+  GENERAR_RESUMEN_DIARIO = 'GENERAR_RESUMEN_DIARIO',
+  /** Consulta de ticket en SUNAT para cualquier comprobante/RC/Comunic. de Baja. */
+  CONSULTAR_TICKET_RESUMEN_SUNAT = 'CONSULTAR_TICKET_RESUMEN_SUNAT',
+  /** Construye la Comunicación de Baja con los comprobantes marcados. */
+  GENERAR_COMUNICACION_BAJA = 'GENERAR_COMUNICACION_BAJA',
+  /** Envía la Comunicación de Baja a SUNAT. */
+  CONSULTAR_TICKET_COMUNICACION_BAJA_SUNAT = 'CONSULTAR_TICKET_COMUNICACION_BAJA_SUNAT',
+  /** Reintenta envíos pendientes a SUNAT (timeouts, desconexiones, etc.). */
+  REENVIAR_PENDIENTES_SUNAT = 'REENVIAR_PENDIENTES_SUNAT',
+
+  /** Reprocesa documentos rechazados por SUNAT (corrige y reenvía). */
+  REPROCESAR_RECHAZADOS_SUNAT = 'REPROCESAR_RECHAZADOS_SUNAT',
+
+  /** Sincroniza datos de clientes desde los últimos comprobantes (dirección/estado/condición). */
+  SINCRONIZAR_CLIENTES = 'SINCRONIZAR_CLIENTES',
+
+  /** Sincroniza series/correlativos y alerta desalineaciones por sucursal. */
+  SINCRONIZAR_SERIES_CORRELATIVOS = 'SINCRONIZAR_SERIES_CORRELATIVOS',
+
+  /** Purga archivos temporales (XML, ZIP, PDFs generados) según TTL. */
+  PURGAR_ARCHIVOS_TEMPORALES = 'PURGAR_ARCHIVOS_TEMPORALES',
+
+  /** Limpia logs de proceso/errores según política de retención. */
+  LIMPIAR_LOGS = 'LIMPIAR_LOGS',
+
+  /** Respaldos programados por tenant/sucursal (BD y adjuntos). */
+  BACKUP_PROGRAMADO = 'BACKUP_PROGRAMADO',
+
+  /** Health-checks de integraciones (SUNAT, correo, storage) con alertas. */
+  VERIFICAR_SALUD_INTEGRACIONES = 'VERIFICAR_SALUD_INTEGRACIONES',
+
+  /** Reconstrucción de índices/búsquedas (si usas search interno). */
+  REINDEXAR_BUSQUEDAS = 'REINDEXAR_BUSQUEDAS',
+}

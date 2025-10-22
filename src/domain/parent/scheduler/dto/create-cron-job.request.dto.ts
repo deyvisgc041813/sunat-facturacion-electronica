@@ -1,15 +1,27 @@
-import { IsString, IsInt, Matches, IsOptional, IsBoolean } from 'class-validator';
+import {
+  IsString,
+  IsInt,
+  Matches,
+  IsOptional,
+  IsBoolean,
+  IsEnum,
+} from 'class-validator';
+import { CronTaskType } from 'src/util/catalogo.enum';
 
 export class CreateCronJobDto {
   @IsInt()
   @IsOptional()
   empresaId: number;
 
-  @IsString()
-  tipo: string;
+  @IsEnum(CronTaskType, {
+    message: `El tipo de tarea no es válido. Debe ser uno de: ${Object.values(CronTaskType).join(', ')}`,
+  })
+  tipo: CronTaskType;
 
   // Acepta formato HH:mm
-  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, { message: 'Formato de hora inválido (usa HH:mm)' })
+  @Matches(/^([01]\d|2[0-3]):([0-5]\d)$/, {
+    message: 'Formato de hora inválido (usa HH:mm)',
+  })
   horaEjecucion: string;
 
   @IsOptional()
@@ -19,5 +31,5 @@ export class CreateCronJobDto {
   @IsOptional()
   payload?: Record<string, any>;
   @IsOptional()
-  proximaEjecucion?:any
+  proximaEjecucion?: any;
 }

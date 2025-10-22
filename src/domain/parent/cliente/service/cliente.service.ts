@@ -1,7 +1,5 @@
 import {
-  BadRequestException,
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { buildLogData } from 'src/common/core';
@@ -15,6 +13,7 @@ import { validarDatosSegunTipoDocumento } from 'src/util/Helpers';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ClienteResponseDto } from '../dto/client.response.dto';
 import { UpdateClienteDto } from '../dto/update.client.dto';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class ClienteService {
@@ -34,7 +33,7 @@ export class ClienteService {
           cliente.numeroDocumento,
         );
         if (existe ) {
-          throw new BadRequestException(
+          throw new BusinessLogicException(
             `El cliente con documento ${cliente.numeroDocumento} ya se encuentra registrado.`,
           );
         }
@@ -70,7 +69,7 @@ export class ClienteService {
     clienteId: number,
   ): Promise<ClienteResponseDto | null> {
     const cliente = await this.clienteRepo.findById(empresaId, clienteId);
-    if (!cliente) throw new NotFoundException('Cliente no encontrado.');
+    if (!cliente) throw new BusinessLogicException('Cliente no encontrado.');
     return cliente;
   }
   async getByNumDocumento(numDoc: string): Promise<ClienteResponseDto | null> {
@@ -88,11 +87,11 @@ export class ClienteService {
       const empresaId = dto.empresaId ?? 0;
       const exist = await this.clienteRepo.findById(clienteId, empresaId);
       if (!exist) {
-        throw new NotFoundException('Cliente no encontrado.');
+        throw new BusinessLogicException('Cliente no encontrado.');
       }
       const existe = await this.clienteRepo.findByDocumento(dto.numeroDocumento ?? '');
       if (existe && existe.clienteId !== clienteId) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El cliente con documento ${exist.numeroDocumento} ya está registrado para esta empresa`,
         );
       }
@@ -155,7 +154,7 @@ export class ClienteService {
         nuevoEstado,
       )
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         'El estado solo puede ser 1 (activo) o 0 (inactivo)',
       );
     }
@@ -166,7 +165,7 @@ export class ClienteService {
       nuevoEstado,
     );
 
-    if (!cliente) throw new NotFoundException('Cliente no encontrado');
+    if (!cliente) throw new BusinessLogicException('Cliente no encontrado');
     const accion =
       nuevoEstado === EEstadosGlobales.ACTIVO
         ? 'Cliente activada (estado=1)'

@@ -1,8 +1,7 @@
 import { ICompanyDefault } from './../interface/resumen.diario.default.interface';
 import {
-  BadRequestException,
   Injectable,
-  NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { CronJobRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/cron-job.repository.impl';
 import { CreateCronJobDto } from '../dto/create-cron-job.request.dto';
@@ -18,12 +17,14 @@ import { getFechaHoraActualLima } from 'src/util/Helpers';
 import dayjs from 'dayjs';
 import { EmpresaService } from '../../empresa/services/empresa.service';
 import { TipoDocumentoIdentidadEnum } from 'src/util/catalogo.enum';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 @Injectable()
 export class CronService {
+  private readonly logger = new Logger(CronService.name);
   constructor(
     private readonly cronRepo: CronJobRepositoryImpl,
     private readonly auditoriaService: AuditoriaService,
-    private readonly empresaService:EmpresaService
+    private readonly empresaService: EmpresaService,
   ) {}
 
   private calcularProximaEjecucion(horaEjecucion: string): Date {
@@ -48,24 +49,24 @@ export class CronService {
     auth: IUserPayload,
   ): Promise<GenericResponse<CronJobResponseDto>> {
     dto.empresaId = dto.empresaId ? dto.empresaId : (auth.empresaId ?? 0);
-    const empresa = await this.empresaService.getById(dto.empresaId)
-    const company:ICompanyDefault = {
-      ruc: empresa?.ruc ?? "",
-      razonSocial: empresa?.razonSocial ?? "",
-      tipoDoc: TipoDocumentoIdentidadEnum.RUC
-    }
-    dto.payload = {   
-      enviarCorreo: true,                    
-      tipoTarea: "RESUMEN_DIARIO",          
-      usuarioEjecutor: "sistema",              
-      reintentos: 0,    
-      serieResumen: "RC",                
+    const empresa = await this.empresaService.getById(dto.empresaId);
+    const company: ICompanyDefault = {
+      ruc: empresa?.ruc ?? '',
+      razonSocial: empresa?.razonSocial ?? '',
+      tipoDoc: TipoDocumentoIdentidadEnum.RUC,
+    };
+    dto.payload = {
+      enviarCorreo: true,
+      tipoTarea: 'RESUMEN_DIARIO',
+      usuarioEjecutor: 'sistema',
+      reintentos: 0,
+      serieResumen: 'RC',
       company,
       auth,
       meta: {
-        origen: "CRON_JOB_SERVICE",
-        descripcion: "Generación y envío de resumen diario a SUNAT"
-      }
+        origen: 'CRON_JOB_SERVICE',
+        descripcion: 'Generación y envío de resumen diario a SUNAT',
+      },
     };
     dto.proximaEjecucion = this.calcularProximaEjecucion(dto.horaEjecucion);
     dto.repetir = dto.repetir ?? true;
@@ -117,7 +118,7 @@ export class CronService {
         nuevoEstado,
       )
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         'El estado solo puede ser 001 (pendiente) o 900 (inactivo)',
       );
     }
@@ -128,7 +129,7 @@ export class CronService {
     );
 
     if (!sucursal)
-      throw new NotFoundException('Tarea programada no encontrada');
+      throw new BusinessLogicException('Tarea programada no encontrada');
 
     const accion =
       nuevoEstado === EEstadosCronJob.PENDIENTE
