@@ -190,8 +190,7 @@ export class SunatService {
     console.log('password ', password);
     console.log('ticket ', ticket);
 
-    const envelope = `
- <?xml version="1.0" encoding="UTF-8"?>
+    const envelope = `<?xml version="1.0" encoding="UTF-8"?>
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
                       xmlns:ser="http://service.sunat.gob.pe"
                       xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">

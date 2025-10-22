@@ -85,8 +85,9 @@ export class ComprobanteRepositoryImpl
   async findById(
     sucursalId: number,
     comprobanteIds: number[],
+    tenantDatabase?:string,
   ): Promise<ComprobanteResponseDto[] | null> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     const comprobantes = await repo.find({
       where: { comprobanteId: In(comprobanteIds), sucursalId },
       relations: ['respuestaSunat', 'serie'],
@@ -379,8 +380,9 @@ export class ComprobanteRepositoryImpl
     comprobanteIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat,
+    tenantDatabase?:string
   ) {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     await repo
       .createQueryBuilder()
       .update()
@@ -394,10 +396,7 @@ export class ComprobanteRepositoryImpl
            ELSE estado 
          END`,
         comunicadoSunat: () => comunicadoSunat,
-        fechaAnulacion:
-          nuevoEstado === EstadoEnumComprobante.ANULADO
-            ? dayjs().toDate()
-            : null,
+        fechaAnulacion: nuevoEstado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
       })
       .whereInIds(comprobanteIds)
       .andWhere('sucursal_id = :sucursalId', { sucursalId })

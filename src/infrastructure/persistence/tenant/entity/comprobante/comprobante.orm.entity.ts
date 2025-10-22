@@ -142,7 +142,7 @@ export class ComprobanteOrmEntity {
   @CreateDateColumn({
     name: 'fecha_anulacion',
     type: 'datetime',
-    nullable: false,
+    nullable: true,
   })
   fechaAnulacion: Date | null;
 

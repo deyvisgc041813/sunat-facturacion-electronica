@@ -12,6 +12,7 @@ import { ComunicacionBajaRepositoryImpl } from './infrastructure/persistence/ten
 import { CreateComunicacionBajaUseCase } from './application/tenant/comunicacion-baja/create/CreateComunicacionBajaUseCase';
 import { GetStatusBajaStatusUseCase } from './application/tenant/comunicacion-baja/query/GetStatusBajaStatusUseCase';
 import { ComunicaciomBajaController } from './adapter/web/controller/tenant/comunicacion.baja.controller';
+import { ComunicacionBajaService } from './domain/tenant/comunicacion-baja/service/comunicacion-baja.service';
 
 @Module({
   imports: [
@@ -31,7 +32,8 @@ import { ComunicaciomBajaController } from './adapter/web/controller/tenant/comu
     GetStatusBajaStatusUseCase,
     XmlBuilderComunicacionBajaService,
     ComunicacionBajaRepositoryImpl,
+    ComunicacionBajaService
   ],
-  exports: [ComunicacionBajaRepositoryImpl],
+  exports: [ComunicacionBajaRepositoryImpl, ComunicacionBajaService],
 })
 export class ComunicacionBajaModule {}
