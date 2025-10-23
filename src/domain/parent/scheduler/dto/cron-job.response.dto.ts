@@ -1,5 +1,4 @@
 import { EmpresaResponseDto } from "../../empresa/dto/external.response.dto";
-import { EmpresaInternaResponseDto } from "../../empresa/dto/internal.response.dto";
 
 export class CronJobResponseDto {
   constructor(
@@ -12,6 +11,6 @@ export class CronJobResponseDto {
     public payload?: any,
     public ultimaEjecucion?: any,
     public messageError?:string,
-    public empresa?: EmpresaResponseDto | EmpresaInternaResponseDto
+    public empresa?: EmpresaResponseDto
   ) {}
 }

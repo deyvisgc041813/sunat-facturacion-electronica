@@ -72,6 +72,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       },
       relations: [
         'empresa',
+        'empresa.credenciales',
         'distrito',
         'distrito.provincia',
         'distrito.provincia.departamento',
@@ -103,7 +104,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
         empresa: { empresaId },
         estado: EEstadosGlobales.HABILITADA_FACTURACION,
       },
-      relations: ['empresa'],
+      relations: ['empresa', 'empresa.credenciales'],
     });
     if (!sucursal) {
      throw new BusinessLogicException(
@@ -167,6 +168,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       },
       relations: [
         'empresa',
+        'empresa.credenciales',
         'distrito',
         'distrito.provincia',
         'distrito.provincia.departamento',

@@ -93,6 +93,12 @@ export function buildDuplicateMessage(sqlError: any): string {
   if (sqlError.message.includes('baja_comprobante')) {
     return 'Ya existe una comunicación de baja registrada en esta sucursal con la misma fecha y número correlativo. Por favor, comunícate con su proveedor para solucionarlo.';
   }
+  if (sqlError.message.includes('sucursal.sub_dominio_UNIQUE')) {
+    return 'El dominio ingresado ya está asociado a otra sucursal registrada. Por favor, utiliza un dominio diferente o comunícate con el administrador del sistema para resolver el conflicto.';
+  }
+  if (sqlError.message.includes('empresas.ruc')) {
+    return 'El RUC ingresado ya se encuentra registrado en otra empresa o sucursal. Por favor, verifica la información e intenta nuevamente, o comunícate con el administrador del sistema para resolver el conflicto.';
+  }
 
   return 'Ya existe un registro duplicado';
 }

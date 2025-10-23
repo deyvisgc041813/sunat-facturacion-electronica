@@ -12,13 +12,14 @@ import { UpdateSucursalDto } from '../dto/update.request.dto';
 import { buildLogData } from 'src/common/core';
 import { APLICACION_ORIGEN } from 'src/util/constantes';
 import { EAccionAudit, ETablaAudit } from 'src/util/general.enum';
-import { EEstadosGlobales } from 'src/util/estado.enum';
+import { EEstadosGlobales, EstadoCredencialEmpresaSunat } from 'src/util/estado.enum';
 import { AuditoriaService } from '../../core/logs/service/auditoria.logs.service';
 import { TenantDatabaseService } from '../../conecciones-database/service/tenant-database.service';
 import { DataSource } from 'typeorm';
-import { EmpresaInternaResponseDto } from '../../empresa/dto/internal.response.dto';
 import { GetCertificadoDto } from '../../empresa/dto/obtner-certificado.dto';
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
+import { EmpresaResponseDto } from '../../empresa/dto/external.response.dto';
+import { EmpresaCredencialesInternaResponseDto } from '../../empresa/dto/credenciales-sunat.response.dto';
 
 @Injectable()
 export class SucursalService {
@@ -286,17 +287,18 @@ export class SucursalService {
         `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
       );
     }
-    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
-    if (!empresa.certificadoDigital || !empresa?.claveCertificado) {
+    const empresa = sucursal.empresa as EmpresaResponseDto;
+    const credencial = empresa.credenciales.find((cr:EmpresaCredencialesInternaResponseDto) => EstadoCredencialEmpresaSunat.VIGENTE === cr?.base?.estado) as EmpresaCredencialesInternaResponseDto
+    if (credencial && (!credencial.certificadoDigital || !credencial?.claveCertificado)) {
       throw new BadRequestException(
         `No se encontró certificado digital para la sucursal con RUC ${sucursal.nombre}`,
       );
     }
     const certificado = new GetCertificadoDto(
-      empresa.certificadoDigital,
-      empresa.claveCertificado ?? '',
-      empresa.usuarioSolSecundario ?? '',
-      empresa.claveSolSecundario ?? '',
+      credencial.certificadoDigital,
+      credencial.claveCertificado ?? '',
+      credencial.base.usuarioSolSecundario ?? '',
+      credencial.claveSolSecundario ?? '',
       empresa.email,
       empresa.telefono,
       sucursal.signatureId ?? "",

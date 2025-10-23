@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ExportarController } from './adapter/web/controller/tenant/exportar.controller';
 import { ComprobantePdfBuilderImpl } from './infrastructure/adapter/PdfServiceImpl';
 import { SucursalRepositoryImpl } from './infrastructure/persistence/parent/implement/sucursal.repository.impl';
-import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { ClienteOrmEntity } from './infrastructure/persistence/parent/entity/cliente.orm.entity';
 import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/conprobante-respuesta-sunat.orm.entity';
@@ -14,6 +13,7 @@ import { CreatePdfUseCase } from './application/tenant/pdf/CreatePdfUseCase';
 import { TenantConeccionesModule } from './tenant-conecciones.module';
 import { TenantContextModule } from './tenant-context.module';
 import { ComprobanteModule } from './comprobante.module';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
 
 @Module({
   imports: [

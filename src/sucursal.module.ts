@@ -103,7 +103,6 @@ import { GetSucursalByEmpresaIdUseCase } from './application/parent/sucursal/get
 import { UpdateSucursalUseCase } from './application/parent/sucursal/update.sucursal.usecase';
 import { DeleteSucursalUseCase } from './application/parent/sucursal/delete.sucursal.usecase';
 import { BranchStatusSucursalUseCase } from './application/parent/sucursal/update-status.sucursal.usecase';
-import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { SucursalOrmEntity } from './infrastructure/persistence/parent/entity/sucursal.orm.entity';
 import { SucursalService } from './domain/parent/sucursal/service/sucursal.service';
@@ -114,7 +113,7 @@ import { TenantConeccionesModule } from './tenant-conecciones.module';
 import { AuditoriaLogsRepositoryImpl } from './infrastructure/persistence/parent/implement/auditoria-log.repository';
 import { TenantConnectionRepositoryImpl } from './infrastructure/persistence/parent/implement/coneccion-database.repository.impl';
 import { TenantConnectionOrmEntity } from './infrastructure/persistence/parent/entity/tenant.coneccion.orm.entity';
-//import { DataSource } from 'typeorm';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
 
 @Module({
   imports: [

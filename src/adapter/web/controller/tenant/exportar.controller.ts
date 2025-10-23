@@ -2,7 +2,6 @@ import {
   Controller,
   ForbiddenException,
   Get,
-  InternalServerErrorException,
   Logger,
   Param,
   Query,
@@ -65,7 +64,6 @@ export class ExportarController {
     contexto: string,
   ): Promise<void> {
     const { sucursalActiva, empresaId } = auth;
-
     if (!sucursalActiva || sucursalActiva === 0) {
       this.logger.warn(
         `[${contexto.toUpperCase()}] Intento no autorizado desde sucursal inactiva.`,

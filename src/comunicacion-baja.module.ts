@@ -5,7 +5,6 @@ import { CatalogoModule } from './catalogo.module';
 import { ComprobanteModule } from './comprobante.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { XmlBuilderComunicacionBajaService } from './infrastructure/sunat/xml/xml-builder-comunicacion-baja.service';
-import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { SunatLogOrmEntity } from './infrastructure/persistence/tenant/entity/sunat-log.orm.entity';
 import { ComunicacionBajaRepositoryImpl } from './infrastructure/persistence/tenant/implement/baja.repository.impl';
@@ -13,6 +12,7 @@ import { CreateComunicacionBajaUseCase } from './application/tenant/comunicacion
 import { GetStatusBajaStatusUseCase } from './application/tenant/comunicacion-baja/query/GetStatusBajaStatusUseCase';
 import { ComunicaciomBajaController } from './adapter/web/controller/tenant/comunicacion.baja.controller';
 import { ComunicacionBajaService } from './domain/tenant/comunicacion-baja/service/comunicacion-baja.service';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
 
 @Module({
   imports: [

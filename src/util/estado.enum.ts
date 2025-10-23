@@ -74,3 +74,8 @@ export enum EstadoSystem {
   ACTIVO= "1",
   INACTIVO = "0"
 }
+export enum EstadoCredencialEmpresaSunat {
+  VIGENTE = 'VIGENTE',
+  CADUCADO = 'CADUCADO',
+  REVOCADO = 'REVOCADO',
+}

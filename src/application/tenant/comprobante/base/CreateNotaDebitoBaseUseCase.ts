@@ -19,7 +19,7 @@ import {
   TipoDocumentoLetras,
 } from 'src/util/catalogo.enum';
 import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
-import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import { EstadoCredencialEmpresaSunat, EstadoEnumComprobante } from 'src/util/estado.enum';
 import {
   buildMensajeRecalculo,
   calcularMora,
@@ -48,7 +48,6 @@ import { GetBySucursalAndTipComAndSerieUseCase } from 'src/application/tenant/se
 import { CreateNotaDto } from 'src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
 import { SucursalResponseDto } from 'src/domain/parent/sucursal/dto/sucursal.response.dto';
-import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
 import { GetCertificadoDto } from 'src/domain/parent/empresa/dto/obtner-certificado.dto';
 import { CreateSunatLogDto } from 'src/domain/tenant/sunat-log/interface/sunat.log.interface';
 import { ComprobanteResponseDto } from 'src/domain/tenant/comprobante/dto/conprobante.response.dto';
@@ -56,6 +55,8 @@ import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
 import { ICreateComprobante } from 'src/domain/tenant/comprobante/interface/create.interface';
 import { ClienteService } from 'src/domain/parent/cliente/service/cliente.service';
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
+import { EmpresaResponseDto } from 'src/domain/parent/empresa/dto/external.response.dto';
+import { EmpresaCredencialesInternaResponseDto } from 'src/domain/parent/empresa/dto/credenciales-sunat.response.dto';
 
 export abstract class CreateNotaDebitoBaseUseCase {
   constructor(
@@ -214,17 +215,25 @@ export abstract class CreateNotaDebitoBaseUseCase {
         `El tipo de comprobante ${data.tipoComprobante} no se encuentra en los catálogos de SUNAT`,
       );
     }
-    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
-    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
-      throw new Error(
-        `No se encontró certificado digital para la sucursal con RUC ${data.company.ruc}`,
+    const empresa = sucursal.empresa as EmpresaResponseDto;
+    const credencial = empresa.credenciales.find(
+      (cr: EmpresaCredencialesInternaResponseDto) =>
+        EstadoCredencialEmpresaSunat.VIGENTE === cr?.base?.estado,
+    ) as EmpresaCredencialesInternaResponseDto;
+    if (
+      credencial &&
+      (!credencial.certificadoDigital || !credencial?.claveCertificado)
+    ) {
+      throw new BusinessLogicException(
+        `No se encontró certificado digital para la sucursal con RUC ${sucursal.nombre}`,
       );
     }
+
     const certificado = new GetCertificadoDto(
-      empresa.certificadoDigital,
-      empresa.claveCertificado ?? '',
-      empresa.usuarioSolSecundario ?? '',
-      empresa.claveSolSecundario ?? '',
+      credencial.certificadoDigital,
+      credencial.claveCertificado ?? '',
+      credencial.base.usuarioSolSecundario ?? '',
+      credencial.claveSolSecundario ?? '',
       empresa.email,
       empresa.telefono,
       "",

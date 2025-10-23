@@ -8,6 +8,7 @@ export const User = createParamDecorator(
     return {
       userId: payload?.userId,
       empresaId: payload?.empresaId,
+      credencialId:payload?.credencialId,
       correo: payload?.correo,
       nombre: payload?.nombre,
       sucursalActiva: payload?.sucursalActiva,

@@ -8,6 +8,7 @@ import {
   Min,
   Matches,
   IsNotEmptyObject,
+  IsOptional,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 export class CpeDto {
@@ -49,6 +50,7 @@ export class ConsultarLoteCpeDto {
   @ValidateNested({ each: true })
   @Type(() => CpeDto)
   cpes: CpeDto[];
+  @IsOptional()
   @IsNumber({}, { message: 'El ID de la sucursal debe ser numérico' })
   @Min(1, { message: 'El ID de la sucursal debe ser mayor a 0' })
   sucursalId: number;

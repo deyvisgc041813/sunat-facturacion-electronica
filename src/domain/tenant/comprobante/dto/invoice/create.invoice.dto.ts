@@ -56,7 +56,8 @@ export class CreateInvoiceDto extends ComprobanteBaseDto {
   telefonoEmpresa:string
   @IsOptional()
   correoEmpresa:string
-
+  @IsOptional()
+  numeroPedido:number
   @IsOptional()
   signatureId:string
   @IsOptional()

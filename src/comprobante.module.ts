@@ -17,7 +17,6 @@ import { FindCatalogosUseCase } from './application/parent/catalogo/FindCatalogo
 import { SerieOrmEntity } from './infrastructure/persistence/tenant/entity/serie-comprobante/serie-comprobante.orm.entity';
 import { GetBySucursalAndTipComAndSerieUseCase } from './application/tenant/serie-comprobante/get-serie-by-sucursal-and-tipo-comprobante.usecase';
 import { SerieComprobanteModule } from './serie-comprobante.module';
-import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ClienteOrmEntity } from './infrastructure/persistence/parent/entity/cliente.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { SunatLogOrmEntity } from './infrastructure/persistence/tenant/entity/sunat-log.orm.entity';
@@ -47,6 +46,8 @@ import { CatalogoRepositoryImpl } from './infrastructure/persistence/parent/impl
 import { TributoTasaRepositoryImpl } from './infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
 import { ComprobantePdfBuilderImpl } from './infrastructure/adapter/PdfServiceImpl';
 import { ComprobanteService } from './domain/tenant/comprobante/services/comprobante.service';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
+import { EmpresaModule } from './empresa.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -68,6 +69,7 @@ import { ComprobanteService } from './domain/tenant/comprobante/services/comprob
     TenantConeccionesModule,
     TenantContextModule,
     SucursalModule,
+    EmpresaModule
   ],
   controllers: [ComprobanteController],
   providers: [

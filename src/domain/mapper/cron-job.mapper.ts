@@ -8,7 +8,7 @@ import { EEstadosCronJob } from 'src/util/estado.enum';
 export class CronJobMapper {
   static toDomain(orm: CronJobOrmEntity): CronJobResponseDto {
     const empresa = orm.empresa
-      ? EmpresaMapper.toDomain(orm.empresa)
+      ? EmpresaMapper.toDomain(orm.empresa, false)
       : undefined;
     return new CronJobResponseDto(
       orm.cronId,

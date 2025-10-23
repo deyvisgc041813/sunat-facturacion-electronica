@@ -5,7 +5,6 @@ import { ResumenBoletasDetalleOrmEntity } from './infrastructure/persistence/ten
 import { CatalogoModule } from './catalogo.module';
 import { ComprobanteModule } from './comprobante.module';
 import { XmlBuilderResumenService } from './infrastructure/sunat/xml/xml-builder-resumen.service';
-import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { ComprobanteRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/conprobante-respuesta-sunat.orm.entity';
 import { SunatLogOrmEntity } from './infrastructure/persistence/tenant/entity/sunat-log.orm.entity';
@@ -22,6 +21,7 @@ import { SerieComprobanteRepositoryImpl } from './infrastructure/persistence/ten
 import { SunatService } from './infrastructure/sunat/send/sunat.service';
 import { SucursalModule } from './sucursal.module';
 import { SucursalService } from './domain/parent/sucursal/service/sucursal.service';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
 @Module({
   imports: [
     TypeOrmModule.forFeature([

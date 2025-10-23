@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger
-} from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import * as crypto from 'crypto';
@@ -21,11 +17,12 @@ import { CreateEmpresaDto } from '../dto/create.request.dto';
 import { EmpresaResponseDto } from '../dto/external.response.dto';
 import { SucursalService } from '../../sucursal/service/sucursal.service';
 import { CreateSucursalDto } from '../../sucursal/dto/create.request.dto';
-import { CreateEmpresaOnboardingDto } from '../dto/create.request.onboarding.dto';
 import { TenantDatabaseService } from '../../conecciones-database/service/tenant-database.service';
 import { AuthService } from 'src/domain/auth/services/auth.service';
 import { UbigeoService } from '../../ubigeo/services/ubigeo.service';
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
+import { CreateEmpresaCredencialesDto } from '../dto/create.credenciales-sunat.request.dto';
+import { UpdateEmpresaCredencialesDto } from '../dto/update.credenciales-sunat.request.dto';
 // import forge from 'node-forge';
 const forge = require('node-forge');
 
@@ -41,73 +38,6 @@ export class EmpresaService {
     private readonly auditoriaService: AuditoriaService,
   ) {}
 
-  async save(
-    data: CreateEmpresaDto,
-    auth: IUserPayload,
-  ): Promise<GenericResponse<EmpresaResponseDto>> {
-    try {
-      // 1. Validar archivo
-      if (!this.esArchivoPfxValido(data.certificado_digital)) {
-        throw new BusinessLogicException('El archivo no es un certificado válido');
-      }
-      // 2. Validar clave con node-forge
-      const metadatos = this.validarClaveCertificado(
-        data.certificado_digital,
-        data.claveCertificado,
-      );
-      if (!metadatos.status) {
-        throw new  BusinessLogicException(
-          'La clave del certificado es incorrecta',
-        );
-      }
-      data.certificadoHash = this.generarHash(data.certificado_digital);
-      data.certificadoSubject = metadatos.subject;
-      data.certificadoIssuer = metadatos.issuer;
-      data.certificadoValidoDesde = metadatos.validoDesde;
-      data.certificadoValidoHasta = metadatos.validoHasta;
-
-      // Clave Certificado -> AES
-      const encryptedClaveSolSecundario = data.claveSolSecundario
-        ? CryptoUtil.encrypt(data.claveSolSecundario)
-        : null;
-      const encryptedClaveCert = data.claveCertificado
-        ? CryptoUtil.encrypt(data.claveCertificado)
-        : null;
-      data.claveSolSecundario = encryptedClaveSolSecundario ?? '';
-      data.claveCertificado = encryptedClaveCert ?? '';
-      const fileMain = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            { folder: `logos/${data.ruc}/`, resource_type: 'image' },
-            (error, result) => {
-              if (error) return reject(error);
-              resolve(result);
-            },
-          )
-          .end(data.logo);
-      });
-      data.logo = fileMain?.url;
-      data.logoPublicId = fileMain.public_id;
-      data.plan = obtenerDescPlan(data.plan);
-      const newEmpresa = await this.empRepo.save(data);
-      const logData = buildLogData({
-        tablaAfectada: ETablaAudit.EMPRESA,
-        accion: EAccionAudit.INSERT,
-        valoresNuevos: newEmpresa,
-        usuario: auth,
-        idRegistro: newEmpresa.data?.empresaId,
-        entorno: '',
-        observacion: 'Crear emoresa',
-        aplicacionOrigen: APLICACION_ORIGEN,
-        sucursalId: 0,
-      });
-      await this.auditoriaService.saveLog(logData);
-      return newEmpresa;
-    } catch (err: any) {
-      console.log(err);
-      throw err;
-    }
-  }
   async getAll(): Promise<EmpresaResponseDto[]> {
     return this.empRepo.findAll();
   }
@@ -116,86 +46,6 @@ export class EmpresaService {
   }
   async getByRuc(ruc: string): Promise<EmpresaResponseDto | null> {
     return this.empRepo.findByRuc(ruc, false);
-  }
-  async update(
-    empresaEdit: EmpresaResponseDto,
-    data: UpdateEmpresaDto,
-    auth: IUserPayload,
-  ): Promise<GenericResponse<EmpresaResponseDto>> {
-    // Si viene un nuevo certificado
-    if (data.certificado_digital) {
-      const nuevoHash = this.generarHash(data.certificado_digital);
-
-      if (nuevoHash === empresaEdit.certificadoHash) {
-        console.log('El certificado es el mismo, no se actualiza');
-      } else {
-        if (!this.esArchivoPfxValido(data.certificado_digital)) {
-          throw new BadRequestException(
-            'El archivo no es un certificado válido',
-          );
-        }
-        const metadatos = this.validarClaveCertificado(
-          data.certificado_digital,
-          data.claveCertificado ?? '',
-        );
-        if (!metadatos.status) {
-          throw new BusinessLogicException(
-            'La clave del certificado es incorrecta',
-          );
-        }
-        // Clave Certificado -> AES
-        const encryptedClaveSolSecundario = data.claveSolSecundario
-          ? CryptoUtil.encrypt(data.claveSolSecundario)
-          : null;
-        const encryptedClaveCert = data.claveCertificado
-          ? CryptoUtil.encrypt(data.claveCertificado)
-          : null;
-        data.claveSolSecundario = encryptedClaveSolSecundario ?? '';
-        data.claveCertificado = encryptedClaveCert ?? '';
-        data.certificadoHash = nuevoHash;
-        data.certificadoSubject = metadatos.subject;
-        data.certificadoIssuer = metadatos.issuer;
-        data.certificadoValidoDesde = metadatos.validoDesde;
-        data.certificadoValidoHasta = metadatos.validoHasta;
-      }
-    }
-    if (data.logo && data.logoPublicId) {
-      await cloudinary.uploader.destroy(data.logoPublicId);
-      const fileMain = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            { folder: `logos/${data.ruc}/`, resource_type: 'image' },
-            (error, result) => {
-              if (error) return reject(error);
-              resolve(result);
-            },
-          )
-          .end(data.logo);
-      });
-      data.logo = fileMain?.url;
-      data.logoPublicId = fileMain.public_id;
-    } else {
-      delete data.logo;
-    }
-    data.plan = obtenerDescPlan(data.plan ?? '');
-    const updateEmpresa = await this.empRepo.update(
-      empresaEdit.empresaId,
-      data,
-    );
-    const logData = buildLogData({
-      tablaAfectada: ETablaAudit.EMPRESA,
-      accion: EAccionAudit.UPDATE,
-      valoresAnteriores: JSON.stringify(empresaEdit),
-      valoresNuevos: JSON.stringify(updateEmpresa),
-      idRegistro: empresaEdit.empresaId,
-      usuario: auth,
-      entorno: '',
-      observacion: 'Actualizar empresa',
-      aplicacionOrigen: APLICACION_ORIGEN,
-      sucursalId: 0,
-    });
-    await this.auditoriaService.saveLog(logData);
-    return updateEmpresa;
   }
 
   async delete(
@@ -260,27 +110,41 @@ export class EmpresaService {
       message: accion,
     };
   }
-  async createOnboarding(
-    body: CreateEmpresaOnboardingDto,
-    auth: IUserPayload,
-  ): Promise<any> {
-    let empresa: any = null;
+  async save(body: CreateEmpresaDto, auth: IUserPayload): Promise<any> {
+    let createEmpresa: { empresaId: number; crencialId: number } = {
+      crencialId: 0,
+      empresaId: 0,
+    };
     let sucursal: any = null;
-    let tenant: any = null;
     let activate: any = null;
+    // 1. Validar archivo
+    if (!this.esArchivoPfxValido(body.certificado_digital)) {
+      throw new BusinessLogicException(
+        'El archivo no es un certificado válido',
+      );
+    }
+    // 2. Validar clave con node-forge
+    const metadatos = this.validarClaveCertificado(
+      body.certificado_digital,
+      body.claveCertificado ?? '',
+    );
+    if (!metadatos.status) {
+      throw new BusinessLogicException(
+        'La clave del certificado es incorrecta',
+      );
+    }
     const dominioBase = process.env.DOMINIO_PRINCIPAL;
     const subDominioClient = body.subDominio.trim().toLowerCase();
     const subDominioCompleto = `${subDominioClient}.${dominioBase}`;
     try {
-      const createEmpresa: CreateEmpresaDto = { ...body };
-      empresa = await this.save(createEmpresa, auth);
+      createEmpresa = await this.saveEmpresa(body, auth);
       let createSucursal = new CreateSucursalDto();
       const distrito = await this.ubigeoService.getDistritoById(
         body.distritoId,
       );
 
       if (body.activarSucursal === '1') {
-        createSucursal.empresaId = empresa?.data?.empresaId;
+        createSucursal.empresaId = createEmpresa?.empresaId;
         ((createSucursal.distritoId = body.distritoId),
           (createSucursal.nombre = body.razonSocial));
         createSucursal.subDominio = subDominioCompleto;
@@ -293,45 +157,131 @@ export class EmpresaService {
         createSucursal.signatureNote =
           process.env.SIGNATUREID ?? 'DIGITALWEBFACTURALO';
         ((createSucursal.codigoEstablecimiento = body.codigoEstablecimiento),
-          (createSucursal.entorno = body.entorno));
-        createSucursal.usuarioRegistro = 'systemOnboarding';
+          (createSucursal.entorno = body.ambiente));
+        createSucursal.usuarioRegistro = auth.correo;
         createSucursal.estado = EEstadosGlobales.HABILITADA_FACTURACION;
         sucursal = await this.sucursalService.create(createSucursal, auth);
       }
       const sucursalId = sucursal?.data?.sucursalId;
       if (body.activarSucursal === '1') {
-        tenant = await this.tenantService.createTenant(
+        await this.tenantService.createTenant(
           sucursalId,
           body?.ruc,
           subDominioClient.replace(/[^a-z0-9]/g, ''),
         );
-        auth.empresaId = empresa?.data?.empresaId
-        activate = await this.authService.branchActive(
-          sucursalId,
-          auth,
-          false,
-        );
+        auth.empresaId = createEmpresa?.empresaId;
+        auth.credencialId = createEmpresa?.crencialId;
+        activate = await this.authService.branchActive(sucursalId, auth, false);
       }
       return {
         success: true,
-        message: 'La empresa y su sucursal han sido registradas y habilitadas para emitir comprobantes electrónicos.',
+        message:
+          'La empresa y su sucursal han sido registradas y habilitadas para emitir comprobantes electrónicos.',
         activate,
       };
     } catch (error) {
       this.logger.error('Error durante el onboarding', error);
       await this.tenantService
-        .deleteTenant(sucursal?.data?.sucursalId, body?.ruc, subDominioClient?.replace(/[^a-z0-9]/g, ''))
+        .deleteTenant(
+          sucursal?.data?.sucursalId,
+          body?.ruc,
+          subDominioClient?.replace(/[^a-z0-9]/g, ''),
+        )
         .catch((e) => this.logger.warn('Rollback tenant falló', e));
       await this.sucursalService
-        .deleteById(sucursal?.data?.sucursalId, empresa?.data?.empresaId)
+        .deleteById(sucursal?.data?.sucursalId, createEmpresa.empresaId)
         .catch((e) => this.logger.warn('Rollback sucursal falló', e));
+
       await this.empRepo
-        .deleteById(empresa?.data?.empresaId)
+        .deleteById(createEmpresa.empresaId)
         .catch((e) => this.logger.warn('Rollback empresa falló', e));
       throw error;
     }
   }
-
+  async update(
+    credencialId: number,
+    empresaEdit: EmpresaResponseDto,
+    data: UpdateEmpresaDto,
+    auth: IUserPayload,
+  ): Promise<GenericResponse<EmpresaResponseDto>> {
+    const credencialUpdate: UpdateEmpresaCredencialesDto = { ...data };
+    // Si viene un nuevo certificado
+    if (data.certificado_digital) {
+      const nuevoHash = this.generarHash(data.certificado_digital);
+      const crenciales: any = empresaEdit.credenciales[0];
+      if (nuevoHash === crenciales.certificadoHash) {
+        console.log('El certificado es el mismo, no se actualiza');
+      } else {
+        if (!this.esArchivoPfxValido(data.certificado_digital)) {
+          throw new BadRequestException(
+            'El archivo no es un certificado válido',
+          );
+        }
+        const metadatos = this.validarClaveCertificado(
+          data.certificado_digital,
+          data.claveCertificado ?? '',
+        );
+        if (!metadatos.status) {
+          throw new BusinessLogicException(
+            'La clave del certificado es incorrecta',
+          );
+        }
+        // Clave Certificado -> AES
+        const encryptedClaveSolSecundario = data.claveSolSecundario
+          ? CryptoUtil.encrypt(data.claveSolSecundario)
+          : null;
+        const encryptedClaveCert = data.claveCertificado
+          ? CryptoUtil.encrypt(data.claveCertificado)
+          : null;
+        credencialUpdate.claveSolSecundario = encryptedClaveSolSecundario ?? '';
+        credencialUpdate.claveCertificado = encryptedClaveCert ?? '';
+        credencialUpdate.certificadoHash = nuevoHash;
+        credencialUpdate.certificadoSubject = metadatos.subject;
+        credencialUpdate.certificadoIssuer = metadatos.issuer;
+        credencialUpdate.certificadoValidoDesde = metadatos.validoDesde;
+        credencialUpdate.certificadoValidoHasta = metadatos.validoHasta;
+      }
+    }
+    if (data.logo && data.logoPublicId) {
+      await cloudinary.uploader.destroy(data.logoPublicId);
+      const fileMain = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: `logos/${data.ruc}/`, resource_type: 'image' },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            },
+          )
+          .end(data.logo);
+      });
+      data.logo = fileMain?.url;
+      data.logoPublicId = fileMain.public_id;
+    } else {
+      delete data.logo;
+    }
+    data.plan = obtenerDescPlan(data.plan ?? '');
+    const updateEmpresa = await this.empRepo.update(
+      empresaEdit.empresaId,
+      credencialId,
+      data,
+      credencialUpdate,
+    );
+    const logData = buildLogData({
+      tablaAfectada: ETablaAudit.EMPRESA,
+      accion: EAccionAudit.UPDATE,
+      valoresAnteriores: JSON.stringify(empresaEdit),
+      valoresNuevos: JSON.stringify(updateEmpresa),
+      idRegistro: empresaEdit.empresaId,
+      usuario: auth,
+      entorno: '',
+      observacion: 'Actualizar empresa',
+      aplicacionOrigen: APLICACION_ORIGEN,
+      sucursalId: 0,
+    });
+    await this.auditoriaService.saveLog(logData);
+    return updateEmpresa;
+  }
   private esArchivoPfxValido(buffer: Buffer): boolean {
     try {
       // usar loop para armar string de bytes crudos
@@ -391,5 +341,83 @@ export class EmpresaService {
   }
   private generarHash(buffer: Buffer): string {
     return crypto.createHash('sha256').update(buffer).digest('hex');
+  }
+  async saveEmpresa(
+    data: CreateEmpresaDto,
+    auth: IUserPayload,
+  ): Promise<{ empresaId: number; crencialId: number }> {
+    try {
+      // 1. Validar archivo
+      if (!this.esArchivoPfxValido(data.certificado_digital)) {
+        throw new BusinessLogicException(
+          'El archivo no es un certificado válido',
+        );
+      }
+      // 2. Validar clave con node-forge
+      const metadatos = this.validarClaveCertificado(
+        data.certificado_digital,
+        data.claveCertificado ?? '',
+      );
+      if (!metadatos.status) {
+        throw new BusinessLogicException(
+          'La clave del certificado es incorrecta',
+        );
+      }
+
+      const credenciales: CreateEmpresaCredencialesDto = { ...data };
+      credenciales.certificadoHash = this.generarHash(data.certificado_digital);
+      credenciales.certificadoSubject = metadatos.subject;
+      credenciales.certificadoIssuer = metadatos.issuer;
+      credenciales.certificadoValidoDesde = metadatos.validoDesde;
+      credenciales.certificadoValidoHasta = metadatos.validoHasta;
+      // Clave Certificado -> AES
+      const encryptedClaveSolSecundario = data.claveSolSecundario
+        ? CryptoUtil.encrypt(data.claveSolSecundario)
+        : null;
+      const encryptedClaveCert = data.claveCertificado
+        ? CryptoUtil.encrypt(data.claveCertificado)
+        : null;
+      const encryptedClientSecret = data.clienteSecret
+        ? CryptoUtil.encrypt(data.clienteSecret)
+        : null;
+
+      credenciales.claveSolSecundario = encryptedClaveSolSecundario ?? '';
+      credenciales.claveCertificado = encryptedClaveCert ?? '';
+      credenciales.clienteSecret = encryptedClientSecret ?? '';
+      const fileMain = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader
+          .upload_stream(
+            { folder: `logos/${data.ruc}/`, resource_type: 'image' },
+            (error, result) => {
+              if (error) return reject(error);
+              resolve(result);
+            },
+          )
+          .end(data.logo);
+      });
+      data.logo = fileMain?.url;
+      data.logoPublicId = fileMain.public_id;
+      data.plan = obtenerDescPlan(data.plan);
+      const newEmpresa = await this.empRepo.save(data, credenciales);
+      const logData = buildLogData({
+        tablaAfectada: ETablaAudit.EMPRESA,
+        accion: EAccionAudit.INSERT,
+        valoresNuevos: newEmpresa,
+        usuario: auth,
+        idRegistro: newEmpresa.data?.empresaId,
+        entorno: '',
+        observacion: 'Crear emoresa',
+        aplicacionOrigen: APLICACION_ORIGEN,
+        sucursalId: 0,
+      });
+      await this.auditoriaService.saveLog(logData);
+      return {
+        empresaId: newEmpresa.data?.empresaId ?? 0,
+        crencialId: newEmpresa.data?.crencialId ?? 0,
+      };
+    } catch (err: any) {
+      console.log(err);
+      throw err;
+    }
   }
 }

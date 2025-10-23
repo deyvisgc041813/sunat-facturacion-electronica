@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ClienteOrmEntity } from './infrastructure/persistence/parent/entity/cliente.orm.entity';
-import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { CatalogoModule } from './catalogo.module';
 import { ClienteController } from './adapter/web/controller/parent/cliente.controller';
@@ -15,6 +14,7 @@ import { GetByIdClientUseCase } from './application/parent/cliente/get-by-id.cli
 import { GetByNumDocClientUseCase } from './application/parent/cliente/get-by-num-doc.usecase';
 import { UpdateStatusClientUseCase } from './application/parent/cliente/update-status.client.usecase';
 import { UpdateClientUseCase } from './application/parent/cliente/update.cliente.usecase';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
 
 @Module({
   imports: [

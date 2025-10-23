@@ -6,9 +6,9 @@ import { UpdateEmpresaDto } from "src/domain/parent/empresa/dto/update.request";
 import { EmpresaService } from "src/domain/parent/empresa/services/empresa.service";
 export class UpdateEmpresaUseCase {
   constructor(private readonly empresaService: EmpresaService) {}
-  async execute(data: UpdateEmpresaDto, empresaId: number,  auth: IUserPayload):Promise<GenericResponse<EmpresaResponseDto>> {
+  async execute(data: UpdateEmpresaDto, empresaId: number, auth: IUserPayload):Promise<GenericResponse<EmpresaResponseDto>> {
     const empresa = await this.empresaService.getById(empresaId);
     if (!empresa) throw new BusinessLogicException('Empresa no encontrada');
-    return this.empresaService.update(empresa, data, auth);
+    return this.empresaService.update(auth.credencialId ?? 0, empresa, data, auth);
   }
 }

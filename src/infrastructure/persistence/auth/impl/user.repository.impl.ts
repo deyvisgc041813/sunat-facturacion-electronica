@@ -73,7 +73,7 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
   async findByUsername(correo: string): Promise<UsuarioResponseDto | null> {
     const usuario = await this.repo.findOne({
       where: { correo },
-      relations: ['sucursales'],
+      relations: ['sucursales', 'sucursales.empresa', 'sucursales.empresa.credenciales'],
     });
     if (!usuario) return null;
     return UsuarioMapper.toDomain(usuario, { incluirClave: true });

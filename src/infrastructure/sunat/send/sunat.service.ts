@@ -311,12 +311,12 @@ export class SunatService {
     return Promise.any(intentos);
   }
   async getStatusCdr(data: CpeDto) {
-    // 🔑 Usuario y clave SOL
+    // Usuario y clave SOL
     const username = '20600887735SOROVECA'; // En producción sería RUC+UsuarioSOL
     const password = 'ambitinbe'; // En producción tu clave SOL
     const [serie, correlativoStr] = data.serieNumero.split('-');
     const correlativo = parseInt(correlativoStr, 10);
-    // 🔖 Datos del comprobante
+    // Datos del comprobante
     const rucComprobante = '20600887735';
     const tipoComprobante = '01';
     const serieComprobante = serie;
@@ -361,7 +361,7 @@ export class SunatService {
 
       console.log('Respuesta XML >>>', data);
 
-      // 👉 Extraer statusCode y statusMessage
+      //Extraer statusCode y statusMessage
       const statusCode =
         data.match(/<statusCode>(.*?)<\/statusCode>/)?.[1] || '99';
       const statusMessage =

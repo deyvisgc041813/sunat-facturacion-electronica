@@ -7,7 +7,7 @@ import { UpdateClienteDto } from "../parent/cliente/dto/update.client.dto";
 
 export class ClienteMapper {
   static toDomain(orm: ClienteOrmEntity): ClienteResponseDto {
-    const empresa = orm.empresa ? EmpresaMapper.toDomain(orm.empresa) : undefined
+    const empresa = orm.empresa ? EmpresaMapper.toDomain(orm.empresa, true) : undefined
     return new ClienteResponseDto(
       orm.clienteId,
       orm.tipoDocumento,

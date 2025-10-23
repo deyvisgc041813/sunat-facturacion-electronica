@@ -4,11 +4,10 @@ import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/
 import { CreateSucursalDto } from '../parent/sucursal/dto/create.request.dto';
 import { UpdateSucursalDto } from '../parent/sucursal/dto/update.request.dto';
 import { DepartamentoResponseDto, DistritoResponseDto, ProvinciaResponseDto, UbigeoResponseDto } from '../parent/ubigeo/dto/ubigeo.response';
-import { EmpresaInternaResponseDto } from '../parent/empresa/dto/internal.response.dto';
 
 export class SucursalMapper {
   static toDomain(orm: SucursalOrmEntity): SucursalResponseDto {
-    const empresa = orm?.empresa ? EmpresaMapper.toDomain(orm?.empresa) : undefined;
+    const empresa = orm?.empresa ? EmpresaMapper.toDomain(orm?.empresa, true) : undefined;
     const productos = [];
     const series = [];
     const comprobantes = [];
@@ -47,7 +46,7 @@ export class SucursalMapper {
 
   static toDomainInterno(orm: SucursalOrmEntity): SucursalResponseDto {
     const empresa = orm?.empresa
-      ? EmpresaMapper.toDomainInterno(orm?.empresa)
+      ? EmpresaMapper.toDomain(orm?.empresa, false)
       : undefined;
     return new SucursalResponseDto(
       orm.sucursalId,

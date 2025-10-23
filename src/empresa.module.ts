@@ -7,7 +7,6 @@ import { GetByRucEmpresaUseCase } from './application/parent/empresa/get-by-ruc.
 import { UpdateEmpresaUseCase } from './application/parent/empresa/update.empresa.usecase';
 import { DeleteEmpresaUseCase } from './application/parent/empresa/delete.empresa.usecase';
 import { UpdateStatusEmpresaUseCase } from './application/parent/empresa/update-status.empresa.usecase';
-import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empesa.orm.entity';
 import { ClienteOrmEntity } from './infrastructure/persistence/parent/entity/cliente.orm.entity';
 import { ComprobanteOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/comprobante.orm.entity';
 import { ProductoOrmEntity } from './infrastructure/persistence/tenant/entity/inventario/producto.orm.entity';
@@ -22,11 +21,11 @@ import { SucursalModule } from './sucursal.module';
 import { TenantConeccionesModule } from './tenant-conecciones.module';
 import { TenantContextModule } from './tenant-context.module';
 import { AuthModule } from './auth.module';
-import { CreateEmpresaBoardingUseCase } from './application/parent/empresa/create.empresa-boarding.usecase';
 import { UbigeoService } from './domain/parent/ubigeo/services/ubigeo.service';
 import { UbigeoModule } from './ubigeo.module';
-import { CronJobOrmEntity } from './infrastructure/persistence/parent/entity/scheduler/cron_job.orm.entity';
-import { SchedulerModule } from './scheduler.module';
+import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
+import { EmpresaCredencialesOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa-credenciales-sunat.orm.entity';
+import { EmpresaCredencialesSunatRepositoryImpl } from './infrastructure/persistence/parent/implement/empresa.credenciales.repository.impl';
 
 @Module({
   imports: [
@@ -34,7 +33,8 @@ import { SchedulerModule } from './scheduler.module';
       EmpresaOrmEntity,
       ClienteOrmEntity,
       ComprobanteOrmEntity,
-      ProductoOrmEntity
+      ProductoOrmEntity,
+      EmpresaCredencialesOrmEntity
     ]),
     SucursalModule,
     TenantConeccionesModule,
@@ -116,15 +116,10 @@ import { SchedulerModule } from './scheduler.module';
         new UpdateStatusEmpresaUseCase(empresaService),
       inject: [EmpresaService],
     },
-    {
-      provide: CreateEmpresaBoardingUseCase,
-      useFactory: (empresaService: EmpresaService) =>
-        new CreateEmpresaBoardingUseCase(empresaService),
-      inject: [EmpresaService],
-    },
     
     EmpresaRepositoryImpl,
+    EmpresaCredencialesSunatRepositoryImpl
   ],
-  exports: [EmpresaRepositoryImpl, EmpresaService],
+  exports: [EmpresaRepositoryImpl, EmpresaService, EmpresaCredencialesSunatRepositoryImpl],
 })
 export class EmpresaModule {}

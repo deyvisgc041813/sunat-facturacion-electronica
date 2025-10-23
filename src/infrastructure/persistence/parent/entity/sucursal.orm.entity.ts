@@ -8,11 +8,11 @@ import {
   ManyToMany,
   OneToOne,
 } from 'typeorm';
-import { EmpresaOrmEntity } from '../entity/empesa.orm.entity';
 import { DistritoOrmEntity } from './ubigeo/distrito.orm.entity';
 import { EEstadosGlobales } from 'src/util/estado.enum';
 import { UsuariosOrmEntity } from '../../auth/usuario.orm.entity';
 import { TenantConnectionOrmEntity } from './tenant.coneccion.orm.entity';
+import { EmpresaOrmEntity } from './empresa/empesa.orm.entity';
 
 @Entity({ name: 'sucursal' })
 export class SucursalOrmEntity {

@@ -1,6 +1,7 @@
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
-import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
+import { EmpresaCredencialesInternaResponseDto } from 'src/domain/parent/empresa/dto/credenciales-sunat.response.dto';
+import { EmpresaResponseDto } from 'src/domain/parent/empresa/dto/external.response.dto';
 import { ISucursalRepository } from 'src/domain/parent/sucursal/ports/sucursal.repository';
 import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante.repository';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
@@ -13,6 +14,7 @@ import { CryptoUtil } from 'src/util/CryptoUtil';
 import {
   codigoRespuestaSunatMap,
   EstadoComunicacionEnvioSunat,
+  EstadoCredencialEmpresaSunat,
   EstadoEnumComprobante,
   EstadoEnvioSunat,
 } from 'src/util/estado.enum';
@@ -47,8 +49,13 @@ export class GetStatusBajaStatusUseCase {
         `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
       );
     }
-    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
-    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
+      const empresa = sucursal.empresa as EmpresaResponseDto;
+      const credencial = empresa.credenciales.find(
+        (cr: EmpresaCredencialesInternaResponseDto) =>
+          EstadoCredencialEmpresaSunat.VIGENTE === cr?.base?.estado,
+      ) as EmpresaCredencialesInternaResponseDto;
+    
+    if (empresa && !credencial?.certificadoDigital || !credencial?.claveCertificado) {
       throw new Error(
         `No se encontró certificado digital para la sucursal con RUC ${empresa?.ruc}`,
       );
@@ -65,10 +72,8 @@ export class GetStatusBajaStatusUseCase {
         );
       }
       await this.validarEstadoFinalBaja(baja);
-      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
-      const claveSecundaria = CryptoUtil.decrypt(
-        empresa.claveSolSecundario ?? '',
-      );
+      const usuarioSecundario = credencial?.base.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(credencial.claveSolSecundario ?? '');
       const result = await this.sunatService.getStatus(
         ticket,
         usuarioSecundario,

@@ -15,7 +15,7 @@ import {
   TipoDocumentoLetras,
 } from 'src/util/catalogo.enum';
 import { UpdateComprobanteUseCase } from '../update/UpdateComprobanteUseCase';
-import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import { EstadoCredencialEmpresaSunat, EstadoEnumComprobante } from 'src/util/estado.enum';
 import {
   buildMensajeRecalculo,
   buildMtoGlobales,
@@ -54,7 +54,6 @@ import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/tenant
 import { CreateNotaDto } from 'src/domain/tenant/comprobante/dto/notasComprobante/create.nota.dto';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
 import { SucursalResponseDto } from 'src/domain/parent/sucursal/dto/sucursal.response.dto';
-import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
 import { GetCertificadoDto } from 'src/domain/parent/empresa/dto/obtner-certificado.dto';
 import { ICreateComprobante } from 'src/domain/tenant/comprobante/interface/create.interface';
 import { CreateSunatLogDto } from 'src/domain/tenant/sunat-log/interface/sunat.log.interface';
@@ -63,7 +62,12 @@ import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
 import { DescuentoGlobales } from 'src/domain/tenant/comprobante/dto/notasComprobante/descuento-globales.dto';
 import { IMtoGloables } from 'src/domain/tenant/comprobante/interface/mtos-globales';
 import { ClienteService } from 'src/domain/parent/cliente/service/cliente.service';
-import { BusinessLogicException, BusinessLogicObjectException } from 'src/adapter/web/exception/exeception-dynamic';
+import {
+  BusinessLogicException,
+  BusinessLogicObjectException,
+} from 'src/adapter/web/exception/exeception-dynamic';
+import { EmpresaResponseDto } from 'src/domain/parent/empresa/dto/external.response.dto';
+import { EmpresaCredencialesInternaResponseDto } from 'src/domain/parent/empresa/dto/credenciales-sunat.response.dto';
 
 const motivosAnulacionTotal = [
   NotaCreditoMotivo.ANULACION_OPERACION,
@@ -206,7 +210,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       const comprobante = await this.registrarComprobante(
         jsonFinal,
         sucursalId,
-        cliente.clienteId
+        cliente.clienteId,
       );
       comprobanteId = comprobante.data?.comprobanteId ?? 0;
       jsonFinal.correlativo =
@@ -283,26 +287,38 @@ export abstract class CreateNotaCreditoBaseUseCase {
         `El tipo de comprobante ${data.tipoComprobante} no se encuentra en los catálogos de SUNAT`,
       );
     }
-    const empresa = sucursal.empresa as EmpresaInternaResponseDto;
-    if (!empresa?.certificadoDigital || !empresa?.claveCertificado) {
-      throw new Error(
-        `No se encontró certificado digital para la sucursal con RUC ${data.company.ruc}`,
+
+    const empresa = sucursal.empresa as EmpresaResponseDto;
+    const credencial = empresa.credenciales.find(
+      (cr: EmpresaCredencialesInternaResponseDto) =>
+        EstadoCredencialEmpresaSunat.VIGENTE === cr?.base?.estado,
+    ) as EmpresaCredencialesInternaResponseDto;
+    if (
+      credencial &&
+      (!credencial.certificadoDigital || !credencial?.claveCertificado)
+    ) {
+      throw new BusinessLogicException(
+        `No se encontró certificado digital para la sucursal con RUC ${sucursal.nombre}`,
       );
     }
     const certificado = new GetCertificadoDto(
-      empresa.certificadoDigital,
-      empresa.claveCertificado ?? '',
-      empresa.usuarioSolSecundario ?? '',
-      empresa.claveSolSecundario ?? '',
+      credencial.certificadoDigital,
+      credencial.claveCertificado ?? '',
+      credencial.base.usuarioSolSecundario ?? '',
+      credencial.claveSolSecundario ?? '',
       empresa.email,
       empresa.telefono,
-      "",
-      "",
-      ""
+      '',
+      '',
+      '',
     );
     return certificado;
   }
-  private async registrarComprobante(data: any, sucursalId: number, clientId:number) {
+  private async registrarComprobante(
+    data: any,
+    sucursalId: number,
+    clientId: number,
+  ) {
     const objComprobante: ICreateComprobante = {
       sucursalId,
       tipoComprobante: data.tipoComprobante as TipoComprobanteEnum,
@@ -318,7 +334,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       totalIgv: data.mtoIGV ?? 0,
       mtoImpVenta: data.mtoImpVenta ?? 0,
       payloadJson: JSON.stringify(data),
-      clientId
+      clientId,
     };
     return this.useCreateComprobanteCase.execute(objComprobante, data);
   }
@@ -527,7 +543,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
             success: false,
             message: 'Se encontraron inconsistencias en los ítems',
             statusCode: 422,
-            errors: errores
+            errors: errores,
           });
         }
         const esEntradaSinTotalesDev = sonMontosCero(
@@ -788,7 +804,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     // Si hay errores, se devuelven todos juntos
     if (errores.length > 0) {
       throw new BusinessLogicObjectException({
-        success:false,
+        success: false,
         statusCode: 422,
         message: 'Se encontraron inconsistencias en los ítems',
         errors: errores,

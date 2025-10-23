@@ -1,5 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { EmpresaOrmEntity } from './empesa.orm.entity';
+import { EmpresaOrmEntity } from './empresa/empesa.orm.entity';
 
 @Entity('clientes')
 export class ClienteOrmEntity {

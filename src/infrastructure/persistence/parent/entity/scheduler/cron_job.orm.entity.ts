@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
-import { EmpresaOrmEntity } from '../empesa.orm.entity';
 import { EEstadosCronJob } from 'src/util/estado.enum';
+import { EmpresaOrmEntity } from '../empresa/empesa.orm.entity';
 
 @Entity('cron_jobs')
 export class CronJobOrmEntity {

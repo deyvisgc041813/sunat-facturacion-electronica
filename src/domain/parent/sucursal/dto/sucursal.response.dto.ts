@@ -1,6 +1,5 @@
 import { ProductoResponseDto } from "src/domain/tenant/inventario/producto/dto/producto.response.dto";
 import { EmpresaResponseDto } from "../../empresa/dto/external.response.dto";
-import { EmpresaInternaResponseDto } from "../../empresa/dto/internal.response.dto";
 import { SerieResponseDto } from "src/domain/tenant/serie-comprobante/dto/reesponse.dto";
 import { ComprobanteResponseDto } from "src/domain/tenant/comprobante/dto/conprobante.response.dto";
 import { ResumenResponseDto } from "src/domain/tenant/resumen/dto/resumen.response.dto";
@@ -28,7 +27,7 @@ export class SucursalResponseDto {
     public usuarioRegistro?:string,
     public usuarioModificacion?:string,
     public fechaModificacion?: Date,
-    public empresa?: EmpresaResponseDto | EmpresaInternaResponseDto,
+    public empresa?: EmpresaResponseDto,
     public productos?: ProductoResponseDto[],
     public series?: SerieResponseDto[],
     public comprobantes?: ComprobanteResponseDto[],

@@ -27,8 +27,7 @@ import { UpdateStatusEmpresaUseCase } from 'src/application/parent/empresa/updat
 import { CreateEmpresaDto } from 'src/domain/parent/empresa/dto/create.request.dto';
 import { UpdateEmpresaDto } from 'src/domain/parent/empresa/dto/update.request';
 import { FileValidatorUtil } from '../../validator/validator-file';
-import { CreateEmpresaOnboardingDto } from 'src/domain/parent/empresa/dto/create.request.onboarding.dto';
-import { CreateEmpresaBoardingUseCase } from 'src/application/parent/empresa/create.empresa-boarding.usecase';
+
 
 @UseGuards(JwtAuthGuard)
 @Controller('companies')
@@ -41,10 +40,9 @@ export class EmpresaController {
     private readonly updateUseCase: UpdateEmpresaUseCase,
     private readonly deleteUseCase: DeleteEmpresaUseCase,
     private readonly updateStatusUseCase: UpdateStatusEmpresaUseCase,
-    private readonly createBoardingUseCase: CreateEmpresaBoardingUseCase,
   ) {}
 
-  @Post()
+  @Post("create")
   @UseInterceptors(
     FileFieldsInterceptor([
       { name: 'certificado_digital', maxCount: 1 },
@@ -66,34 +64,34 @@ export class EmpresaController {
     FileValidatorUtil.validarLogo(logo);
     body.certificado_digital = certificado.buffer;
     body.logo = logo.buffer;
-    body.certificadoNombreArchivo = certificado?.originalname;
+    body.certificadoNombre = certificado?.originalname;
     return this.createUseCase.execute(body, auth);
   }
-  @Post("boarding")
-  @UseInterceptors(
-    FileFieldsInterceptor([
-      { name: 'certificado_digital', maxCount: 1 },
-      { name: 'logo', maxCount: 1 },
-    ]),
-  )
-  async createBoarding(
-    @UploadedFiles()
-    files: {
-      certificado_digital: Express.Multer.File[];
-      logo: Express.Multer.File[];
-    },
-    @Body() body: CreateEmpresaOnboardingDto,
-    @User() auth: IUserPayload,
-  ) {
-    const certificado = files.certificado_digital?.[0];
-    const logo = files.logo?.[0];
-    FileValidatorUtil.validarCertificado(certificado);
-    FileValidatorUtil.validarLogo(logo);
-    body.certificado_digital = certificado.buffer;
-    body.logo = logo.buffer;
-    body.certificadoNombreArchivo = certificado?.originalname;
-    return this.createBoardingUseCase.execute(body, auth);
-  }
+  // @Post("boarding")
+  // @UseInterceptors(
+  //   FileFieldsInterceptor([
+  //     { name: 'certificado_digital', maxCount: 1 },
+  //     { name: 'logo', maxCount: 1 },
+  //   ]),
+  // )
+  // async createBoarding(
+  //   @UploadedFiles()
+  //   files: {
+  //     certificado_digital: Express.Multer.File[];
+  //     logo: Express.Multer.File[];
+  //   },
+  //   @Body() body: CreateEmpresaOnboardingDto,
+  //   @User() auth: IUserPayload,
+  // ) {
+  //   const certificado = files.certificado_digital?.[0];
+  //   const logo = files.logo?.[0];
+  //   FileValidatorUtil.validarCertificado(certificado);
+  //   FileValidatorUtil.validarLogo(logo);
+  //   body.certificado_digital = certificado.buffer;
+  //   body.logo = logo.buffer;
+  //   body.certificadoNombreArchivo = certificado?.originalname;
+  //   return this.createBoardingUseCase.execute(body, auth);
+  // }
   @Put(':id')
   @UseInterceptors(
     FileFieldsInterceptor([
@@ -117,7 +115,7 @@ export class EmpresaController {
     FileValidatorUtil.validarLogo(logo);
     body.certificado_digital = certificado.buffer;
     body.logo = logo.buffer;
-    body.certificadoNombreArchivo = certificado?.originalname;
+    body.certificadoNombre = certificado?.originalname;
     return this.updateUseCase.execute(body, empresaId, auth);
   }
   @Get()

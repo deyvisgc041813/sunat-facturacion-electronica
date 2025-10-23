@@ -7,9 +7,11 @@ import { CpeDto } from 'src/domain/tenant/comprobante/dto/cpe/consultar-lote.cpe
 import { SunatLogRepository } from 'src/domain/tenant/sunat-log/port/sunat-log.repository.port';
 import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante.repository';
 import { ISucursalRepository } from 'src/domain/parent/sucursal/ports/sucursal.repository';
-import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
 import { CreateSunatLogDto } from 'src/domain/tenant/sunat-log/interface/sunat.log.interface';
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
+import { EmpresaResponseDto } from 'src/domain/parent/empresa/dto/external.response.dto';
+import { EmpresaCredencialesInternaResponseDto } from 'src/domain/parent/empresa/dto/credenciales-sunat.response.dto';
+import { EstadoCredencialEmpresaSunat } from 'src/util/estado.enum';
 export class CpeValidadoDto extends CpeDto {
   existe: boolean;
   mensaje: string;
@@ -28,24 +30,33 @@ export class GetStatusValidateCpeUseCase {
     this.password = process.env.SUNAT_PASSWORD || 'moddatos'; // pruebas
   }
 
-  async execute(data: CpeDto, empresaId: number, sucursalId: number): Promise<any> {
+  async execute(
+    data: CpeDto,
+    empresaId: number,
+    sucursalId: number,
+  ): Promise<any> {
     //IResponseSunat
     try {
       // 1 validacion de comprobantes
       // const usuario = '20600887735SOROVECA'
       // const passwrod = 'ambitinbe'
-      const sucursal = (await this.sucursalRepo.findSucursalInterna( empresaId, sucursalId));
+      const sucursal = await this.sucursalRepo.findSucursalInterna(
+        empresaId,
+        sucursalId,
+      );
 
       if (!sucursal) {
         throw new BusinessLogicException(
           'No se ha encontrado una sucursal asociada al identificador obtenido del token de autenticación.',
         );
       }
-      const empresa = sucursal.empresa as EmpresaInternaResponseDto
-      const usuarioSecundario = empresa?.usuarioSolSecundario ?? '';
-      const claveSecundaria = CryptoUtil.decrypt(
-        empresa.claveSolSecundario ?? '',
-      );
+      const empresa = sucursal.empresa as EmpresaResponseDto;
+      const credencial = empresa.credenciales.find(
+        (cr: EmpresaCredencialesInternaResponseDto) =>
+          EstadoCredencialEmpresaSunat.VIGENTE === cr?.base?.estado,
+      ) as EmpresaCredencialesInternaResponseDto;
+      const usuarioSecundario = credencial?.base.usuarioSolSecundario ?? '';
+      const claveSecundaria = CryptoUtil.decrypt(  credencial.claveSolSecundario ?? '');
       const resultado = await this.sunatService.getStatusCpe(
         data,
         usuarioSecundario,
