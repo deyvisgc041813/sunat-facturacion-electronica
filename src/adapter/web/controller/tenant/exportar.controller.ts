@@ -33,11 +33,11 @@ export class ExportarController {
     @Query('tipo') tipo: 'A4' | 'TICKET' = 'A4',
     @Res() res: Response
   ) {
-    if (!auth?.sucursales.includes(auth.sucursalActiva)) {
-     throw new ForbiddenException(
-        `No tienes autorización para realizar esta acción desde la sucursal actual (ID: ${auth?.sucursalActiva}).`,
-      );
-    }
+    // if (!auth?.sucursales.includes(auth.sucursalActiva)) {
+    //  throw new ForbiddenException(
+    //     `No tienes autorización para realizar esta acción desde la sucursal actual (ID: ${auth?.sucursalActiva}).`,
+    //   );
+    // }
     const useCase = new CreatePdfUseCase(
       this.sucursalRepo,
       this.comprobanteRepo,
