@@ -2,7 +2,7 @@ import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.ser
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
 import { ComprobanteService } from 'src/domain/tenant/comprobante/services/comprobante.service';
 import { ResumenService } from 'src/domain/tenant/resumen/service/resumen.service';
-import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/resumen.repository';
+import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/resumen.impl.repository';
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import {
   EstadoEnvioSunat,

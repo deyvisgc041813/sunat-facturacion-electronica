@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   OperacionResumenEnum,
   TipoComprobanteEnum,
@@ -30,7 +30,7 @@ import {
   ISummaryDocument,
 } from '../interface/sunat.summary.interface';
 import { CreateResumenBoletaDto } from '../interface/create.summary.interface';
-import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/resumen.repository';
+import { ResumenRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/resumen.impl.repository';
 import { ResumenBoletaDetalleDto } from '../interface/create.summary.detalle.interface';
 import { GetCertificadoDto } from 'src/domain/parent/empresa/dto/obtner-certificado.dto';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
@@ -59,6 +59,7 @@ const estadosFinales = new Set([
 ]);
 @Injectable()
 export class ResumenService {
+  private readonly logger = new Logger(ResumenService.name);
   constructor(
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
     private readonly resumenRepo: ResumenRepositoryImpl,
@@ -70,7 +71,7 @@ export class ResumenService {
     protected readonly sucursalService: SucursalService,
   ) {}
 
-  async iniciarProceso(
+  async createResumenenSunat(
     data: SummaryDocumentDto,
     auth: IUserPayload,
   ): Promise<{
@@ -97,7 +98,6 @@ export class ResumenService {
 
     const boletas = await this.obtenerBoletasPendientes(
       sucursalId,
-      data.serie ?? 'B001',
       data.fecReferencia,
       tenantDatabase,
     );
@@ -147,13 +147,13 @@ export class ResumenService {
       builResumen?.hash,
       resumen?.resumenId,
       detalle,
-      tenantDatabase
+      tenantDatabase,
     );
     await this.setNextCorrelativo(
       sucursalId,
       resumen?.serieId,
       resumen?.correlativo,
-      tenantDatabase
+      tenantDatabase,
     );
     const rpta = this.submitResumenSunat(
       sucursalId,
@@ -163,7 +163,7 @@ export class ResumenService {
       detalle,
       resumenSave.data ?? 0,
       data.serie ?? '',
-      tenantDatabase
+      tenantDatabase,
     );
     return rpta;
   }
@@ -222,24 +222,14 @@ export class ResumenService {
   }
   async obtenerBoletasPendientes(
     sucursalId: number,
-    serie: string,
     fechaReferencia: string,
     tenantDatabase?: string,
   ) {
-    const rspSerie = await this.serieRepo.findBySucursalTipCompSerie(
-      sucursalId,
-      TipoComprobanteEnum.BOLETA,
-      serie,
-      tenantDatabase,
-    );
-    const serieId = rspSerie?.serieId ?? 0;
-
     return this.comprobanteRepo.findBoletasForResumen(
       sucursalId,
-      serieId,
       fechaReferencia,
       [EstadoEnumComprobante.PENDIENTE, EstadoEnumComprobante.ANULADO],
-      tenantDatabase
+      tenantDatabase,
     );
   }
   async procesarErrorResumen(
@@ -249,7 +239,7 @@ export class ResumenService {
     resumenId: string,
     xmlFirmado: string,
     serie: string,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ) {
     const rspError = ErrorMapper.mapError(error, {
       sucursalId,
@@ -351,13 +341,13 @@ export class ResumenService {
     sucursalId: number,
     serieId: number,
     newCorrelativo: number,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ) {
     await this.serieRepo.setNextCorrelativo(
       sucursalId,
       serieId,
       newCorrelativo,
-      tenantDatabase
+      tenantDatabase,
     );
   }
   async submitResumenSunat(
@@ -368,7 +358,7 @@ export class ResumenService {
     detalle: ResumenBoletaDetalleDto[],
     resumenIdBd: number,
     serie: string,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ) {
     try {
       const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
@@ -390,7 +380,7 @@ export class ResumenService {
           estado: EstadoEnvioSunat.ENVIADO,
           ticket,
         },
-        tenantDatabase
+        tenantDatabase,
       );
 
       // 8. Actualizar boletas
@@ -410,7 +400,7 @@ export class ResumenService {
         {
           estado: EstadoEnvioSunat.ERROR,
         },
-        tenantDatabase
+        tenantDatabase,
       );
       await this.procesarErrorResumen(
         error,
@@ -423,13 +413,17 @@ export class ResumenService {
       throw error;
     }
   }
-  async updateBoletaStatus(sucursalId: number, boletasIds: number[], tenantDatabase?:string) {
+  async updateBoletaStatus(
+    sucursalId: number,
+    boletasIds: number[],
+    tenantDatabase?: string,
+  ) {
     await this.comprobanteRepo.updateBoletaStatus(
       sucursalId,
       boletasIds,
       EstadoEnumComprobante.ENVIADO,
       EstadoComunicacionEnvioSunat.ENVIADO,
-      tenantDatabase
+      tenantDatabase,
     );
   }
   async validarEstadoFinalResumen(resumen: ResumenResponseDto | null) {
@@ -442,10 +436,145 @@ export class ResumenService {
       );
     }
   }
+  async consultarTicketResumenSunat(auth: IUserPayload, ticket?: string) {
+    const empresaId = auth?.empresaId ?? 0;
+    const sucursalId = auth.sucursalActiva ?? 0;
+    const sucursal = await this.sucursalService.getDigitalCertificate(
+      sucursalId,
+      empresaId,
+    );
+    const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
+    const claveSecundaria = CryptoUtil.decrypt(
+      sucursal.claveSolSecundario ?? '',
+    );
+    if (ticket) {
+      return this.consultarTicketResumenSunatIndividual(
+        sucursalId,
+        ticket,
+        usuarioSecundario,
+        claveSecundaria,
+      );
+    } else {
+      // Caso masivo
+      return this.consultarTicketResumenSunatMasivo(sucursalId, usuarioSecundario, claveSecundaria, auth.subDominio);
+    }
+  }
+ private async consultarTicketResumenSunatIndividual(
+    sucursalId: number,
+    ticket: string,
+    usuarioSecundario: string,
+    claveSecundaria: string,
+  ) {
+    const resumen = await this.findBySucursalAndTicket(sucursalId, ticket);
+    if (!resumen)
+      throw new BusinessLogicException (`No se encontró el resumen con ticket ${ticket}`);
+    try {
+      await this.validarEstadoFinalResumen(resumen);
+      // Consultar estado en SUNAT
+      const result = await this.consultarEstadoTicketSunat(
+        ticket,
+        usuarioSecundario,
+        claveSecundaria,
+      );
+
+      // Actualizar resumen
+      await this.updateBySucursalAndTicket(sucursalId, ticket, result);
+
+      // Actualizar boletas asociadas
+      const boletasIds: number[] = (resumen?.detalles ?? [])
+        .map((d) => d.comprobante?.comprobanteId)
+        .filter((id): id is number => id !== undefined);
+
+      await this.updateBoletaStatus(sucursalId, boletasIds);
+
+      return result;
+    } catch (error: any) {
+      const resumenId = resumen?.resumenId ?? '';
+      if (resumen) {
+        if (!estadosFinales.has(resumen.estado as EstadoEnvioSunat)) {
+          await this.resumenRepo.update(resumenId, sucursalId, {
+            estado: EstadoEnvioSunat.ERROR,
+          });
+        }
+        await this.procesarErrorResumen(
+          error,
+          resumen?.resBolId ?? 0,
+          resumen?.sucursalId ?? 0,
+          resumenId,
+          resumen.xml ?? '',
+          resumenId,
+        );
+      }
+      throw error;
+    }
+  }
+  private async consultarTicketResumenSunatMasivo(
+    sucursalId: number,
+    usuarioSecundario: string,
+    claveSecundaria: string,
+    tenantDatabase: string,
+  ): Promise<void> {
+    const resultados: any[] = [];
+    const errores: string[] = [];
+    //"2025-09-11T12:26:13-05:00";
+    const resumenes = await this.resumenRepo.findByFecha(
+      sucursalId,
+      getFechaHoraActualLima(),
+      EstadoEnumComprobante.ENVIADO,
+      tenantDatabase,
+    );
+
+    if (resumenes.length === 0) {
+      this.logger.warn(
+        `[SUNAT] No se encontraron resúmenes pendientes por validar el estado de ticket en la sucursal ${sucursalId}.`,
+      );
+      return;
+    }
+    this.logger.log(
+      `[SUNAT] Iniciando validación automática de tickets (${resumenes.length}) en la sucursal ${sucursalId}.`,
+    );
+
+    for (const resumen of resumenes) {
+      const ticket = resumen.ticket ?? '';
+
+      if (!ticket) {
+        this.logger.warn(
+          `[SUNAT] El resumen ${resumen.resumenId ?? '—'}-${resumen.correlativo ?? ''} no tiene ticket asignado. Se omitió la validación (sucursal: ${sucursalId}).`,
+        );
+        continue;
+      }
+
+      try {
+        const result = await this.consultarEstadoTicketSunat(
+          ticket,
+          usuarioSecundario,
+          claveSecundaria,
+        );
+
+        await this.updateBySucursalAndTicket(sucursalId, ticket, result);
+        const boletasIds: number[] = (resumen?.detalles ?? [])
+          .map((d) => d.comprobante?.comprobanteId)
+          .filter((id): id is number => id !== undefined);
+        await this.updateBoletaStatus(sucursalId, boletasIds);
+        resultados.push({ ticket, estado: result?.estadoSunat });
+        this.logger.log(
+          `[SUNAT]Ticket ${ticket} del resumen ${resumen.resumenId ?? '—'}-${resumen.correlativo ?? ''} validado correctamente. Estado: ${result?.estadoSunat}.`,
+        );
+      } catch (error: any) {
+        errores.push(`Ticket ${ticket}: ${error.message}`);
+        this.logger.error(
+          `[SUNAT] Error al consultar ticket ${ticket} (resumen ${resumen.resumenId ?? '—'}-${resumen.correlativo ?? ''}): ${error.message}`,
+        );
+      }
+    }
+    this.logger.log(
+      `[SUNAT] Finalizó validación automática de tickets. Total: ${resumenes.length}, procesados: ${resultados.length}, fallidos: ${errores.length}.`,
+    );
+  }
   async consultarEstadoTicketSunat(
     ticket: string,
     usuarioSecundario: string,
-    claveSecundaria: string
+    claveSecundaria: string,
   ) {
     try {
       const result = await this.sunatService.getStatus(
@@ -462,29 +591,34 @@ export class ResumenService {
     sucursalId: number,
     ticket: string,
     result: IResponseSunat,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ) {
-    await this.resumenRepo.updateBySucursalAndTicket(sucursalId, ticket, {
-      estado: mapSunatToEstado(result.codigoResponse ?? ''),
-      codResPuestaSunat: result.codigoResponse ?? '',
-      cdr: result.cdr?.toString('base64') ?? null,
-      mensajeSunat: result.mensaje,
-      observacionSunat:
-        result.observaciones.length > 0
-          ? JSON.stringify(result.observaciones)
-          : null,
-      fechaRespuestaSunat: new Date(),
-    }, tenantDatabase);
+    await this.resumenRepo.updateBySucursalAndTicket(
+      sucursalId,
+      ticket,
+      {
+        estado: mapSunatToEstado(result.codigoResponse ?? ''),
+        codResPuestaSunat: result.codigoResponse ?? '',
+        cdr: result.cdr?.toString('base64') ?? null,
+        mensajeSunat: result.mensaje,
+        observacionSunat:
+          result.observaciones.length > 0
+            ? JSON.stringify(result.observaciones)
+            : null,
+        fechaRespuestaSunat: new Date(),
+      },
+      tenantDatabase,
+    );
   }
   async findBySucursalAndTicket(
     sucursalId: number,
     ticket: string,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ): Promise<ResumenResponseDto | null> {
     const resumen = await this.resumenRepo.findBySucursalAndTicket(
       sucursalId,
       ticket,
-      tenantDatabase
+      tenantDatabase,
     );
     if (!resumen) {
       throw new BusinessLogicException(

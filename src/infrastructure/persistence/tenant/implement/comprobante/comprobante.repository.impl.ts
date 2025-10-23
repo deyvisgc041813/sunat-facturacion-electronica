@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Between, In, Not } from 'typeorm';
+import { Between, In, Like, Not } from 'typeorm';
 
 import {
   EstadoComunicacionEnvioSunat,
@@ -23,6 +23,7 @@ import { BaseTenantRepository } from '../../../base/base-tenant.repository';
 import { ComprobanteRespuestaSunatRepositoryImpl } from './comprobante-respuesta.sunat.repository.impl';
 import { LogRespuestaSunatRepositoryImpl } from './log-respuesta-sunat-fallida.repository.impl';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 @Injectable()
 export class ComprobanteRepositoryImpl
   extends BaseTenantRepository<ComprobanteOrmEntity>
@@ -36,6 +37,7 @@ export class ComprobanteRepositoryImpl
   ) {
     super(tenantContext, tenantRepositoryHelper, ComprobanteOrmEntity);
   }
+
   async save(
     dto: ICreateComprobante,
     payloadJson: any,
@@ -65,7 +67,7 @@ export class ComprobanteRepositoryImpl
     );
     const response: IResponsePs = {
       correlativo: rows[0].numero_correlativo,
-      comprobanteId: rows[0].comprobante_id
+      comprobanteId: rows[0].comprobante_id,
     };
     return {
       status: true,
@@ -85,7 +87,7 @@ export class ComprobanteRepositoryImpl
   async findById(
     sucursalId: number,
     comprobanteIds: number[],
-    tenantDatabase?:string,
+    tenantDatabase?: string,
   ): Promise<ComprobanteResponseDto[] | null> {
     const repo = await this.getRepository(tenantDatabase);
     const comprobantes = await repo.find({
@@ -324,10 +326,45 @@ export class ComprobanteRepositoryImpl
   }
   async findBoletasForResumen(
     sucursalId: number,
-    serieId: number,
     fechaResumen: string,
     estados: EstadoEnumComprobante[],
-    tenantDatabase?:string
+    tenantDatabase?: string,
+  ): Promise<ComprobanteResponseDto[]> {
+    const repo = await this.getRepository(tenantDatabase);
+
+    // Calcular inicio y fin del día
+    const fecha = new Date(fechaResumen);
+    const inicioDelDia = new Date(fecha);
+    inicioDelDia.setHours(0, 0, 0, 0);
+
+    const finDelDia = new Date(fecha);
+    finDelDia.setHours(23, 59, 59, 999);
+
+    const rsp = await repo.find({
+      where: {
+        sucursalId,
+        fechaEmision: Between(inicioDelDia, finDelDia),
+        comunicadoSunat: EstadoComunicacionEnvioSunat.NO_ENVIADO,
+        estado: In(estados),
+        serie: {
+          serie: Like('B%'),
+          tipoComprobante: TipoComprobanteEnum.BOLETA,
+        },
+      },
+      relations: ['serie'],
+      order: {
+        fechaEmision: 'ASC',
+      },
+    });
+
+    return rsp.map(ComprobanteMapper.toDomain);
+  }
+
+  async findBoletasByTicketResumenStatus(
+    sucursalId: number,
+    fechaResumen: string,
+    estado: EstadoEnumComprobante,
+    tenantDatabase?: string,
   ): Promise<ComprobanteResponseDto[]> {
     const repo = await this.getRepository(tenantDatabase);
     const fecha = new Date(fechaResumen);
@@ -339,10 +376,9 @@ export class ComprobanteRepositoryImpl
     const rsp = await repo.find({
       where: {
         sucursalId,
-        serie: { serieId },
         fechaEmision: Between(inicioDelDia, finDelDia),
-        comunicadoSunat: EstadoComunicacionEnvioSunat.NO_ENVIADO,
-        estado: In(estados),
+        comunicadoSunat: EstadoComunicacionEnvioSunat.ENVIADO,
+        estado: estado,
       },
       relations: ['serie'],
     });
@@ -354,7 +390,7 @@ export class ComprobanteRepositoryImpl
     boletasIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ) {
     const repo = await this.getRepository(tenantDatabase);
     await repo
@@ -380,7 +416,7 @@ export class ComprobanteRepositoryImpl
     comprobanteIds: number[],
     nuevoEstado: EstadoEnumComprobante,
     comunicadoSunat: EstadoComunicacionEnvioSunat,
-    tenantDatabase?:string
+    tenantDatabase?: string,
   ) {
     const repo = await this.getRepository(tenantDatabase);
     await repo
@@ -396,7 +432,10 @@ export class ComprobanteRepositoryImpl
            ELSE estado 
          END`,
         comunicadoSunat: () => comunicadoSunat,
-        fechaAnulacion: nuevoEstado === EstadoEnumComprobante.ANULADO ? dayjs().toDate() : null,
+        fechaAnulacion:
+          nuevoEstado === EstadoEnumComprobante.ANULADO
+            ? dayjs().toDate()
+            : null,
       })
       .whereInIds(comprobanteIds)
       .andWhere('sucursal_id = :sucursalId', { sucursalId })
@@ -459,7 +498,27 @@ export class ComprobanteRepositoryImpl
         hashCpe: update.hashCpe ?? null,
         errorMensaje: String(error.message || 'Error desconocido'),
       });
-      throw error
+      throw error;
     }
+  }
+  async findByPedidoIntegracion(
+    sucursalId: number,
+    pedidoId: number,
+  ): Promise<ComprobanteResponseDto | null> {
+    const repo = await this.getRepository();
+
+    const comprobante = await repo
+      .createQueryBuilder('c')
+      .where('c.sucursal_id = :sucursalId', { sucursalId })
+      .andWhere(`JSON_EXTRACT(c.payload_json, '$.numeroPedido') = :pedidoId`, {
+        pedidoId,
+      })
+      .getOne();
+
+    if (!comprobante) {
+      throw new BusinessLogicException( `[TERCIARIO] No se encontró comprobante para pedidoId=${pedidoId} en la sucursal ${sucursalId}.`)
+    }
+
+    return ComprobanteMapper.toDomain(comprobante);
   }
 }

@@ -1,14 +1,12 @@
 import {
-  BadRequestException,
+
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { CreateSerieDto } from '../dto/create.request.dto';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { SerieResponseDto } from '../dto/reesponse.dto';
 import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/catalogo.repository.impl';
-import { TipoCatalogoEnum } from 'src/util/catalogo.enum';
 import { buildLogData } from 'src/common/core';
 import { EAccionAudit, ETablaAudit } from 'src/util/general.enum';
 import { APLICACION_ORIGEN } from 'src/util/constantes';
@@ -16,6 +14,7 @@ import { UpdateSerieDto } from '../dto/update.request.dto';
 import { EEstadosGlobales } from 'src/util/estado.enum';
 import { SerieComprobanteRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/serie-comprobante.repository.impl';
 import { AuditoriaService } from 'src/domain/parent/core/logs/service/auditoria.logs.service';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class SerieComprobanteService {
@@ -38,7 +37,7 @@ export class SerieComprobanteService {
         dto.serie,
       );
       if (existSerie) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `Ya existe una serie activa (${dto.serie}) registrada para el tipo de comprobante ${dto.tipoComprobante} en esta sucursal.`,
         );
       }
@@ -71,7 +70,7 @@ export class SerieComprobanteService {
     serieId: number,
   ): Promise<SerieResponseDto | null> {
     const sucursal = await this.serieRepo.findById(sucursalId, serieId);
-    if (!sucursal) throw new NotFoundException('Serie no encontrada.');
+    if (!sucursal) throw new BusinessLogicException('Serie no encontrada.');
     return sucursal;
   }
   async update(
@@ -83,7 +82,7 @@ export class SerieComprobanteService {
       const sucursalId = dto.sucursalId ?? 0;
       const serie = await this.serieRepo.findById(sucursalId, serieId);
       if (!serie) {
-        throw new NotFoundException('Serie no encontrada.');
+        throw new BusinessLogicException('Serie no encontrada.');
       }
       dto.usuarioModificacion = auth.correo;
       const response = await this.serieRepo.update(dto, serieId);
@@ -139,7 +138,7 @@ export class SerieComprobanteService {
     auth: IUserPayload,
   ): Promise<GenericResponse<void>> {
     if ( ![EEstadosGlobales.ACTIVO, EEstadosGlobales.INACTIVO].includes( nuevoEstado)) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         'El estado solo puede ser 1 (activo) o 0 (inactivo)',
       );
     }
@@ -150,7 +149,7 @@ export class SerieComprobanteService {
       nuevoEstado,
       auth.correo,
     );
-    if (!serie) throw new NotFoundException('Serie no encontrada');
+    if (!serie) throw new BusinessLogicException('Serie no encontrada');
 
     const accion =
       nuevoEstado === EEstadosGlobales.ACTIVO
@@ -182,7 +181,7 @@ export class SerieComprobanteService {
     );
 
     if (!resp) {
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `No se encontró ninguna serie registrada con los siguientes filtros:   sucursalId=${sucursalId}, tipoComprobante=${tipoComprobante}, serie=${serie}.`,
       );
     }
@@ -196,13 +195,13 @@ export class SerieComprobanteService {
     motivo: string,
   ): Promise<GenericResponse<SerieResponseDto>> {
     if (!usuarioId) {
-      throw new BadRequestException('El usuarioId es obligatorio');
+      throw new BusinessLogicException('El usuarioId es obligatorio');
     }
     if (!newCorrelativo) {
-      throw new BadRequestException('El nuevo correlativo es obligatorio');
+      throw new BusinessLogicException('El nuevo correlativo es obligatorio');
     }
     if (!motivo) {
-      throw new BadRequestException('El motivo es obligatorio');
+      throw new BusinessLogicException('El motivo es obligatorio');
     }
     return this.serieRepo.adjustCorrelative(sucursalId ?? 0, serieId, usuarioId, newCorrelativo, motivo);
   }

@@ -5,6 +5,9 @@ import { SummaryDocumentDto } from 'src/domain/tenant/resumen/dto/summary-docume
 import { getFechaHoraActualLimaFormat } from 'src/util/Helpers';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ResumenService } from 'src/domain/tenant/resumen/service/resumen.service';
+import { ComunicacionBajaService } from 'src/domain/tenant/comunicacion-baja/service/comunicacion-baja.service';
+import { CronTaskType } from 'src/util/catalogo.enum';
+import { ComunicacionBajaDto } from 'src/domain/tenant/comunicacion-baja/dto/comunicacion-baja.dto';
 
 @Injectable()
 export class CronRunnerService {
@@ -16,7 +19,8 @@ export class CronRunnerService {
   private readonly INTERVALO_MINUTOS = 0.2;
   constructor(
     private readonly cronService: CronService,
-   private readonly resumenService: ResumenService,
+    private readonly resumenService: ResumenService,
+    private readonly comunicacionBajaService: ComunicacionBajaService,
   ) {}
 
   // Inicia el scheduler
@@ -24,7 +28,7 @@ export class CronRunnerService {
     this.logger.log(
       `Scheduler iniciadssso (revisión cada ${this.INTERVALO_MINUTOS} min)...`,
     );
-        // this.resumenService = await this.moduleRef.resolve(ResumenService);
+    // this.resumenService = await this.moduleRef.resolve(ResumenService);
     await this.programarProxima();
     await this.iniciarRevisionAutomatica();
   }
@@ -87,7 +91,9 @@ export class CronRunnerService {
   private async iniciarRevisionAutomatica() {
     if (this.revisionRef) clearInterval(this.revisionRef);
     const ms = this.INTERVALO_MINUTOS * 60 * 1000;
-    this.logger.log(`Revisión automática cada ${this.INTERVALO_MINUTOS} min...`);
+    this.logger.log(
+      `Revisión automática cada ${this.INTERVALO_MINUTOS} min...`,
+    );
 
     this.revisionRef = setInterval(async () => {
       this.logger.log(`Revisando tareas activas...`);
@@ -105,10 +111,16 @@ export class CronRunnerService {
       await this.cronService.marcarEnProceso(cronId);
 
       switch (tipo) {
-        case 'RESUMEN_DIARIO':
-          await this.enviarResumenSunat(tarea);
+        case CronTaskType.GENERAR_RESUMEN_DIARIO:
+          await this.crearResumenSunat(tarea);
           break;
-        case 'BACKUP_DATABASE':
+        case CronTaskType.CONSULTAR_TICKET_RESUMEN_SUNAT:
+          await this.consultatTicketResumenSunat(tarea);
+          break;
+        case CronTaskType.CONSULTAR_TICKET_COMUNICACION_BAJA_SUNAT:
+          await this.consultatTicketComunicacionBajaSunat(tarea);
+          break;
+        case CronTaskType.BACKUP_PROGRAMADO:
           await this.hacerBackup(empresaId);
           break;
         case 'REINTENTOS':
@@ -123,14 +135,15 @@ export class CronRunnerService {
     }
   }
 
-  private async enviarResumenSunat(tarea: CronJobResponseDto): Promise<void> {
-
+  private async crearResumenSunat(tarea: CronJobResponseDto): Promise<void> {
     const empresaId = tarea?.empresa?.empresaId;
     const cronJobId = tarea.cronId;
     const payload = tarea?.payload;
-    const context = `CronJob:enviarResumenSunat[empresa:${empresaId}]`;
+    const context = `CronJob:${CronTaskType.GENERAR_RESUMEN_DIARIO}[empresa:${empresaId}]`;
     const inicio = Date.now();
-    this.logger.log(`Ejecutando tarea RESUMEN_DIARIO empresa ${empresaId}`);
+    this.logger.log(
+      `Ejecutando tarea ${CronTaskType.GENERAR_RESUMEN_DIARIO} empresa ${empresaId}`,
+    );
     try {
       if (!payload?.company || !payload?.serieResumen || !payload?.auth) {
         const msg = `Payload incompleto. Faltan campos requeridos: company, serieResumen, auth`;
@@ -143,12 +156,13 @@ export class CronRunnerService {
       const data = new SummaryDocumentDto();
       data.ublVersion = '2.0';
       data.customizationID = '1.1';
-      data.fecReferencia = getFechaHoraActualLimaFormat('YYYY-MM-DDTHH:mm:ssZ') //"2025-09-11T12:26:13-05:00";
+      data.fecReferencia = getFechaHoraActualLimaFormat('YYYY-MM-DDTHH:mm:ssZ'); //"2025-09-11T12:26:13-05:00";
       data.serieResumen = payload.serieResumen;
       data.company = payload.company;
       data.sucursalId = payload.sucursalId ?? auth.sucursalActiva ?? 1;
-      const rpta = await this.resumenService.iniciarProceso(data, auth);
-      this.logger.warn( `[CRON:RESUMEN_DIARIO][Empresa:${empresaId}] → Respuesta SUNAT: ${rpta.message} | Status: ${rpta.status}`
+      const rpta = await this.resumenService.createResumenenSunat(data, auth);
+      this.logger.warn(
+        `[CRON:${CronTaskType.GENERAR_RESUMEN_DIARIO}][Empresa:${empresaId}] → Respuesta SUNAT: ${rpta.message} | Status: ${rpta.status}`,
       );
       const duracion = ((Date.now() - inicio) / 1000).toFixed(2);
 
@@ -172,6 +186,85 @@ export class CronRunnerService {
     }
   }
 
+  private async consultatTicketResumenSunat(
+    tarea: CronJobResponseDto,
+  ): Promise<void> {
+    const empresaId = tarea?.empresa?.empresaId;
+    const cronJobId = tarea.cronId;
+    const payload = tarea?.payload;
+    const context = `CronJob:${CronTaskType.CONSULTAR_TICKET_RESUMEN_SUNAT}[empresa:${empresaId}]`;
+    const inicio = Date.now();
+    this.logger.log(
+      `Ejecutando tarea ${CronTaskType.CONSULTAR_TICKET_RESUMEN_SUNAT} empresa ${empresaId}`,
+    );
+    try {
+      if (!payload?.company || !payload?.auth) {
+        const msg = `Payload incompleto. Faltan campos requeridos: company, auth`;
+        this.logger.warn(msg, context);
+        await this.cronService.marcarEnError(cronJobId, msg);
+        return;
+      }
+      const auth = payload.auth as IUserPayload;
+      await this.resumenService.consultarTicketResumenSunat(auth);
+      const duracion = ((Date.now() - inicio) / 1000).toFixed(2);
+      await this.programarProximaPorTipo(
+        cronJobId,
+        tarea.horaEjecucion,
+        tarea.repetir,
+        tarea.tipo,
+      );
+      this.logger.log(
+        `[${context}] Finalizó la consulta de ticket del resumen diario masivo. Tiempo de ejecución: ${duracion}s`,
+      );
+    } catch (error: any) {
+      const mensajeError = `[${context}] Error en envío → ${error.message}`;
+      this.logger.error(mensajeError, error.stack, context);
+      await this.cronService.marcarEnError(cronJobId, error);
+    } finally {
+      const duracion = ((Date.now() - inicio) / 1000).toFixed(2);
+      this.logger.log(`[${context}] Finalizó tarea (${duracion}s)`);
+    }
+  }
+  private async consultatTicketComunicacionBajaSunat(
+    tarea: CronJobResponseDto,
+  ): Promise<void> {
+    const empresaId = tarea?.empresa?.empresaId;
+    const cronJobId = tarea.cronId;
+    const payload = tarea?.payload;
+    const context = `CronJob:${CronTaskType.CONSULTAR_TICKET_COMUNICACION_BAJA_SUNAT}[empresa:${empresaId}]`;
+    const inicio = Date.now();
+    this.logger.log(
+      `Ejecutando tarea ${CronTaskType.CONSULTAR_TICKET_COMUNICACION_BAJA_SUNAT} empresa ${empresaId}`,
+    );
+    try {
+      if (!payload?.company || !payload?.auth) {
+        const msg = `Payload incompleto. Faltan campos requeridos: company, auth`;
+        this.logger.warn(msg, context);
+        await this.cronService.marcarEnError(cronJobId, msg);
+        return;
+      }
+      const auth = payload.auth as IUserPayload;
+      await this.comunicacionBajaService.consultarTicketBajaSunat(auth);
+      const duracion = ((Date.now() - inicio) / 1000).toFixed(2);
+      // Programar siguiente ejecución
+      await this.programarProximaPorTipo(
+        cronJobId,
+        tarea.horaEjecucion,
+        tarea.repetir,
+        tarea.tipo,
+      );
+      this.logger.log(
+        `[${context}] Comunicacion de baja consultada correctamente. Tiempo de ejecución: ${duracion}s.`,
+      );
+    } catch (error: any) {
+      const mensajeError = `[${context}] Error en envío → ${error.message}`;
+      this.logger.error(mensajeError, error.stack, context);
+      await this.cronService.marcarEnError(cronJobId, error);
+    } finally {
+      const duracion = ((Date.now() - inicio) / 1000).toFixed(2);
+      this.logger.log(`[${context}] Finalizó tarea (${duracion}s)`);
+    }
+  }
   // Caso: Backup de base de datos
   private async hacerBackup(empresaId: number) {
     this.logger.log(` Generando backup empresa ${empresaId}`);

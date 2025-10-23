@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { EEstadosGlobales } from 'src/util/estado.enum';
@@ -57,7 +57,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       ],
     });
     if (!result)
-      throw new NotFoundException('No se encontro sucursales para esta sesion');
+      throw new BusinessLogicException('No se encontro sucursales para esta sesion');
     return result.map((sucursal) => SucursalMapper.toDomain(sucursal));
   }
   async getByIdSucursal(

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { ClienteMapper } from 'src/domain/mapper/cliente.mapper';
@@ -9,6 +9,7 @@ import { CreateClienteDto } from 'src/domain/parent/cliente/dto/create.client.dt
 import { UpdateClienteDto } from 'src/domain/parent/cliente/dto/update.client.dto';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { EEstadosGlobales } from 'src/util/estado.enum';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class ClienteRepositoryImpl implements IClienteRepositoryPort {
@@ -45,7 +46,7 @@ export class ClienteRepositoryImpl implements IClienteRepositoryPort {
       relations: ['empresa'],
     });
     if (!cliente) {
-      throw new NotFoundException(`Cliente con id ${clienteId} no encontrado`);
+      throw new BusinessLogicException(`Cliente con id ${clienteId} no encontrado`);
     }
     return ClienteMapper.toDomain(cliente);
   }
@@ -81,7 +82,7 @@ export class ClienteRepositoryImpl implements IClienteRepositoryPort {
     });
 
     if (!cliente) {
-      throw new Error(`Cliente con ID ${clienteId} no encontrado`);
+      throw new BusinessLogicException(`Cliente con ID ${clienteId} no encontrado`);
     }
     await this.repo.update(clienteId, {
       estado: nuevoEstado,

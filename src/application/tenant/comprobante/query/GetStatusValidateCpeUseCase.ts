@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
@@ -10,6 +9,7 @@ import { ConprobanteRepository } from 'src/domain/tenant/comprobante/comprobante
 import { ISucursalRepository } from 'src/domain/parent/sucursal/ports/sucursal.repository';
 import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
 import { CreateSunatLogDto } from 'src/domain/tenant/sunat-log/interface/sunat.log.interface';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 export class CpeValidadoDto extends CpeDto {
   existe: boolean;
   mensaje: string;
@@ -37,7 +37,7 @@ export class GetStatusValidateCpeUseCase {
       const sucursal = (await this.sucursalRepo.findSucursalInterna( empresaId, sucursalId));
 
       if (!sucursal) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           'No se ha encontrado una sucursal asociada al identificador obtenido del token de autenticación.',
         );
       }

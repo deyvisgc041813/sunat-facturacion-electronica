@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { EmpresaMapper } from 'src/domain/mapper/empresa.mapper';
@@ -11,6 +11,7 @@ import { CreateEmpresaDto } from 'src/domain/parent/empresa/dto/create.request.d
 import { EmpresaInternaResponseDto } from 'src/domain/parent/empresa/dto/internal.response.dto';
 import { UpdateEmpresaDto } from 'src/domain/parent/empresa/dto/update.request';
 import { GetCertificadoDto } from 'src/domain/parent/empresa/dto/obtner-certificado.dto';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
@@ -61,7 +62,7 @@ export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
       ],
     });
     if (!empresa) {
-      throw new NotFoundException(`Empresa con id ${id} no encontrado`);
+      throw new BusinessLogicException(`Empresa con id ${id} no encontrado`);
     }
     return !interno
       ? EmpresaMapper.toDomain(empresa)
@@ -81,7 +82,7 @@ export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
       ],
     });
     if (!empresa) {
-      throw new NotFoundException(`Empresa con ruc ${ruc} se encontro`);
+      throw new BusinessLogicException(`Empresa con ruc ${ruc} se encontro`);
     }
     return !interno
       ? EmpresaMapper.toDomain(empresa)
@@ -93,10 +94,10 @@ export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
     });
 
     if (!empresa) {
-      throw new NotFoundException(`No se encontró empresa con RUC ${ruc}`);
+      throw new BusinessLogicException(`No se encontró empresa con RUC ${ruc}`);
     }
     if (!empresa.certificadoDigital) {
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `La empresa ${ruc} no tiene certificado digital registrado`,
       );
     }
@@ -134,7 +135,7 @@ export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
     });
 
     if (!empresa) {
-      throw new NotFoundException(`La empresa con ID ${empresaId} no existe.`);
+      throw new BusinessLogicException(`La empresa con ID ${empresaId} no existe.`);
     }
     await this.repo.update(empresaId, { estado: nuevoEstado });
     return {

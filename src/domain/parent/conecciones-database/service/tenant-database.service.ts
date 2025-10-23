@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { TenantConnectionRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/coneccion-database.repository.impl';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as tenantEntities from '../../../../infrastructure/persistence/tenant/entity/index';
@@ -8,6 +8,7 @@ import { generateTenantCredentials } from 'src/util/Helpers';
 import { ETablaAudit } from 'src/util/general.enum';
 import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 import { SQL_EXISTE_SPGC, SQL_SPGUARDAR_COMPROBANTE } from 'src/util/constantes';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 /**
  * Servicio de gestión de bases de datos multi-tenant (una BD por sucursal)
  * - 🔹 Lazy connection (solo conecta cuando se necesita)
@@ -39,7 +40,7 @@ export class TenantDatabaseService {
     existDbUser: boolean,
   ): Promise<void> {
     if (!/^[a-zA-Z0-9_]+$/.test(dbName)) {
-      throw new Error('Nombre de base de datos inválido');
+      throw new BusinessLogicException('Nombre de base de datos inválido');
     }
     const rootDS = new DataSource({
       type: 'mysql',
@@ -178,7 +179,7 @@ export class TenantDatabaseService {
       subDominio,
     );
     if (!tenant || tenant.estado !== EEstadosGlobales.ACTIVO) {
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `Tenant "${subDominio}" no está activo o no existe.`,
       );
     }

@@ -5,7 +5,6 @@ import { CryptoUtil } from 'src/util/CryptoUtil';
 import { ZipUtil } from 'src/util/ZipUtil';
 import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import {
   CodigoSunatTasasEnum,
   NotaCreditoMotivo,
@@ -64,6 +63,8 @@ import { DetailDto } from 'src/domain/tenant/comprobante/dto/base/detail.dto';
 import { DescuentoGlobales } from 'src/domain/tenant/comprobante/dto/notasComprobante/descuento-globales.dto';
 import { IMtoGloables } from 'src/domain/tenant/comprobante/interface/mtos-globales';
 import { ClienteService } from 'src/domain/parent/cliente/service/cliente.service';
+import { BusinessLogicException, BusinessLogicObjectException } from 'src/adapter/web/exception/exeception-dynamic';
+
 const motivosAnulacionTotal = [
   NotaCreditoMotivo.ANULACION_OPERACION,
   NotaCreditoMotivo.ANULACION_ERROR_RUC,
@@ -110,7 +111,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       sucursalId,
     );
     if (!sucursal) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
       );
     }
@@ -122,7 +123,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       data.client.numDoc,
     );
     if (!cliente) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El cliente identificado con ${data.client.tipoDoc} ${data.client.numDoc} no pertenece a la empresa emisora, por lo que no corresponde a la factura original.`,
       );
     }
@@ -278,7 +279,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       data.tipoComprobante,
     );
     if (!existCatalogo) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El tipo de comprobante ${data.tipoComprobante} no se encuentra en los catálogos de SUNAT`,
       );
     }
@@ -522,9 +523,11 @@ export abstract class CreateNotaCreditoBaseUseCase {
         );
         // Si hay errores, se devuelven todos juntos
         if (errores.length > 0) {
-          throw new BadRequestException({
+          throw new BusinessLogicObjectException({
+            success: false,
             message: 'Se encontraron inconsistencias en los ítems',
-            detalles: errores,
+            statusCode: 422,
+            errors: errores
           });
         }
         const esEntradaSinTotalesDev = sonMontosCero(
@@ -784,9 +787,11 @@ export abstract class CreateNotaCreditoBaseUseCase {
     );
     // Si hay errores, se devuelven todos juntos
     if (errores.length > 0) {
-      throw new BadRequestException({
+      throw new BusinessLogicObjectException({
+        success:false,
+        statusCode: 422,
         message: 'Se encontraron inconsistencias en los ítems',
-        detalles: errores,
+        errors: errores,
       });
     }
 
@@ -872,7 +877,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       // --- Recalcular valores correctos ---
       const precioBase = d.mtoValorUnitario - (d.mtoDescuento || 0);
       if (precioBase < 0) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene un descuento mayor al valor unitario. Enviado: ${d.mtoDescuento}, máximo permitido: ${d.mtoValorUnitario}.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
@@ -890,19 +895,19 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
       // --- Comparar valores enviados vs calculados ---
       if (Number(d.mtoValorVenta.toFixed(2)) !== valorVentaCalc) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene un valor de venta incorrecto. Enviado: ${d.mtoValorVenta}, esperado: ${valorVentaCalc}.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
       }
       if (Number(d.igv.toFixed(2)) !== igvCalc) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene un IGV incorrecto. Enviado: ${d.igv}, esperado: ${igvCalc}.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
       }
       if (Number(d.mtoBaseIgv.toFixed(2)) !== mtoBaseIgv) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene una base imponible incorrecta. Enviado: ${d.mtoBaseIgv}, esperado: ${mtoBaseIgv}.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
@@ -911,7 +916,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         Number(d.mtoPrecioUnitario.toFixed(2)) !== precioUnitCalc &&
         tipoAfectacionGravadas.includes(d.tipAfeIgv)
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene un precio unitario con IGV incorrecto. Enviado: ${d.mtoPrecioUnitario}, esperado: ${precioUnitCalc}.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
@@ -920,14 +925,14 @@ export abstract class CreateNotaCreditoBaseUseCase {
         !tipoAfectacionGravadas.includes(d.tipAfeIgv) &&
         d.porcentajeIgv > 0
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene un porcentaje IGV inválido. Solo los ítems gravados pueden tener IGV > 0. Enviado: ${d.porcentajeIgv}, esperado: 0.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
       }
 
       if (Number(d.totalImpuestos.toFixed(2)) !== igvCalc) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene un total de impuestos incorrecto. Enviado: ${d.totalImpuestos}, esperado: ${igvCalc}.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
@@ -941,7 +946,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
         // Validaciones específicas para exonerados
         if (d.igv !== 0 || d.totalImpuestos !== 0) {
-          throw new BadRequestException(
+          throw new BusinessLogicException(
             `El ítem ${d.codProducto} es exonerado y no debe tener impuestos. IGV enviado: ${d.igv}, totalImpuestos enviado: ${d.totalImpuestos}.
             ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
           );
@@ -950,7 +955,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
           Number(d.mtoPrecioUnitario.toFixed(2)) !==
           Number(precioBase.toFixed(2))
         ) {
-          throw new BadRequestException(
+          throw new BusinessLogicException(
             `El ítem ${d.codProducto} es exonerado y su precio unitario debe ser ${precioBase}, pero se envió ${d.mtoPrecioUnitario}.
             ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
           );
@@ -960,7 +965,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
         // 🔹 Validaciones específicas para inafectos
         if (d.igv !== 0 || d.totalImpuestos !== 0) {
-          throw new BadRequestException(
+          throw new BusinessLogicException(
             `El ítem ${d.codProducto} es inafecto y no debe tener impuestos. IGV enviado: ${d.igv}, totalImpuestos enviado: ${d.totalImpuestos}.
             ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
           );
@@ -969,7 +974,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
           Number(d.mtoPrecioUnitario.toFixed(2)) !==
           Number(precioBase.toFixed(2))
         ) {
-          throw new BadRequestException(
+          throw new BusinessLogicException(
             `El ítem ${d.codProducto} es inafecto y su precio unitario debe ser ${precioBase}, pero se envió ${d.mtoPrecioUnitario}.
             ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
           );
@@ -978,7 +983,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
       // --- Validaciones de IGV según tipo de afectación ---
       if (tipoAfectacionGravadas.includes(d.tipAfeIgv) && igvCalc <= 0) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} es gravado pero no tiene un IGV válido. Enviado: ${d.igv}, esperado: ${igvCalc}.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
@@ -988,7 +993,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
           tipoAfectacionInafectas.includes(d.tipAfeIgv)) &&
         igvCalc > 0
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} no debería tener IGV. Enviado: ${d.igv}, esperado: 0.
           ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
         );
@@ -999,7 +1004,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     if (
       Number(sumaGravadas.toFixed(2)) !== Number(mtoOperGravadas.toFixed(2))
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El total de operaciones gravadas es incorrecto. Enviado: ${mtoOperGravadas}, esperado: ${sumaGravadas.toFixed(2)}.
         ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
@@ -1008,7 +1013,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     if (
       Number(sumaExoneradas.toFixed(2)) !== Number(mtoOperExoneradas.toFixed(2))
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El total de operaciones exoneradas es incorrecto. Enviado: ${mtoOperExoneradas}, esperado: ${sumaExoneradas.toFixed(2)}.
         ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
@@ -1017,7 +1022,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     if (
       Number(sumaInafectas.toFixed(2)) !== Number(mtoOperInafectas.toFixed(2))
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El total de operaciones inafectas es incorrecto. Enviado: ${mtoOperInafectas}, esperado: ${sumaInafectas.toFixed(2)}.
         ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
@@ -1025,14 +1030,14 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
     const subtotalEsperado = sumaGravadas + sumaExoneradas + sumaInafectas;
     if (Number(subtotalEsperado.toFixed(2)) !== Number(subTotal.toFixed(2))) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El subtotal es incorrecto. Enviado: ${subTotal}, esperado: ${subtotalEsperado.toFixed(2)}.
         ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
     }
 
     if (Number(sumaIgv.toFixed(2)) !== Number(mtoIGV.toFixed(2))) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El IGV total es incorrecto. Enviado: ${mtoIGV}, esperado: ${sumaIgv.toFixed(2)}.
         ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
@@ -1040,7 +1045,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
     const totalEsperado = subtotalEsperado + sumaIgv;
     if (Number(totalEsperado.toFixed(2)) !== Number(mtoImpVenta.toFixed(2))) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El total de la venta es incorrecto. Enviado: ${mtoImpVenta}, esperado: ${totalEsperado.toFixed(2)}.
         ${buildMensajeRecalculo(TipoDocumentoLetras.NOTA_CREDITO)}`,
       );
@@ -1120,7 +1125,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     const detCompOriginal = original?.details;
 
     if (!original || !detCompOriginal) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El comprobante original no contiene información suficiente para validar.`,
       );
     }
@@ -1132,14 +1137,14 @@ export abstract class CreateNotaCreditoBaseUseCase {
       (mtoOperInafectas || 0);
 
     if (+subtotalEsperado.toFixed(2) !== +(subTotal || 0).toFixed(2)) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El subTotal (${subTotal}) no coincide con la suma de operaciones (${subtotalEsperado})`,
       );
     }
 
     const totalEsperado = (subTotal || 0) + (mtoIGV || 0);
     if (+totalEsperado.toFixed(2) !== +(mtoImpVenta || 0).toFixed(2)) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El total de la venta (${mtoImpVenta}) no coincide con la suma subtotal+IGV (${totalEsperado})`,
       );
     }
@@ -1158,7 +1163,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       const valorOriginal = Number(original[campo]);
 
       if (valorEnviado.toFixed(2) !== valorOriginal.toFixed(2)) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El campo ${String(campo)} (${valorEnviado}) no coincide con el comprobante original (${valorOriginal}). 
         Si no es posible cuadrar, envíe la estructura mínima del comprobante con montos en 0 y details: [].`,
         );
@@ -1166,7 +1171,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     }
 
     if (details.length !== detCompOriginal.length) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `La cantidad de ítems (${details.length}) no coincide con el comprobante original (${detCompOriginal.length}).`,
       );
     }
@@ -1179,7 +1184,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       validarProductoYTipoAfectacion(d, existComprobante);
       // Cantidad (igual obligatoria en devolución total)
       if (d.cantidad !== existComprobante.cantidad) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `En devolución total, el ítem ${d.codProducto} debe tener la misma cantidad. 
          Enviado: ${d.cantidad}, Original: ${existComprobante.cantidad}`,
         );
@@ -1187,7 +1192,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
       // Unidad
       if (existComprobante.unidad !== d.unidad) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene una unidad distinta. 
          Enviado: ${d.unidad}, Original: ${existComprobante.unidad}`,
         );
@@ -1198,7 +1203,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         tipoAfectacionGravadas.includes(d.tipAfeIgv) &&
         d.porcentajeIgv !== existComprobante.porcentajeIgv
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} tiene un porcentaje de IGV distinto. 
          Enviado: ${d.porcentajeIgv}, Original: ${existComprobante.porcentajeIgv}`,
         );
@@ -1209,7 +1214,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         tipoAfectacionGravadas.includes(d.tipAfeIgv) &&
         (!d.igv || d.igv <= 0)
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} es gravado pero no tiene IGV válido`,
         );
       }
@@ -1218,7 +1223,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
           tipoAfectacionInafectas.includes(d.tipAfeIgv)) &&
         d.igv > 0
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} no debería tener IGV. Enviado: ${d.igv}, esperado: 0`,
         );
       }
@@ -1238,7 +1243,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         const valorOriginal = Number(existComprobante[campo]);
 
         if (valorEnviado.toFixed(2) !== valorOriginal.toFixed(2)) {
-          throw new BadRequestException(
+          throw new BusinessLogicException(
             `El ítem ${d.codProducto} tiene un valor distinto en ${String(campo)}. 
            Enviado: ${valorEnviado}, Original: ${valorOriginal}`,
           );
@@ -1339,7 +1344,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       parseFloat(subtotalEsperado.toFixed(2)) !==
       parseFloat((subTotal || 0).toFixed(2))
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El subTotal (${subTotal}) no coincide con la suma de operaciones (${subtotalEsperado}).
       Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
       );
@@ -1350,7 +1355,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       parseFloat(totalEsperado.toFixed(2)) !==
       parseFloat((mtoImpVenta || 0).toFixed(2))
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El total de la venta (${mtoImpVenta}) no coincide con la suma subtotal+IGV (${totalEsperado}).
       Si no es posible cuadrar los montos, envíe la estructura mínima del comprobante de Nota de Crédito con montos en cero y el details: [].`,
       );
@@ -1362,7 +1367,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         tipoAfectacionGravadas.includes(d.tipAfeIgv) &&
         (!d.igv || d.igv <= 0)
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} es gravado pero no tiene IGV válido.
         Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
         );
@@ -1373,7 +1378,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         d.igv &&
         d.igv > 0
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} no debería tener IGV.
         Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
         );
@@ -1383,7 +1388,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     // --- Validación contra comprobante original ---
     const original = comprobante?.payloadJson;
     if (!original) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El comprobante original no contiene información para validar`,
       );
     }
@@ -1394,7 +1399,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         (o) => o.codProducto === d.codProducto,
       );
       if (!itemOriginal) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El ítem ${d.codProducto} no existe en el comprobante original.
         Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
         );
@@ -1405,7 +1410,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
         parseFloat(d.mtoValorUnitario.toFixed(2)) !==
         parseFloat(itemOriginal.mtoValorUnitario.toFixed(2))
       ) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `El valor unitario del ítem ${d.codProducto} (${d.mtoValorUnitario}) no coincide con el comprobante original (${itemOriginal.mtoValorUnitario}).
         Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
         );
@@ -1413,7 +1418,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
 
       // Validar cantidad
       if (d.cantidad > itemOriginal.cantidad) {
-        throw new BadRequestException(
+        throw new BusinessLogicException(
           `La cantidad devuelta del ítem ${d.codProducto} (${d.cantidad}) excede la cantidad en el comprobante original (${itemOriginal.cantidad}).
         Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
         );
@@ -1429,14 +1434,14 @@ export abstract class CreateNotaCreditoBaseUseCase {
       parseFloat(mtoOperGravadas.toFixed(2)) !==
       parseFloat(totalBases.toFixed(2))
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El monto gravado (${mtoOperGravadas}) no coincide con la suma de los ítems devueltos (${totalBases}).
       Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
       );
     }
 
     if (parseFloat(mtoIGV.toFixed(2)) !== parseFloat(totalIgv.toFixed(2))) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El IGV (${mtoIGV}) no coincide con la suma de los ítems devueltos (${totalIgv}).
       Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
       );
@@ -1445,7 +1450,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
     if (
       parseFloat(mtoImpVenta.toFixed(2)) !== parseFloat(totalVenta.toFixed(2))
     ) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El total de la venta (${mtoImpVenta}) no coincide con la suma de ítems devueltos (${totalVenta}).
       Si no es posible cuadrar los montos, envíe la estructura mínima con montos en cero y el details: [].`,
       );
@@ -1509,7 +1514,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       serieRelacionado,
     );
     if (!serie) {
-      throw new BadRequestException(
+      throw new BusinessLogicException(
         `El tipo de comprobante ${data.tipoComprobante} no se encuentra registrado en el sistema`,
       );
     }
@@ -1520,7 +1525,7 @@ export abstract class CreateNotaCreditoBaseUseCase {
       serie?.serieId,
     );
     if (!comprobante) {
-      throw new NotFoundException(
+      throw new BusinessLogicException(
         `No se encontró un comprobante asociado al documento relacionado con la serie ${serieRelacionado} y correlativo ${numCorrelativoRelacionado}.`,
       );
     }

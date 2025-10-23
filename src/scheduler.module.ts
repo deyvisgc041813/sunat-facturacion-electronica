@@ -12,14 +12,15 @@ import { GetCronJobByEmpresaUseCase } from './application/parent/cron-job/get-cr
 import { BranchStatusCronJobUseCase } from './application/parent/cron-job/update-status.cron-job.usecase';
 import { GetCronJobByIdUseCase } from './application/parent/cron-job/get-cron-job-by-id-empresa.usecase';
 import { CronJobController } from './adapter/web/controller/parent/cron-job.controller';
-import { CreateResumenUseCase } from './application/tenant/resumen/create/CreateResumenUseCase';
 import { ResumenBoletasModule } from './resumen-boletas.module';
 import { EmpresaService } from './domain/parent/empresa/services/empresa.service';
 import { EmpresaModule } from './empresa.module';
 import { ResumenService } from './domain/tenant/resumen/service/resumen.service';
+import { ComunicacionBajaService } from './domain/tenant/comunicacion-baja/service/comunicacion-baja.service';
+import { ComunicacionBajaModule } from './comunicacion-baja.module';
 @Global()
 @Module({
-  imports: [TypeOrmModule.forFeature([CronJobOrmEntity]), ResumenBoletasModule, EmpresaModule],
+  imports: [TypeOrmModule.forFeature([CronJobOrmEntity]), ResumenBoletasModule, ComunicacionBajaModule, EmpresaModule],
   controllers: [CronJobController],
   providers: [
     {
@@ -33,9 +34,10 @@ import { ResumenService } from './domain/tenant/resumen/service/resumen.service'
     },
     {
       provide: CronRunnerService,
-      useFactory: (cronService: CronService, resumenService:ResumenService) =>
-        new CronRunnerService(cronService, resumenService),
-      inject: [CronService, ResumenService],
+      useFactory: (cronService: CronService, resumenService:ResumenService, 
+        comunicacionBajaService: ComunicacionBajaService) =>
+        new CronRunnerService(cronService, resumenService, comunicacionBajaService),
+      inject: [CronService, ResumenService, ComunicacionBajaService],
     },
       CronService,
   CronRunnerService,

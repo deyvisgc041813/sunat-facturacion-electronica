@@ -2,7 +2,6 @@
 import { SucursalRepositoryImpl } from '../../../infrastructure/persistence/parent/implement/sucursal.repository.impl';
 import {
   Injectable,
-  NotFoundException,
 } from '@nestjs/common';
 import { CreateUsuarioDto } from '../dto/usuario/create.request.dto';
 import { CryptoUtil } from 'src/util/CryptoUtil';
@@ -17,6 +16,7 @@ import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/
 import { RolesOrmEntity } from 'src/infrastructure/persistence/auth/role.orm.entity';
 import { UserRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/user.repository.impl';
 import { RoleRepositoryImpl } from 'src/infrastructure/persistence/auth/impl/role.repository.impl';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class UsuarioService {
@@ -69,7 +69,7 @@ export class UsuarioService {
     usuarioId: number,
   ): Promise<UsuarioResponseDto> {
     const user = await this.usuarioRepo.findById(usuarioId);
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new BusinessLogicException('Usuario no encontrado');
     return user;
   }
   async update(
@@ -80,7 +80,7 @@ export class UsuarioService {
     try {
       const user = await this.usuarioRepo.findById(usuarioId);
       if (!user) {
-        throw new NotFoundException('Usuario no encontrado');
+        throw new BusinessLogicException('Usuario no encontrado');
       }
       // Validar si se proporcionaron sucursales
       let hasRoleAndSucursalChanges = false;
@@ -100,7 +100,7 @@ export class UsuarioService {
 
         if (!esAdmin) {
           if (rolesDto.length !== roles.length) {
-            throw new NotFoundException(
+            throw new BusinessLogicException(
               `No tienes permisos para modificar roles o sucursales. Estás intentando agregar o cambiar roles o sucursales:
             Roles intentados: ${rolesDto.map((role) => role.roleId).join(', ')},
             Solo los administradores pueden hacer estos cambios.`,

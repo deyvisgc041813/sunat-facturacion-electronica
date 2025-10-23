@@ -1,5 +1,5 @@
 import { CronJobMapper } from '../../../../domain/mapper/cron-job.mapper';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
@@ -9,6 +9,7 @@ import { CreateCronJobDto } from 'src/domain/parent/scheduler/dto/create-cron-jo
 import { CronJobResponseDto } from 'src/domain/parent/scheduler/dto/cron-job.response.dto';
 import { UpdateCronJobDto } from 'src/domain/parent/scheduler/dto/update-cron-job.request.dto';
 import { CronJobOrmEntity } from '../entity/scheduler/cron_job.orm.entity';
+import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 
 @Injectable()
 export class CronJobRepositoryImpl implements ICronJobRepositoryPort {
@@ -49,7 +50,7 @@ export class CronJobRepositoryImpl implements ICronJobRepositoryPort {
       },
       relations: ['empresa', 'empresa.sucursal']
     });
-    if(!result) throw new NotFoundException("No se encontro información para la tarea programada consultada")
+    if(!result) throw new BusinessLogicException("No se encontro información para la tarea programada consultada")
     return CronJobMapper.toDomain(result)
   }
   async findNextActiveJob(): Promise<CronJobResponseDto[]> {

@@ -3,7 +3,6 @@ import {
   Post,
   Body,
   UseGuards,
-  BadRequestException,
 } from '@nestjs/common';
 import { User } from 'src/adapter/decorator/user.decorator';
 import type { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
@@ -13,6 +12,7 @@ import { LoginUseCase } from 'src/application/auth/login.usecase';
 import { LogoutUseCase } from 'src/application/auth/logout.usecase';
 import { RefreshTokenUseCase } from 'src/application/auth/refresh-token.usecase';
 import { LoginDto } from 'src/domain/auth/dto/login.request.dto';
+import { BusinessLogicException } from '../exception/exeception-dynamic';
 
 @Controller('auth')
 export class AuthController {
@@ -44,7 +44,7 @@ export class AuthController {
     @User() auth: IUserPayload,
   ) {
     if (!body.sucursalId || body.sucursalId <= 0) {
-      throw new BadRequestException('Debe seleccionar una sucursal válida');
+      throw new BusinessLogicException('Debe seleccionar una sucursal válida');
     }
     return this.selectionUseCase.execute(body.sucursalId, auth);
   }
