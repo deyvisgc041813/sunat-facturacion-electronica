@@ -3,19 +3,19 @@ import { IsString, IsNotEmpty, Length, IsOptional } from 'class-validator';
 export class AddressDto {
   @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'La dirección es obligatoria' })
+  // @IsNotEmpty({ message: 'La dirección es obligatoria' })
   direccion: string;
   @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'La provincia es obligatoria' })
+  // @IsNotEmpty({ message: 'La provincia es obligatoria' })
   provincia: string;
   @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'El departamento es obligatorio' })
+  // @IsNotEmpty({ message: 'El departamento es obligatorio' })
   departamento: string;
   @IsOptional()
   @IsString()
-  @IsNotEmpty({ message: 'El distrito es obligatorio' })
+  // @IsNotEmpty({ message: 'El distrito es obligatorio' })
   distrito: string;
   @IsOptional()
   @IsString()
