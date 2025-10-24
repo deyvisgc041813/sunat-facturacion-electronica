@@ -19,6 +19,6 @@ export class AddressDto {
   distrito: string;
   @IsOptional()
   @IsString()
-  @Length(6, 6, { message: 'El ubigeo debe tener exactamente 6 caracteres' })
+  //@Length(6, 6, { message: 'El ubigeo debe tener exactamente 6 caracteres' })
   ubigueo: string;
 }
