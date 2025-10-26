@@ -1,17 +1,24 @@
-
 import { CryptoUtil } from 'src/util/CryptoUtil';
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 import { BadRequestException } from '@nestjs/common';
-import {CodigoSunatTasasEnum,TipoComprobanteEnum,} from 'src/util/catalogo.enum';
-import { EstadoEnumComprobante } from 'src/util/estado.enum';
+import {
+  CodigoSunatTasasEnum,
+  TipoComprobanteEnum,
+} from 'src/util/catalogo.enum';
+import {
+  EstadoEnumComprobante,
+  EstadoEnvioSunatFactura,
+} from 'src/util/estado.enum';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
 import { CreateInvoiceDto } from 'src/domain/tenant/comprobante/dto/invoice/create.invoice.dto';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
 import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ComprobanteService } from 'src/domain/tenant/comprobante/services/comprobante.service';
-import { BusinessLogicException, BusinessLogicObjectException } from 'src/adapter/web/exception/exeception-dynamic';
-
+import {
+  BusinessLogicException,
+  BusinessLogicObjectException,
+} from 'src/adapter/web/exception/exeception-dynamic';
 
 export abstract class CreateInvoiceBaseUseCase {
   constructor(
@@ -43,8 +50,11 @@ export abstract class CreateInvoiceBaseUseCase {
         auth,
         data?.client,
       );
-      const catalogosTributos = await this.comprobanteService.cargarCatalogosTributarios()
-      const tasaIgv = catalogosTributos.tributosTasa.get(CodigoSunatTasasEnum.IGV);
+      const catalogosTributos =
+        await this.comprobanteService.cargarCatalogosTributarios();
+      const tasaIgv = catalogosTributos.tributosTasa.get(
+        CodigoSunatTasasEnum.IGV,
+      );
       data.porcentajeIgv = tasaIgv == null ? 0.18 : tasaIgv / 100;
       // 1. Validar item de la factura
       const errores = ComprobantesHelper.validarDetalleInvoice(
@@ -81,32 +91,43 @@ export abstract class CreateInvoiceBaseUseCase {
         await this.comprobanteService.prepararXmlFirmado(
           invoice,
           sucursal.certificadoDigital,
-          sucursal.claveCertificado
+          sucursal.claveCertificado,
         );
       contexto.xmlFirmado = xmlFirmado;
       contexto.sucursalId = surcursalId;
       const usuarioSecundario = sucursal?.usuarioSolSecundario ?? '';
-      const claveSecundaria = CryptoUtil.decrypt( sucursal.claveSolSecundario ?? '',
+      const claveSecundaria = CryptoUtil.decrypt(
+        sucursal.claveSolSecundario ?? '',
       );
-      // 5. Enviar a SUNAT
-      const responseSunat = await this.sendSunat(
-        xmlFirmado,
-        invoice.tipoComprobante,
-        fileName,
-        zipBuffer,
-        usuarioSecundario,
-        claveSecundaria,
-      );
-      responseSunat.xmlFirmado = xmlFirmado;
-      // 6. Actualizar comprobante con CDR, Hash y estado
-      await this.comprobanteService.actualizarComprobante(
-        contexto.comprobanteId,
-        surcursalId,
-        invoice.tipoComprobante as TipoComprobanteEnum,
-        xmlFirmado,
-        responseSunat,
-      );
-      responseSunat.comprobanteId = contexto.comprobanteId
+      let responseSunat: IResponseSunat = {
+        estadoSunat: EstadoEnumComprobante.PENDIENTE,
+        mensaje: 'El comprobante está pendiente de envío a SUNAT',
+        observaciones: [],
+        status: true,
+        xmlFirmado: xmlFirmado,
+        comprobanteId: contexto.comprobanteId,
+      };
+      if (EstadoEnvioSunatFactura.ENVIAR_SUNAT === invoice.enviarSunat) {
+        // 5. Enviar a SUNAT
+        responseSunat = await this.sendSunat(
+          xmlFirmado,
+          invoice.tipoComprobante,
+          fileName,
+          zipBuffer,
+          usuarioSecundario,
+          claveSecundaria,
+        );
+        responseSunat.xmlFirmado = xmlFirmado;
+        // 6. Actualizar comprobante con CDR, Hash y estado
+        await this.comprobanteService.actualizarComprobante(
+          contexto.comprobanteId,
+          surcursalId,
+          invoice.tipoComprobante as TipoComprobanteEnum,
+          xmlFirmado,
+          responseSunat,
+        );
+        responseSunat.comprobanteId = contexto.comprobanteId;
+      }
       return responseSunat;
     } catch (error: any) {
       await this.comprobanteService.procesarErrorSunat(

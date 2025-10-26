@@ -5,6 +5,9 @@ import {
   UseGuards,
   Res,
   ForbiddenException,
+  Get,
+  Param,
+  Query,
 } from '@nestjs/common';
 
 import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
@@ -32,6 +35,11 @@ import { TenantGuard } from 'src/adapter/guards/tenant.guard';
 import { ComprobantePdfBuilderImpl } from 'src/infrastructure/adapter/PdfServiceImpl';
 import { CreatePdfUseCase } from 'src/application/tenant/pdf/CreatePdfUseCase';
 import type { Response } from 'express';
+import { GetAllComprobantesUseCase } from 'src/application/tenant/comprobante/query/GetAllComprobantesUseCase';
+import { GetByIdComprobantesUseCase } from 'src/application/tenant/comprobante/query/GetByIdComprobantesUseCase';
+import { GetByFechaComprobantesUseCase } from 'src/application/tenant/comprobante/query/GetByFechaComprobantesUseCase';
+import { ExportSignedXmlDocumentUseCase } from 'src/application/tenant/comprobante/export/ExportSignedXmlDocumentUseCase';
+import { ExportCdrZipComprobanteUseCase } from 'src/application/tenant/comprobante/export/ExportCdrZipComprobanteUseCase';
 @Controller('companies/branch/documents')
 @UseGuards(JwtAuthGuard, TenantGuard)
 export class ComprobanteController {
@@ -45,6 +53,11 @@ export class ComprobanteController {
     private readonly comprobanteRepo: ComprobanteRepositoryImpl,
     private readonly sucursalRepo: SucursalRepositoryImpl,
     private readonly comprobantePdfBuilder: ComprobantePdfBuilderImpl,
+    private readonly getAllUseCase: GetAllComprobantesUseCase,
+    private readonly getByIdUseCase: GetByIdComprobantesUseCase,
+    private readonly GetByFechaUseCase: GetByFechaComprobantesUseCase,
+    private readonly exportSignedXmlUseCase: ExportSignedXmlDocumentUseCase,
+    private readonly exportCdrZipUseCase: ExportCdrZipComprobanteUseCase,
   ) {}
 
   @Post('/invoices')
@@ -71,7 +84,7 @@ export class ComprobanteController {
         auth?.sucursalActiva,
         invoice.comprobanteId ?? 0,
         body.printOptions.format ?? '',
-        "comprobante"
+        'comprobante',
       );
       res.set({
         'Content-Type': 'application/pdf',
@@ -169,109 +182,164 @@ export class ComprobanteController {
       auth.sucursalActiva,
     );
   }
+  @Get('invoices/items')
+  async findAll(
+    @Param('sucursalId') sucursalId: number | undefined,
+    @User() auth: IUserPayload,
+  ) {
+    if (!auth?.sucursalActiva || auth?.sucursalActiva === 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
+    const sucursalIdFinal = sucursalId ?? auth.sucursalActiva;
+    return this.getAllUseCase.execute(sucursalIdFinal);
+  }
 
-  // // Obtener todos los comprobantes de una empresa
-  // @Get()
-  // async findAll(@Param('empresaId') empresaId: number) {
-  //   const useCase = new GetAllComprobantesUseCase(this.comprobanteRepository);
-  //   return useCase.execute(empresaId);
-  // }
+  @Get('invoice/:id')
+  async findById(
+    @Param('id') comprobanteId: number,
+    @Param('sucursalId') sucursalId: number | undefined,
+    @User() auth: IUserPayload,
+  ) {
+    // Validación de autorización
+    if (!auth?.sucursalActiva || auth?.sucursalActiva === 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
+    const sucursalIdFinal = sucursalId ?? auth.sucursalActiva;
+    return this.getByIdUseCase.execute(comprobanteId, sucursalIdFinal);
+  }
+  // Filtrar por fechas
+  @Get('invoices/items/by-date')
+  async findByEmpresaAndFecha(
+    @Query('fecIni') fecIni: Date,
+    @Query('fecFin') fecFin: Date,
+    @User() auth: IUserPayload,
+  ) {
+    // Validación de autorización
+    if (!auth?.sucursalActiva || auth?.sucursalActiva === 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
+    return this.GetByFechaUseCase.execute(auth.sucursalActiva, fecIni, fecFin);
+  }
 
-  // // Obtener comprobante por ID
-  // @Get(':id')
-  // async findById(
-  //   @Param('empresaId') empresaId: number,
-  //   @Param('id') comprobanteId: number,
-  // ) {
-  //   const useCase = new GetByIdComprobantesUseCase(this.comprobanteRepository);
-  //   return useCase.execute(comprobanteId, empresaId);
-  // }
+  // ==============================
+  // Descargar XML por Comprobante ID
+  // ==============================
+  @Get('invoices/download/:id/xml')
+  async getXmlByComprobanteId(
+    @Param('id') comprobanteId: number,
+    @Res() res: Response,
+    @User() auth: IUserPayload,
+  ) {
+    if (!auth?.sucursalActiva || auth.sucursalActiva === 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
 
-  // // Filtrar por estado
-  // @Get('estado/:estado')
-  // async findByEstado(
-  //   @Param('empresaId') empresaId: number,
-  //   @Param('estado') estado: EstadoEnumComprobante,
-  // ) {
-  //   const useCase = new GetByEstadoComprobantesUseCase(
-  //     this.comprobanteRepository,
-  //   );
-  //   return useCase.execute(estado, empresaId);
-  // }
+    const archivo = await this.exportSignedXmlUseCase.execute(
+      auth.sucursalActiva,
+      comprobanteId,
+      0, // sin pedido
+    );
 
-  // // Filtrar por fechas
-  // @Get('buscar/fechas')
-  // async findByEmpresaAndFecha(
-  //   @Param('empresaId') empresaId: number,
-  //   @Query('fecIni') fecIni: Date,
-  //   @Query('fecFin') fecFin: Date,
-  // ) {
-  //   const useCase = new GetByEmpresaAndFechaComprobantesUseCase(
-  //     this.comprobanteRepository,
-  //   );
-  //   return useCase.execute(empresaId, fecIni, fecFin);
-  // }
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${archivo?.fileName}`,
+    );
+    res.setHeader('Content-Type', archivo?.mimeType ?? '');
+    res.send(archivo?.content);
+  }
 
-  // // Descargar XML firmado
-  // @Get(':id/xml')
-  // async getXmlFirmado(
-  //   @Param('empresaId') empresaId: number,
-  //   @Param('id') componenteId: number,
-  //   @Res() res: Response,
-  // ) {
-  //   const useCase = new ExportXmlFirmadoComprobanteUseCase(
-  //     this.comprobanteRepository,
-  //   );
-  //   const archivo = await useCase.execute(componenteId, empresaId);
+  // ==============================
+  // Descargar XML por Pedido ID
+  // ==============================
+  @Get('invoices/download/pedido/:pedidoId/xml')
+  async getXmlByPedidoId(
+    @Param('pedidoId') pedidoId: number,
+    @Res() res: Response,
+    @User() auth: IUserPayload,
+  ) {
+    if (!auth?.sucursalActiva || auth.sucursalActiva === 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
 
-  //   if (!archivo)
-  //     return res.status(HttpStatus.NOT_FOUND).send('XML no encontrado');
-  //   res.setHeader(
-  //     'Content-Disposition',
-  //     `attachment; filename=${archivo.fileName}`,
-  //   );
-  //   res.setHeader('Content-Type', archivo.mimeType);
-  //   res.send(archivo.content);
-  // }
+    const archivo = await this.exportSignedXmlUseCase.execute(
+      auth.sucursalActiva,
+      0, // sin comprobanteId
+      pedidoId,
+    );
 
-  // // Descargar ZIP enviado
-  // @Get(':id/zip')
-  // async getZipEnviado(
-  //   @Param('empresaId') empresaId: number,
-  //   @Param('id') componenteId: number,
-  //   @Res() res: Response,
-  // ) {
-  //   const useCase = new ExportZipComprobanteUseCase(this.comprobanteRepository);
-  //   const archivo = await useCase.execute(componenteId, empresaId);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${archivo?.fileName}`,
+    );
+    res.setHeader('Content-Type', archivo?.mimeType ?? '');
+    res.send(archivo?.content);
+  }
 
-  //   if (!archivo)
-  //     return res.status(HttpStatus.NOT_FOUND).send('ZIP no encontrado');
-  //   res.setHeader(
-  //     'Content-Disposition',
-  //     `attachment; filename=${archivo.fileName}`,
-  //   );
-  //   res.setHeader('Content-Type', archivo.mimeType);
-  //   res.send(archivo.content);
-  // }
+  // ==============================
+  // Descargar CDR por Comprobante ID
+  // ==============================
+  @Get('invoices/download/:id/cdr')
+  async getCdrByComprobanteId(
+    @Param('id') comprobanteId: number,
+    @Res() res: Response,
+    @User() auth: IUserPayload,
+  ) {
+    if (!auth?.sucursalActiva || auth.sucursalActiva === 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
 
-  // // Descargar CDR ZIP
-  // @Get(':id/cdr')
-  // async getCdrZip(
-  //   @Param('empresaId') empresaId: number,
-  //   @Param('id') componenteId: number,
-  //   @Res() res: Response,
-  // ) {
-  //   const useCase = new ExportCdrZipComprobanteUseCase(
-  //     this.comprobanteRepository,
-  //   );
-  //   const archivo = await useCase.execute(componenteId, empresaId);
-  //   if (!archivo)
-  //     return res.status(HttpStatus.NOT_FOUND).send('CDR no encontrado');
-  //   res.setHeader(
-  //     'Content-Disposition',
-  //     `attachment; filename=${archivo.fileName}`,
-  //   );
-  //   res.setHeader('Content-Type', archivo.mimeType);
-  //   res.send(archivo.content);
-  // }
+    const archivo = await this.exportCdrZipUseCase.execute(
+      auth.sucursalActiva,
+      comprobanteId,
+      0,
+    );
+
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${archivo?.fileName}`,
+    );
+    res.setHeader('Content-Type', archivo?.mimeType ?? '');
+    res.send(archivo?.content);
+  }
+
+  // ==============================
+  // Descargar CDR por Pedido ID
+  // ==============================
+  @Get('invoices/download/pedido/:pedidoId/cdr')
+  async getCdrByPedidoId(
+    @Param('pedidoId') pedidoId: number,
+    @Res() res: Response,
+    @User() auth: IUserPayload,
+  ) {
+    if (!auth?.sucursalActiva || auth.sucursalActiva === 0) {
+      throw new ForbiddenException(
+        `No tienes autorización para realizar esta acción desde la sucursal actual.`,
+      );
+    }
+
+    const archivo = await this.exportCdrZipUseCase.execute(
+      auth.sucursalActiva,
+      0,
+      pedidoId,
+    );
+
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename=${archivo?.fileName}`,
+    );
+    res.setHeader('Content-Type', archivo?.mimeType ?? '');
+    res.send(archivo?.content);
+  }
 }

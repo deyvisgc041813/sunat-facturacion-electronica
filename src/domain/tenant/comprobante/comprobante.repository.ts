@@ -18,38 +18,23 @@ export interface ConprobanteRepository {
     dto: ICreateComprobante,
     payloadJson: any,
   ): Promise<GenericResponse<IResponsePs>>;
-  /**
-   * Retorna todos los comprobantes registrados.
-   */
-  findAll(sucursalId: number): Promise<ComprobanteResponseDto[]>;
-
-  /**
-   * Busca un comprobante por su ID.
-   */
-
-  findById(
+  findAllDocuments(sucursalId: number): Promise<ComprobanteResponseDto[]>;
+  findByIds(
     sucursalId: number,
-    comprobanteIds: number[],
-    tenantDatabase?:string,
+    comprobanteIds: number[]
   ): Promise<ComprobanteResponseDto[] | null>;
+  findByIdDocument(
+    sucursalId: number,
+    comprobanteIds: number,
+    tenantDatabase?:string,
+  ): Promise<ComprobanteResponseDto | null>;
   findByPedidoIntegracion(
     sucursalId: number,
     pedidoId: number,
   ): Promise<ComprobanteResponseDto | null>
-  //XML firmado
-  getXmlFirmado(
-    comprobanteId: number,
-    sucursalId: number,
-  ): Promise<ArchivoDescargable | null>;
 
   //ZIP enviado a SUNAT
   getZipEnviado(
-    comprobanteId: number,
-    sucursalId: number,
-  ): Promise<ArchivoDescargable | null>;
-
-  // ZIP CDR de SUNAT
-  getCdrZip(
     comprobanteId: number,
     sucursalId: number,
   ): Promise<ArchivoDescargable | null>;

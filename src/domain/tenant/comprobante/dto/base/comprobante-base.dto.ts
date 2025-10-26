@@ -6,15 +6,12 @@ import {
   Min,
   IsIn,
   IsOptional,
-  IsPositive,
-  IsInt,
+  ValidateIf,
 } from 'class-validator';
 import { IsSerieValida } from 'src/common/validator/validate.series';
+import { EstadoEnvioSunatFactura } from 'src/util/estado.enum';
 
 export class ComprobanteBaseDto {
-  // @IsNotEmpty({ message: 'El ID de la sucursal es obligatorio' })
-  // @IsInt({ message: 'El ID de la sucursal debe ser un número entero' })
-  // @IsPositive({ message: 'El ID de la sucursal debe ser mayor a 0' })
   @IsOptional()
   sucursalId: number;
   @IsString({ message: 'La versión UBL debe ser un texto' })
@@ -40,6 +37,14 @@ export class ComprobanteBaseDto {
     message: 'Tipo comprobante no válido (Catálogo 01)',
   })
   tipoComprobante: string;
+  @ValidateIf((c) => c.tipoComprobante === "01")
+  @IsIn([EstadoEnvioSunatFactura.ENVIAR_SUNAT, EstadoEnvioSunatFactura.NO_ENVIAR_SUNAT], {
+    message: 'enviarSunat no valido (01: enviar, 00:no enviar)',
+  })
+  @IsNotEmpty({
+    message: 'El campo enviarSunat es obligatorio.',
+  })
+  enviarSunat: EstadoEnvioSunatFactura = EstadoEnvioSunatFactura.ENVIAR_SUNAT;
 
   @IsString({ message: 'La serie debe ser un texto' })
   @IsNotEmpty({ message: 'La serie es obligatoria' })
@@ -103,4 +108,6 @@ export class ComprobanteBaseDto {
   correlativo: number;
   @IsOptional()
   porcentajeIgv: number; // solo se usara a nivel de backend
+
+
 }

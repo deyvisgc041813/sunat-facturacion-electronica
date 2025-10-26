@@ -1,24 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 import { ComprobanteResponseDto } from 'src/domain/tenant/comprobante/dto/conprobante.response.dto';
 import { ConsultarComprobanteService } from 'src/domain/tenant/comprobante/services/consultar-comprobante.service';
+
 @Injectable()
-export class GetByIdComprobantesUseCase {
+export class GetByFechaComprobantesUseCase {
   constructor(private readonly consultarService: ConsultarComprobanteService) {}
 
   async execute(
-    comprobanteId: number,
     surcursalId: number,
-  ): Promise<ComprobanteResponseDto | null> {
-    const rpta = await this.consultarService.getByIdDocument(
+    fechaInicio: Date,
+    fechaFin: Date
+  ): Promise<ComprobanteResponseDto[] | null> {
+    const rpta = await this.consultarService.getByFechaDocuments(
       surcursalId,
-      comprobanteId,
+      fechaInicio,
+      fechaFin
     );
-    if (!rpta) {
-      throw new BusinessLogicException(
-        `No se encontró ningún comprobante asociado al identificador proporcionado.`,
-      );
-    }
     return rpta;
   }
 }

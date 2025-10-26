@@ -43,7 +43,6 @@ export class GetStatusResumenUseCase {
         usuarioSecundario,
         claveSecundaria,
       );
-      console.log("result ", result)
       await this.resumenService.updateBySucursalAndTicket(
         sucursalId,
         ticket,

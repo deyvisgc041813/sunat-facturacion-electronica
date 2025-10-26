@@ -3,7 +3,7 @@ import { ArchivoDescargable } from 'src/domain/tenant/comprobante/comprobante.re
 import { ConsultarComprobanteService } from 'src/domain/tenant/comprobante/services/consultar-comprobante.service';
 
 @Injectable()
-export class ExportCdrZipComprobanteUseCase {
+export class ExportSignedXmlDocumentUseCase {
   constructor(private readonly consultarService: ConsultarComprobanteService) {}
 
   async execute(
@@ -11,7 +11,7 @@ export class ExportCdrZipComprobanteUseCase {
     comprobanteId: number,
     pedidoId?: number,
   ): Promise<ArchivoDescargable | null> {
-    const rpta = await this.consultarService.exportCdrDocument(
+    const rpta = await this.consultarService.exportSignedXmlDocument(
       sucursalId,
       comprobanteId,
       pedidoId,

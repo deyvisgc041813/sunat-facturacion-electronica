@@ -79,3 +79,7 @@ export enum EstadoCredencialEmpresaSunat {
   CADUCADO = 'CADUCADO',
   REVOCADO = 'REVOCADO',
 }
+export enum EstadoEnvioSunatFactura {
+  ENVIAR_SUNAT = '01',
+  NO_ENVIAR_SUNAT = '00',
+}

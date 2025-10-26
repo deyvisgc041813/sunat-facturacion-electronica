@@ -34,7 +34,8 @@ export class CreateInvoiceDto extends ComprobanteBaseDto {
   @ValidateNested({ message: 'Los datos de la empresa no son válidos' })
   @Type(() => CompanyDto)
   company: CompanyDto;
-  
+  @IsOptional()
+
   @IsOptional()
   @IsNumber({}, { message: 'El monto de ICBPER debe ser numérico' })
   icbper: number;

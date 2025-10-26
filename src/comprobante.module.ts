@@ -48,6 +48,12 @@ import { ComprobantePdfBuilderImpl } from './infrastructure/adapter/PdfServiceIm
 import { ComprobanteService } from './domain/tenant/comprobante/services/comprobante.service';
 import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
 import { EmpresaModule } from './empresa.module';
+import { ConsultarComprobanteService } from './domain/tenant/comprobante/services/consultar-comprobante.service';
+import { GetAllComprobantesUseCase } from './application/tenant/comprobante/query/GetAllComprobantesUseCase';
+import { GetByFechaComprobantesUseCase } from './application/tenant/comprobante/query/GetByFechaComprobantesUseCase';
+import { GetByIdComprobantesUseCase } from './application/tenant/comprobante/query/GetByIdComprobantesUseCase';
+import { ExportCdrZipComprobanteUseCase } from './application/tenant/comprobante/export/ExportCdrZipComprobanteUseCase';
+import { ExportSignedXmlDocumentUseCase } from './application/tenant/comprobante/export/ExportSignedXmlDocumentUseCase';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -69,7 +75,7 @@ import { EmpresaModule } from './empresa.module';
     TenantConeccionesModule,
     TenantContextModule,
     SucursalModule,
-    EmpresaModule
+    EmpresaModule,
   ],
   controllers: [ComprobanteController],
   providers: [
@@ -95,7 +101,7 @@ import { EmpresaModule } from './empresa.module';
           catalogoRepositoryImpl,
           tributoTasaRepositoryImpl,
           findTasaByCodeUseCase,
-          xmlInvoiceBuilder
+          xmlInvoiceBuilder,
         ),
       inject: [
         ClienteService,
@@ -106,9 +112,25 @@ import { EmpresaModule } from './empresa.module';
         CatalogoRepositoryImpl,
         TributoTasaRepositoryImpl,
         FindTasaByCodeUseCase,
-        XmlBuilderInvoiceService
+        XmlBuilderInvoiceService,
       ],
     },
+    {
+      provide: ConsultarComprobanteService,
+      useFactory: (
+        comprobanteRepository: ComprobanteRepositoryImpl,
+        comprobanteRespSunatRepository: ComprobanteRespuestaSunatRepositoryImpl,
+      ) =>
+        new ConsultarComprobanteService(
+          comprobanteRepository,
+          comprobanteRespSunatRepository,
+        ),
+      inject: [
+        ComprobanteRepositoryImpl,
+        ComprobanteRespuestaSunatRepositoryImpl,
+      ],
+    },
+  
     XmlBuilderInvoiceService,
     XmlBuilderNotaCreditoService,
     XmlBuilderNotaDebitoService,
@@ -128,6 +150,11 @@ import { EmpresaModule } from './empresa.module';
     CreateNotaDebitoUseCase,
     GetBySucursalAndTipComAndSerieUseCase,
     GetByComprobanteAceptadoUseCase,
+    GetByIdComprobantesUseCase,
+    ExportSignedXmlDocumentUseCase,
+    ExportCdrZipComprobanteUseCase,
+    GetAllComprobantesUseCase,
+    GetByFechaComprobantesUseCase,
     ValidarAnulacionComprobanteUseCase,
     AnularComprobanteUseCase,
     FindTasaByCodeUseCase,
@@ -145,12 +172,14 @@ import { EmpresaModule } from './empresa.module';
     SunatLogRepositoryImpl,
     SerieComprobanteRepositoryImpl,
     GetValidatedCpeUseCase,
+    GetAllComprobantesUseCase,
     FindCatalogosUseCase,
     ComprobanteRespuestaSunatRepositoryImpl,
     LogRespuestaSunatRepositoryImpl,
     TenantConeccionesModule,
     TenantContextModule,
     ComprobanteService,
+    ConsultarComprobanteService,
     SucursalModule,
   ],
 })

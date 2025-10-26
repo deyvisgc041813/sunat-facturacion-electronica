@@ -89,7 +89,7 @@ export class ComunicacionBajaService {
     const tenantDatabase = auth.subDominio;
     const comprobante = this.obetnerComprobantesDto(data);
     const comprobantesBaja =
-      (await this.comprobanteRepo.findById(
+      (await this.comprobanteRepo.findByIds(
         sucursalId,
         comprobante?.comprobanteIds,
         tenantDatabase,

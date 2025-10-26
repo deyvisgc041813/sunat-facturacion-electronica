@@ -76,15 +76,19 @@ export class ComprobanteRepositoryImpl
     };
   }
 
-  async findAll(sucursalId: number): Promise<ComprobanteResponseDto[]> {
+  async findAllDocuments(
+    sucursalId: number,
+  ): Promise<ComprobanteResponseDto[]> {
     const repo = await this.getRepository();
     const result = await repo.find({
       where: { sucursalId },
       relations: ['serie'],
     });
-    return result.map((c) => ComprobanteMapper.toDomain(c));
+    return result.map((c: ComprobanteOrmEntity) =>
+      ComprobanteMapper.toDomain(c),
+    );
   }
-  async findById(
+  async findByIds(
     sucursalId: number,
     comprobanteIds: number[],
     tenantDatabase?: string,
@@ -95,6 +99,19 @@ export class ComprobanteRepositoryImpl
       relations: ['respuestaSunat', 'serie'],
     });
     return comprobantes.map((rsp) => ComprobanteMapper.toDomain(rsp));
+  }
+  async findByIdDocument(
+    sucursalId: number,
+    comprobanteId: number,
+    tenantDatabase?: string,
+  ): Promise<ComprobanteResponseDto | null> {
+    const repo = await this.getRepository(tenantDatabase);
+    const comprobante = await repo.findOne({
+      where: { comprobanteId, sucursalId },
+      relations: ['respuestaSunat', 'serie'],
+    });
+    if (!comprobante) return null;
+    return ComprobanteMapper.toDomain(comprobante);
   }
   async findByComprobanteAceptado(
     sucursalId: number,
@@ -128,26 +145,7 @@ export class ComprobanteRepositoryImpl
     });
     return cpes.map((c) => ComprobanteMapper.toDomain(c));
   }
-  async getXmlFirmado(
-    comprobanteId: number,
-    empresaId: number,
-  ): Promise<ArchivoDescargable | null> {
-    return null;
-    // const cpe = await this.repo.findOne({
-    //   where: { comprobanteId, empresaId },
-    // });
-    // if (!cpe?.xmlFirmado) {
-    //   throw new NotFoundException(
-    //     `No se encontró el archivo XML del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
-    //   );
-    // }
 
-    // return {
-    //   fileName: `${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.xml`,
-    //   mimeType: 'application/xml',
-    //   content: Buffer.from(cpe.xmlFirmado, 'utf-8'),
-    // };
-  }
   async getZipEnviado(
     comprobanteId: number,
     empresaId: number,
@@ -165,27 +163,6 @@ export class ComprobanteRepositoryImpl
     //   fileName: `${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.zip`,
     //   mimeType: 'application/zip',
     //   content: Buffer.from(cpe.xmlFirmado, 'utf-8'), // TODO: reemplazar con zip real
-    // };
-    return null;
-  }
-  async getCdrZip(
-    comprobanteId: number,
-    empresaId: number,
-  ): Promise<ArchivoDescargable | null> {
-    // const cpe = await this.repo.findOne({
-    //   where: { comprobanteId, empresaId },
-    // });
-
-    // if (!cpe?.cdr) {
-    //   throw new NotFoundException(
-    //     `No se encontró el archivo cdr del comprobante ${comprobanteId} para la empresa ${empresaId}.`,
-    //   );
-    // }
-
-    // return {
-    //   fileName: `R-${cpe.hashCpe || 'comprobante'}-${cpe.comprobanteId}.zip`,
-    //   mimeType: 'application/zip',
-    //   content: Buffer.from(cpe.cdr, 'base64'), // 👈 convertir de string Base64 a Buffer
     // };
     return null;
   }
@@ -510,15 +487,17 @@ export class ComprobanteRepositoryImpl
     const comprobante = await repo
       .createQueryBuilder('c')
       .where('c.sucursal_id = :sucursalId', { sucursalId })
-      .andWhere(`JSON_EXTRACT(c.payload_json, '$.numeroPedido') = :pedidoId`, {
-        pedidoId,
-      })
+      .andWhere(
+        `CAST(JSON_UNQUOTE(JSON_EXTRACT(c.payload_json, '$.numeroPedido')) AS UNSIGNED) = :pedidoId`,
+        { pedidoId },
+      )
       .getOne();
 
     if (!comprobante) {
-      throw new BusinessLogicException( `[TERCIARIO] No se encontró comprobante para pedidoId=${pedidoId} en la sucursal ${sucursalId}.`)
+      throw new BusinessLogicException(
+        `No se encontró comprobante para pedidoId=${pedidoId}.`,
+      );
     }
-
     return ComprobanteMapper.toDomain(comprobante);
   }
 }

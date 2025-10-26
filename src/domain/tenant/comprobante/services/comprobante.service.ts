@@ -79,9 +79,7 @@ export class ComprobanteService {
         dtoClient?.numDoc,
       );
       if (!cliente) {
-        console.log("dtoClient?.tipoDoc ", dtoClient?.tipoDoc)
         const isFactura = TipoDocumentoIdentidadEnum.RUC === dtoClient?.tipoDoc;
-        console.log(isFactura)
         const save = new CreateClienteDto({
           nombre: isFactura ? "" : dtoClient?.rznSocial,
           tipoDocumento: dtoClient?.tipoDoc,

@@ -41,13 +41,10 @@ export class CreatePdfUseCase {
 
       let comprobante: any 
       if(contexto === "comprobante") {
-         comprobante = await this.comprobanteRepo.findById(sucursalId, [
-          comprobanteId,
-        ]);
+         comprobante = await this.comprobanteRepo.findByIdDocument(sucursalId, comprobanteId);
       } else {
         comprobante = await this.comprobanteRepo.findByPedidoIntegracion(sucursalId, comprobanteId);
       }
-      console.log(comprobante)
       if (!comprobante || comprobante.length === 0) {
         throw new BusinessLogicException(
           `No se encontró información del comprobante con ID ${comprobanteId} para la sucursal ${sucursalId}.`,
