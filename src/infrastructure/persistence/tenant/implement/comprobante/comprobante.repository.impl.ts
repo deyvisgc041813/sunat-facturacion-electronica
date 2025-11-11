@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Between, In, Like, Not } from 'typeorm';
 
 import {
@@ -29,6 +29,7 @@ export class ComprobanteRepositoryImpl
   extends BaseTenantRepository<ComprobanteOrmEntity>
   implements ConprobanteRepository
 {
+  private readonly logger = new Logger(ComprobanteRepositoryImpl.name);
   constructor(
     tenantRepositoryHelper: TenantRepositoryHelper,
     tenantContext: TenantContextService,
@@ -183,34 +184,13 @@ export class ComprobanteRepositoryImpl
     // return cpe?.hashCpe;
     return null;
   }
-  // async update(
-  //   comprobanteId: number,
-  //   sucursalId: number,
-  //   update: IUpdateComprobante,
-  // ): Promise<{ status: boolean; message: string }> {
-  //   const repo = await this.getRepository();
-  //   await repo.update(
-  //     { comprobanteId, sucursalId },
-  //     {
-  //       estado: update.estado,
-  //       descripcionEstado: update.descripcionEstado,
-  //       fechaUpdate: update.fechaUpdate,
-  //     },
-  //   );
-  //    await this.comprobanteRespRepo.saveRespuestaSunat(
-  //     comprobanteId,
-  //     update.cdr ?? null,
-  //     update.xmlFirmado ?? null,
-  //     update.hashCpe ?? null,
-  //   );
-  //   return { status: true, message: 'Comprobante actualizado correctamente' };
-  // }
   async update(
     comprobanteId: number,
     sucursalId: number,
     update: IUpdateComprobante,
+    tenantDatabase?: string,
   ): Promise<{ status: boolean; message: string }> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     try {
       await repo.update(
         { comprobanteId, sucursalId },
@@ -221,8 +201,13 @@ export class ComprobanteRepositoryImpl
         },
       );
       // Guardar respuesta SUNAT o registrar error
-      await this.saveRespuestaSunat(comprobanteId, sucursalId, update);
-
+      await this.saveRespuestaSunat(
+        comprobanteId,
+        sucursalId,
+        update,
+        tenantDatabase,
+      );
+      console.log('todo ok ');
       return { status: true, message: 'Comprobante actualizado correctamente' };
     } catch (error) {
       console.error(
@@ -301,39 +286,78 @@ export class ComprobanteRepositoryImpl
     });
     return data.map((dt) => ComprobanteMapper.toDomain(dt));
   }
-  async findBoletasForResumen(
+  async findDocumentPendientes(
     sucursalId: number,
-    fechaResumen: string,
+    fechaEmision: string,
     estados: EstadoEnumComprobante[],
+    serie: string,
+    tipoComprobante: TipoComprobanteEnum,
     tenantDatabase?: string,
   ): Promise<ComprobanteResponseDto[]> {
     const repo = await this.getRepository(tenantDatabase);
 
     // Calcular inicio y fin del día
-    const fecha = new Date(fechaResumen);
+    const fecha = new Date(fechaEmision);
     const inicioDelDia = new Date(fecha);
     inicioDelDia.setHours(0, 0, 0, 0);
 
     const finDelDia = new Date(fecha);
     finDelDia.setHours(23, 59, 59, 999);
 
-    const rsp = await repo.find({
-      where: {
-        sucursalId,
-        fechaEmision: Between(inicioDelDia, finDelDia),
-        comunicadoSunat: EstadoComunicacionEnvioSunat.NO_ENVIADO,
-        estado: In(estados),
-        serie: {
-          serie: Like('B%'),
-          tipoComprobante: TipoComprobanteEnum.BOLETA,
-        },
+    const where: any = {
+      sucursalId,
+      fechaEmision: Between(inicioDelDia, finDelDia),
+      estado: In(estados),
+      serie: {
+        serie: Like(`${serie}%`),
+        tipoComprobante: tipoComprobante,
       },
-      relations: ['serie'],
-      order: {
-        fechaEmision: 'ASC',
-      },
-    });
+    };
 
+    //Solo aplica filtro de comunicación SUNAT si la serie empieza con 'B'
+    if (serie?.startsWith('B')) {
+      where.comunicadoSunat = EstadoComunicacionEnvioSunat.NO_ENVIADO;
+    }
+    this.logger.warn(
+      `Filtros aplicados: ${JSON.stringify(
+        {
+          sucursalId,
+          fechaInicio: inicioDelDia,
+          fechaFin: finDelDia,
+          comunicadoSunat: serie?.startsWith('B')
+            ? EstadoComunicacionEnvioSunat.NO_ENVIADO
+            : '(sin filtro)',
+          estados,
+          serie,
+          tipoComprobante,
+        },
+        null,
+        2,
+      )}`,
+    );
+
+    // const rsp = await repo.find({
+    //   where: {
+    //     sucursalId,
+    //     fechaEmision: Between(inicioDelDia, finDelDia),
+    //     comunicadoSunat: EstadoComunicacionEnvioSunat.NO_ENVIADO,
+    //     estado: In(estados),
+    //     serie: {
+    //       serie: Like(`${serie}%`),
+    //       tipoComprobante: tipoComprobante,
+    //     },
+    //   },
+    //   relations: ['serie', 'respuestaSunat'],
+    //   order: {
+    //     fechaEmision: 'ASC',
+    //   },
+    // });
+
+    const rsp = await repo.find({
+      where,
+      relations: ['serie', 'respuestaSunat'],
+      order: { fechaEmision: 'ASC' },
+    });
     return rsp.map(ComprobanteMapper.toDomain);
   }
 
@@ -451,28 +475,43 @@ export class ComprobanteRepositoryImpl
     comprobanteId: number,
     sucursalId: number,
     update: IUpdateComprobante,
+    tenantDataBase?: string,
   ): Promise<void> {
+    const cdr = update?.cdr ?? null;
+    const xml = update?.xmlFirmado ?? null;
+    const hashCpe = update?.hashCpe ?? null;
     try {
-      await this.comprobanteRespRepo.saveRespuestaSunat(
-        comprobanteId,
-        update?.cdr ?? null,
-        update?.xmlFirmado ?? null,
-        update?.hashCpe ?? null,
-      );
+      if (!update.compRespIdSunat) {
+        await this.comprobanteRespRepo.create(
+          comprobanteId,
+          cdr,
+          xml,
+          hashCpe,
+          tenantDataBase,
+        );
+      } else {
+        if (cdr) {
+          await this.comprobanteRespRepo.update(
+            update.compRespIdSunat,
+            comprobanteId,
+            cdr,
+            tenantDataBase,
+          );
+        }
+      }
     } catch (error) {
       console.warn(
         `Error guardando respuesta SUNAT para comprobante ${comprobanteId}:`,
         error.message,
       );
-
       await this.logErrorRepo.registrarError({
         comprobanteId,
         sucursalId,
         estado: update.estado ?? null,
         descripcionEstado: update.descripcionEstado ?? null,
-        cdr: update.cdr ?? null,
-        xmlFirmado: update.xmlFirmado ?? null,
-        hashCpe: update.hashCpe ?? null,
+        cdr,
+        xmlFirmado: xml,
+        hashCpe,
         errorMensaje: String(error.message || 'Error desconocido'),
       });
       throw error;

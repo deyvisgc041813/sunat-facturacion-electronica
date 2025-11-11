@@ -135,6 +135,8 @@ export enum PriceTypeCode {
 }
 
 export enum CronTaskType {
+  /**Enviar facturas a sunat por sucursal y fecha. */
+  ENVIAR_FACTURAS_SUNAT = 'ENVIAR_FACTURAS_SUNAT',
   /** Genera el Resumen Diario (RC) por sucursal y fecha. */
   GENERAR_RESUMEN_DIARIO = 'GENERAR_RESUMEN_DIARIO',
   /** Consulta de ticket en SUNAT para cualquier comprobante/RC/Comunic. de Baja. */

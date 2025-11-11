@@ -7,6 +7,7 @@ import { IUpdateComprobante } from './interface/update.interface';
 import { ICreateComprobante } from './interface/create.interface';
 import { IResponsePs } from './interface/response.ps.interface';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
+import { TipoComprobanteEnum } from 'src/util/catalogo.enum';
 export interface ArchivoDescargable {
   fileName: string; // Nombre sugerido del archivo (ej: 20600887735-01-F001-123.xml)
   mimeType: string; // application/xml, application/zip, etc.
@@ -100,10 +101,13 @@ export interface ConprobanteRepository {
     serieRef: string,
     correlativoRef: number,
   ): Promise<ComprobanteResponseDto | null>;
-  findBoletasForResumen(
+  findDocumentPendientes(
     sucursalId: number,
     fechaResumen: string,
     estados: EstadoEnumComprobante[],
+    serie:string,
+    tipoComprobante:TipoComprobanteEnum,
+    tenantDatabase?: string,
   ): Promise<ComprobanteResponseDto[]>;
   findBySerieCorrelativos(
     sucursalId: number,

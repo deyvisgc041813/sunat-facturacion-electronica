@@ -107,6 +107,7 @@ export abstract class CreateInvoiceBaseUseCase {
         xmlFirmado: xmlFirmado,
         comprobanteId: contexto.comprobanteId,
       };
+      responseSunat.xmlFirmado = xmlFirmado;
       if (EstadoEnvioSunatFactura.ENVIAR_SUNAT === invoice.enviarSunat) {
         // 5. Enviar a SUNAT
         responseSunat = await this.sendSunat(
@@ -117,17 +118,20 @@ export abstract class CreateInvoiceBaseUseCase {
           usuarioSecundario,
           claveSecundaria,
         );
-        responseSunat.xmlFirmado = xmlFirmado;
-        // 6. Actualizar comprobante con CDR, Hash y estado
-        await this.comprobanteService.actualizarComprobante(
-          contexto.comprobanteId,
-          surcursalId,
-          invoice.tipoComprobante as TipoComprobanteEnum,
-          xmlFirmado,
-          responseSunat,
-        );
         responseSunat.comprobanteId = contexto.comprobanteId;
+      } else {
+        responseSunat.estadoSunat = EstadoEnumComprobante.PENDIENTE
+        responseSunat.cdr = null
+        responseSunat.observaciones = []
       }
+      // 6. Actualizar comprobante con CDR, Hash, estado
+      await this.comprobanteService.actualizarComprobante(
+        contexto.comprobanteId,
+        surcursalId,
+        invoice.tipoComprobante as TipoComprobanteEnum,
+        xmlFirmado,
+        responseSunat
+      );
       return responseSunat;
     } catch (error: any) {
       await this.comprobanteService.procesarErrorSunat(
@@ -136,6 +140,7 @@ export abstract class CreateInvoiceBaseUseCase {
         contexto.comprobanteId,
         contexto.sucursalId,
         contexto.xmlFirmado,
+        auth.correo
       );
       throw error;
     }
@@ -149,6 +154,7 @@ export abstract class CreateInvoiceBaseUseCase {
     usuarioSolSecundario: string,
     claveSolSecundario: string,
   ): Promise<IResponseSunat> {
+    console.log("fileName ", fileName)
     switch (tipoComprobante) {
       case TipoComprobanteEnum.FACTURA:
         return await this.sunatService.sendBill(

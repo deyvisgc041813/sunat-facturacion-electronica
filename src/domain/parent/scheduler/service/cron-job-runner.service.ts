@@ -7,7 +7,8 @@ import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ResumenService } from 'src/domain/tenant/resumen/service/resumen.service';
 import { ComunicacionBajaService } from 'src/domain/tenant/comunicacion-baja/service/comunicacion-baja.service';
 import { CronTaskType } from 'src/util/catalogo.enum';
-import { ComunicacionBajaDto } from 'src/domain/tenant/comunicacion-baja/dto/comunicacion-baja.dto';
+import { ComprobanteService } from 'src/domain/tenant/comprobante/services/comprobante.service';
+import { CompanyDto } from 'src/domain/tenant/comprobante/dto/base/company.dto';
 
 @Injectable()
 export class CronRunnerService {
@@ -19,6 +20,7 @@ export class CronRunnerService {
   private readonly INTERVALO_MINUTOS = 0.2;
   constructor(
     private readonly cronService: CronService,
+    private readonly comprobanteService: ComprobanteService,
     private readonly resumenService: ResumenService,
     private readonly comunicacionBajaService: ComunicacionBajaService,
   ) {}
@@ -120,9 +122,13 @@ export class CronRunnerService {
         case CronTaskType.CONSULTAR_TICKET_COMUNICACION_BAJA_SUNAT:
           await this.consultatTicketComunicacionBajaSunat(tarea);
           break;
+        case CronTaskType.ENVIAR_FACTURAS_SUNAT:
+          await this.sendFacturasSunat(tarea);
+          break;
         case CronTaskType.BACKUP_PROGRAMADO:
           await this.hacerBackup(empresaId);
           break;
+
         case 'REINTENTOS':
           await this.reintentarPendientes(empresaId);
           break;
@@ -185,7 +191,45 @@ export class CronRunnerService {
       this.logger.log(`[${context}] Finalizó tarea (${duracion}s)`);
     }
   }
-
+  private async sendFacturasSunat(tarea: CronJobResponseDto): Promise<void> {
+    const empresaId = tarea?.empresa?.empresaId;
+    const cronJobId = tarea.cronId;
+    const payload = tarea?.payload;
+    const context = `CronJob:${CronTaskType.ENVIAR_FACTURAS_SUNAT}[empresa:${empresaId}]`;
+    const inicio = Date.now();
+    this.logger.log(
+      `Ejecutando tarea ${CronTaskType.ENVIAR_FACTURAS_SUNAT} empresa ${empresaId}`,
+    );
+    try {
+      if (!payload?.company || !payload?.auth) {
+        const msg = `Payload incompleto. Faltan campos requeridos: company, auth`;
+        this.logger.warn(msg, context);
+        await this.cronService.marcarEnError(cronJobId, msg);
+        return;
+      }
+      const auth = payload.auth as IUserPayload;
+      const company = payload.company as CompanyDto;
+      await this.comprobanteService.taskCronSendFcturasSunat(auth, company);
+      const duracion = ((Date.now() - inicio) / 1000).toFixed(2);
+      // Programar siguiente ejecución
+      await this.programarProximaPorTipo(
+        cronJobId,
+        tarea.horaEjecucion,
+        tarea.repetir,
+        tarea.tipo,
+      );
+      this.logger.log(
+        `[${context}] enviado correctamente (Duración: ${duracion}s)`,
+      );
+    } catch (error: any) {
+      const mensajeError = `[${context}] Error en envío → ${error.message}`;
+      this.logger.error(mensajeError, error.stack, context);
+      await this.cronService.marcarEnError(cronJobId, error);
+    } finally {
+      const duracion = ((Date.now() - inicio) / 1000).toFixed(2);
+      this.logger.log(`[${context}] Finalizó tarea (${duracion}s)`);
+    }
+  }
   private async consultatTicketResumenSunat(
     tarea: CronJobResponseDto,
   ): Promise<void> {

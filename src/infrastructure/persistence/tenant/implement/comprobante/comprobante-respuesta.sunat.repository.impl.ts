@@ -19,13 +19,14 @@ export class ComprobanteRespuestaSunatRepositoryImpl extends BaseTenantRepositor
     );
   }
 
-  async saveRespuestaSunat(
+  async create(
     comprobanteId: number,
     cdr: Buffer | null,
     xmlFirmado: string | null,
     hashCpe: string | null,
+    tenantDatabase?: string,
   ): Promise<void> {
-    const repo = await this.getRepository();
+    const repo = await this.getRepository(tenantDatabase);
     await repo.save({
       comprobante: { comprobanteId },
       cdr,
@@ -33,6 +34,19 @@ export class ComprobanteRespuestaSunatRepositoryImpl extends BaseTenantRepositor
       hashCpe,
     });
   }
+  async update(
+    compRespIdSunat:number,
+    comprobanteId: number,
+    cdr: Buffer | null,
+    tenantDatabase?: string,
+  ): Promise<void> {
+    const repo = await this.getRepository(tenantDatabase);
+    await repo.update(
+      { compRespIdSunat, comprobante: { comprobanteId } },
+      { cdr },
+    );
+  }
+
   async findByComprobanteId(comprobanteId: number) {
     const repo = await this.getRepository();
     return repo.findOne({ where: { comprobante: { comprobanteId } } });

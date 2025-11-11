@@ -41,7 +41,6 @@ import { ComprobanteRespuestaSunatRepositoryImpl } from './infrastructure/persis
 import { LogRespuestaSunatRepositoryImpl } from './infrastructure/persistence/tenant/implement/comprobante/log-respuesta-sunat-fallida.repository.impl';
 import { LogRespuestaSunatOrmEntity } from './infrastructure/persistence/tenant/entity/comprobante/log-respuesta-sunat-fallida.orm.entity';
 import { SucursalModule } from './sucursal.module';
-import { ClienteService } from './domain/parent/cliente/service/cliente.service';
 import { CatalogoRepositoryImpl } from './infrastructure/persistence/parent/implement/catalogo.repository.impl';
 import { TributoTasaRepositoryImpl } from './infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
 import { ComprobantePdfBuilderImpl } from './infrastructure/adapter/PdfServiceImpl';
@@ -54,6 +53,10 @@ import { GetByFechaComprobantesUseCase } from './application/tenant/comprobante/
 import { GetByIdComprobantesUseCase } from './application/tenant/comprobante/query/GetByIdComprobantesUseCase';
 import { ExportCdrZipComprobanteUseCase } from './application/tenant/comprobante/export/ExportCdrZipComprobanteUseCase';
 import { ExportSignedXmlDocumentUseCase } from './application/tenant/comprobante/export/ExportSignedXmlDocumentUseCase';
+import { ClienteRepositoryImpl } from './infrastructure/persistence/parent/implement/cliente.repository.impl';
+import { CatalogoTipoOrmEnity } from './infrastructure/persistence/parent/entity/catalogo/catalogo-tipo.orm.entity';
+import { CatalogoDetalleOrmEnity } from './infrastructure/persistence/parent/entity/catalogo/catalogo-detalle.orm.entity';
+import { SucursalService } from './domain/parent/sucursal/service/sucursal.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([
@@ -67,6 +70,8 @@ import { ExportSignedXmlDocumentUseCase } from './application/tenant/comprobante
       ComprobanteRespuestaSunatOrmEntity,
       LogRespuestaSunatOrmEntity,
       SucursalOrmEntity,
+      CatalogoTipoOrmEnity,
+      CatalogoDetalleOrmEnity,
     ]),
     CatalogoModule,
     TasaTributoModule,
@@ -79,58 +84,11 @@ import { ExportSignedXmlDocumentUseCase } from './application/tenant/comprobante
   ],
   controllers: [ComprobanteController],
   providers: [
-    {
-      provide: ComprobanteService,
-      useFactory: (
-        clienteService: ClienteService,
-        createComprobanteUseCase: CreateComprobanteUseCase,
-        updateComprobanteUseCase: UpdateComprobanteUseCase,
-        sunatLogRepositori: SunatLogRepositoryImpl,
-        firmaService: FirmaService,
-        catalogoRepositoryImpl: CatalogoRepositoryImpl,
-        tributoTasaRepositoryImpl: TributoTasaRepositoryImpl,
-        findTasaByCodeUseCase: FindTasaByCodeUseCase,
-        xmlInvoiceBuilder: XmlBuilderInvoiceService,
-      ) =>
-        new ComprobanteService(
-          clienteService,
-          createComprobanteUseCase,
-          updateComprobanteUseCase,
-          sunatLogRepositori,
-          firmaService,
-          catalogoRepositoryImpl,
-          tributoTasaRepositoryImpl,
-          findTasaByCodeUseCase,
-          xmlInvoiceBuilder,
-        ),
-      inject: [
-        ClienteService,
-        CreateComprobanteUseCase,
-        UpdateComprobanteUseCase,
-        SunatLogRepositoryImpl,
-        FirmaService,
-        CatalogoRepositoryImpl,
-        TributoTasaRepositoryImpl,
-        FindTasaByCodeUseCase,
-        XmlBuilderInvoiceService,
-      ],
-    },
-    {
-      provide: ConsultarComprobanteService,
-      useFactory: (
-        comprobanteRepository: ComprobanteRepositoryImpl,
-        comprobanteRespSunatRepository: ComprobanteRespuestaSunatRepositoryImpl,
-      ) =>
-        new ConsultarComprobanteService(
-          comprobanteRepository,
-          comprobanteRespSunatRepository,
-        ),
-      inject: [
-        ComprobanteRepositoryImpl,
-        ComprobanteRespuestaSunatRepositoryImpl,
-      ],
-    },
-  
+    ComprobanteService,
+    ConsultarComprobanteService,
+    CatalogoRepositoryImpl,
+    TributoTasaRepositoryImpl,
+    ClienteRepositoryImpl,
     XmlBuilderInvoiceService,
     XmlBuilderNotaCreditoService,
     XmlBuilderNotaDebitoService,
@@ -161,6 +119,8 @@ import { ExportSignedXmlDocumentUseCase } from './application/tenant/comprobante
     GetValidatedCpeUseCase,
     GetStatusValidateCpeUseCase,
     FindCatalogosUseCase,
+
+    SucursalService,
   ],
   exports: [
     SunatLogRepositoryImpl,

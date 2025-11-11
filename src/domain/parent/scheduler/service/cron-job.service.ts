@@ -103,7 +103,7 @@ export class CronService {
     await this.cronRepo.updateStatus(id, EEstadosCronJob.EN_PROCESO, '');
   }
   async marcarEnError(id: number, message: string) {
-    await this.cronRepo.updateStatus(id, EEstadosCronJob.ERROR, '');
+    await this.cronRepo.updateStatus(id, EEstadosCronJob.ERROR, message);
   }
   async findNextActiveJob() {
     return this.cronRepo.findNextActiveJob();

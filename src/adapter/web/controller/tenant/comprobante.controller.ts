@@ -328,7 +328,6 @@ export class ComprobanteController {
         `No tienes autorización para realizar esta acción desde la sucursal actual.`,
       );
     }
-
     const archivo = await this.exportCdrZipUseCase.execute(
       auth.sucursalActiva,
       0,

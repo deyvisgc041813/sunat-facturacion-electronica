@@ -17,7 +17,7 @@ export class EmpresaResponseDto {
     public nombreComercial?: string,
     public direccion?: string,
     public cliente?:ClienteResponseDto[],
-    public sucursales?:SucursalResponseDto[],
+    public sucursales?:SucursalResponseDto[]
 
   ) {}
 

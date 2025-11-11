@@ -282,6 +282,7 @@ export class SucursalService {
       empresaId,
       sucursalId
     );
+    
     if (!sucursal) {
       throw new BadRequestException(
         `No se encontró ninguna sucursal asociada al identificador proporcionado (${sucursalId}). Verifique que el ID sea correcto.`,
@@ -289,6 +290,11 @@ export class SucursalService {
     }
     const empresa = sucursal.empresa as EmpresaResponseDto;
     const credencial = empresa.credenciales.find((cr:EmpresaCredencialesInternaResponseDto) => EstadoCredencialEmpresaSunat.VIGENTE === cr?.base?.estado) as EmpresaCredencialesInternaResponseDto
+    if(!credencial) {
+     throw new BadRequestException(
+        `No se encontró credenciales para esta empresa`,
+      );
+    }
     if (credencial && (!credencial.certificadoDigital || !credencial?.claveCertificado)) {
       throw new BadRequestException(
         `No se encontró certificado digital para la sucursal con RUC ${sucursal.nombre}`,

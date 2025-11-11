@@ -163,8 +163,9 @@ export class EmpresaService {
         sucursal = await this.sucursalService.create(createSucursal, auth);
       }
       const sucursalId = sucursal?.data?.sucursalId;
+      let tenant: any = null
       if (body.activarSucursal === '1') {
-        await this.tenantService.createTenant(
+        tenant = await this.tenantService.createTenant(
           sucursalId,
           body?.ruc,
           subDominioClient.replace(/[^a-z0-9]/g, ''),
@@ -175,9 +176,9 @@ export class EmpresaService {
       }
       return {
         success: true,
-        message:
-          'La empresa y su sucursal han sido registradas y habilitadas para emitir comprobantes electrónicos.',
+        message: 'La empresa y su sucursal han sido registradas y habilitadas para emitir comprobantes electrónicos.',
         activate,
+        tenant
       };
     } catch (error) {
       this.logger.error('Error durante el onboarding', error);

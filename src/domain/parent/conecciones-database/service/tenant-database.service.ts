@@ -224,7 +224,11 @@ export class TenantDatabaseService {
     sucursalId: number,
     numRuc: string,
     subDominio: string,
-  ): Promise<void> {
+  ): Promise<{
+    usersDatabase : string,
+    databaseName:string,
+    databasePassword:string
+  }> {
     console.log('INICIO crear tenant');
     const dbName = `${numRuc}_${subDominio}_db`;
     let { username, password } = generateTenantCredentials(numRuc);
@@ -250,6 +254,11 @@ export class TenantDatabaseService {
     const dbPassword = await CryptoUtil.encrypt(password);
     await this.tenantRepo.save(sucursalId, dbName, username, dbPassword);
     console.log(`Tenant ${subDominio} activado con base ${dbName}`);
+    return {
+      usersDatabase: username,
+      databaseName: dbName,
+      databasePassword: dbPassword
+    }
   }
   async deleteTenant(
     sucursalId: number,

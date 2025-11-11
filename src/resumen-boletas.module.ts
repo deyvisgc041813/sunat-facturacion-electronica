@@ -51,47 +51,6 @@ import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/emp
     SunatService,
     SucursalService,
   ],
-  // providers: [
-  //       // {
-  //       //   provide: ResumenService,
-  //       //   useFactory: (
-  //       //     comprobanteRepositoryImpl: ComprobanteRepositoryImpl,
-  //       //     resumenRepositoryImpl: ResumenRepositoryImpl,
-  //       //     sunatLogRepositoryImpl: SunatLogRepositoryImpl,
-  //       //     firmaService: FirmaService,
-  //       //     serieComprobanteRepositoryImpl: SerieComprobanteRepositoryImpl,
-  //       //     xmlBuilderResumenService: XmlBuilderResumenService,
-  //       //     sunatService: SunatService,
-  //       //     sucursalService:SucursalService
-  //       //   ) =>
-  //       //     new ResumenService(
-  //       //       comprobanteRepositoryImpl,
-  //       //       resumenRepositoryImpl,
-  //       //       sunatLogRepositoryImpl,
-  //       //       firmaService,
-  //       //       serieComprobanteRepositoryImpl,
-  //       //       xmlBuilderResumenService,
-  //       //       sunatService,
-  //       //       sucursalService
-  //       //     ),
-  //       //   inject: [
-  //       //     ComprobanteRepositoryImpl,
-  //       //     ResumenRepositoryImpl,
-  //       //     SunatLogRepositoryImpl,
-  //       //     FirmaService,
-  //       //     SerieComprobanteRepositoryImpl,
-  //       //     XmlBuilderResumenService,
-  //       //     SunatService,
-  //       //     SucursalService
-  //       //   ],
-  //       // },
-  //     ResumenService, // ✅ cambia esto
-  //   CreateResumenUseCase,
-  //   GetNextCorrelativoUseCase,
-  //   GetStatusResumenUseCase,
-  //   XmlBuilderResumenService,
-  //   ResumenRepositoryImpl,
-  // ],
   exports: [
     ResumenService,
     ResumenRepositoryImpl,

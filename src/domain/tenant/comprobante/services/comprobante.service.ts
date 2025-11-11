@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  HttpException,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { IUserPayload } from 'src/adapter/decorator/user.decorator.interface';
 import { ClienteResponseDto } from 'src/domain/parent/cliente/dto/client.response.dto';
@@ -22,7 +17,12 @@ import { CreateComprobanteUseCase } from '../../../../application/tenant/comprob
 import { IResponsePs } from 'src/domain/tenant/comprobante/interface/response.ps.interface';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
 import { IResponseSunat } from 'src/domain/tenant/comprobante/interface/response.sunat.interface';
-import { extraerHashCpe, setobjectUpdateComprobante } from 'src/util/Helpers';
+import {
+  extraerHashCpe,
+  getFechaHoraActualLima,
+  getFechaHoraActualLimaFormat,
+  setobjectUpdateComprobante,
+} from 'src/util/Helpers';
 import { UpdateComprobanteUseCase } from '../../../../application/tenant/comprobante/update/UpdateComprobanteUseCase';
 import { ErrorMapper } from 'src/domain/mapper/error-exception.mapper';
 import { OrigenErrorEnum } from 'src/util/OrigenErrorEnum';
@@ -38,8 +38,10 @@ import { CatalogoRepositoryImpl } from 'src/infrastructure/persistence/parent/im
 import { TributoTasaRepositoryImpl } from 'src/infrastructure/persistence/parent/implement/tasa-tributo.repository.impl';
 import { FindTasaByCodeUseCase } from 'src/application/parent/Tasa/FindTasaByCodeUseCase';
 import { ComprobantesHelper } from 'src/util/comprobante-helpers';
-const tipoDocDni = new Set(['1', '01']);
-const tipoRucs = new Set(['6', '06']);
+import { ComprobanteRepositoryImpl } from 'src/infrastructure/persistence/tenant/implement/comprobante/comprobante.repository.impl';
+import { SucursalService } from 'src/domain/parent/sucursal/service/sucursal.service';
+import { CompanyDto } from '../dto/base/company.dto';
+import { SunatService } from 'src/infrastructure/sunat/send/sunat.service';
 const tasasTributos = [MAP_TRIBUTOS.IGV.id, MAP_TRIBUTOS.ICBPER.id];
 const tasasVigentes = [MAP_TRIBUTOS.IGV.id];
 const tiposCatalogos = [
@@ -52,6 +54,7 @@ const facturaBoletas = new Set([
 ]);
 @Injectable()
 export class ComprobanteService {
+  private readonly logger = new Logger(ComprobanteService.name);
   constructor(
     private readonly clientService: ClienteService,
     protected readonly useCreateComprobanteCase: CreateComprobanteUseCase,
@@ -62,11 +65,10 @@ export class ComprobanteService {
     protected readonly tributoTasaRepositoryImpl: TributoTasaRepositoryImpl,
     protected readonly findTasaByCodeUseCase: FindTasaByCodeUseCase,
     protected readonly xmlInvoiceBuilder: XmlBuilderInvoiceService,
+    protected readonly comprobanteRepo: ComprobanteRepositoryImpl,
+    protected readonly sucursalService: SucursalService,
+    protected readonly sunatService: SunatService,
   ) {}
-  private readonly logger = new Logger(ComprobanteService.name);
-  // private readonly RENIEC_API = 'https://api.apis.net.pe/v1/dni';
-  // private readonly SUNAT_API = 'https://api.apis.net.pe/v1/ruc';
-  // private readonly TOKEN = process.env.APIS_PERU_TOKEN; // tu token de apis.net.pe
 
   async consultarDocumento(
     empresaId: number,
@@ -81,16 +83,16 @@ export class ComprobanteService {
       if (!cliente) {
         const isFactura = TipoDocumentoIdentidadEnum.RUC === dtoClient?.tipoDoc;
         const save = new CreateClienteDto({
-          nombre: isFactura ? "" : dtoClient?.rznSocial,
+          nombre: isFactura ? '' : dtoClient?.rznSocial,
           tipoDocumento: dtoClient?.tipoDoc,
           numeroDocumento: dtoClient?.numDoc,
-          razonSocial: isFactura ? dtoClient?.rznSocial  : '',
+          razonSocial: isFactura ? dtoClient?.rznSocial : '',
           direccion: dtoClient?.address?.direccion,
           correo: dtoClient?.correo,
           telefono: dtoClient?.telefono,
           empresaId,
           condicionDomicilio: isFactura ? dtoClient.rucCondicion : '',
-          estadoComtribuyente: isFactura ? dtoClient.rucEstado: '',
+          estadoComtribuyente: isFactura ? dtoClient.rucEstado : '',
           distrito: dtoClient?.address?.distrito,
           departamento: dtoClient?.address.departamento,
           provincia: dtoClient?.address?.provincia,
@@ -145,6 +147,8 @@ export class ComprobanteService {
     tipoComprobante: TipoComprobanteEnum,
     xmlFirmado: string,
     responseSunat: IResponseSunat,
+    tenantDatabase?: string,
+    compRespIdSunat?: number,
   ) {
     //const cdr = responseSunat.cdr?.toString('base64') ?? null;
     const hash = (await extraerHashCpe(xmlFirmado)) ?? '';
@@ -154,16 +158,18 @@ export class ComprobanteService {
     const objectUpdate = setobjectUpdateComprobante(
       tipoComprobante,
       xmlFirmado,
-      responseSunat.cdr,
+      responseSunat?.cdr,
       hash,
-      responseSunat.estadoSunat,
+      responseSunat?.estadoSunat,
       motivo ?? '',
     );
-
+    if (compRespIdSunat && compRespIdSunat > 0)
+      objectUpdate.compRespIdSunat = compRespIdSunat;
     await this.useUpdateCaseComprobante.execute(
       comprobanteId,
       sucursalId,
       objectUpdate,
+      tenantDatabase,
     );
   }
   async procesarErrorSunat(
@@ -172,12 +178,15 @@ export class ComprobanteService {
     comprobanteId: number,
     sucursalId: number,
     xmlFirmado: string,
+    usuario: string,
+    dataBaseTenant?: string,
+    comprobanteRspId?: number,
   ) {
     const rspError = ErrorMapper.mapError(error, {
       sucursalId,
-      tipo: data.tipoComprobante,
-      serie: data.serie,
-      correlativo: data.correlativo,
+      tipo: data?.tipoComprobante,
+      serie: data?.serie,
+      correlativo: data?.correlativo,
     });
     let responseSunat: IResponseSunat;
     if (rspError?.tipoError === OrigenErrorEnum.SUNAT) {
@@ -185,12 +194,12 @@ export class ComprobanteService {
       obj.comprobanteId = comprobanteId;
       obj.request = JSON.stringify(data);
       obj.sucursalId = sucursalId;
-      obj.serie = `${data.serie}-${data.correlativo}`;
+      obj.serie = `${data?.serie}-${data?.correlativo}`;
       obj.intentos = 0;
-      obj.usuarioEnvio = 'DEYVISGC';
+      obj.usuarioEnvio = usuario;
       obj.fechaRespuesta = new Date();
       obj.fechaEnvio = new Date();
-      await this.sunatLogRepo.save(obj);
+      await this.sunatLogRepo.save(obj, dataBaseTenant);
       responseSunat = {
         mensaje: obj.response || 'Error SUNAT',
         estadoSunat:
@@ -218,6 +227,8 @@ export class ComprobanteService {
         data.tipoComprobante as TipoComprobanteEnum,
         xmlFirmado || '',
         responseSunat,
+        dataBaseTenant,
+        comprobanteRspId,
       );
     }
   }
@@ -257,31 +268,95 @@ export class ComprobanteService {
       tributosTasa: tributosTasa ?? [],
     };
   }
+  async taskCronSendFcturasSunat(
+    auth: IUserPayload,
+    company: CompanyDto,
+  ): Promise<void> {
+    const tenantDatabase = auth?.subDominio;
+    const empresaId = auth?.empresaId ?? 0;
+    const sucursalId = auth.sucursalActiva ?? 0;
+    this.logger.log(
+      `[CronJob] Iniciando envío de facturas para empresa ${empresaId}`,
+    );
+    const sucursal = await this.sucursalService.getDigitalCertificate(
+      sucursalId,
+      empresaId,
+    );
+    const usuarioSolSecundario = sucursal?.usuarioSolSecundario ?? '';
+    const claveSolSecundario = CryptoUtil.decrypt(
+      sucursal.claveSolSecundario ?? '',
+    );
+    const fechaEmision = '2025-10-21T12:26:13-05:00'; //getFechaHoraActualLimaFormat('YYYY-MM-DDTHH:mm:ssZ'); //;
+    const facturasPendientes =
+      await this.comprobanteRepo.findDocumentPendientes(
+        sucursalId,
+        fechaEmision,
+        [EstadoEnumComprobante.PENDIENTE],
+        'F',
+        TipoComprobanteEnum.FACTURA,
+        tenantDatabase,
+      );
+    if (!facturasPendientes || facturasPendientes.length == 0) {
+      this.logger.warn(
+        `No se encontraron facturas pendientes de envio para la fecha de emisión ${fechaEmision} en la sucursal ${sucursalId}.`,
+      );
+    }
+    for (const factura of facturasPendientes) {
+      const numSerie = factura.serie?.serie;
+      const numCorrelativo = factura.numeroComprobante;
+      const tipoComprobante = factura?.serie?.tipoComprobante;
+      const xmlFirmado = factura.comprobanteRespuestaSunat?.xmlFirmado ?? '';
+      const comprobanteRsptId =
+        factura.comprobanteRespuestaSunat?.comprobanteRsptId ?? 0;
+      try {
+        const fileName = `${company.ruc}-${tipoComprobante}-${numSerie}-${numCorrelativo}`;
+        const zipBuffer = await ZipUtil.createZip(fileName, xmlFirmado);
+        this.logger.log(
+          `Enviando factura a SUNAT: ${numSerie}-${numCorrelativo}`,
+        );
+        const responseSunat = await this.sunatService.sendBill(
+          `${fileName}.zip`,
+          zipBuffer,
+          usuarioSolSecundario,
+          claveSolSecundario,
+        );
+        this.logger.log(
+          `responseSunat: ${JSON.stringify(responseSunat, null, 2)}`,
+        );
 
-  /**
-   * Consulta DNI → RENIEC
-   */
-  private async buscarDni(numero: string) {
-    // try {
-    //   const { data } = await axios.get(`${this.RENIEC_API}?numero=${numero}`, {
-    //     headers: { Authorization: `Bearer ${this.TOKEN}` },
-    //   });
+        await this.actualizarComprobante(
+          factura.comprobanteId,
+          sucursalId,
+          tipoComprobante as TipoComprobanteEnum,
+          xmlFirmado,
+          responseSunat,
+          tenantDatabase,
+          comprobanteRsptId,
+        );
 
-    //   return {
-    //     tipoDocumento: '01',
-    //     numeroDocumento: numero,
-    //     nombre: `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`,
-    //     apellidoPaterno: data.apellidoPaterno,
-    //     apellidoMaterno: data.apellidoMaterno,
-    //     nombres: data.nombres,
-    //     fuente: 'RENIEC',
-    //   };
-    // } catch (error) {
-    //   throw new HttpException(
-    //     'No se encontró el DNI en RENIEC',
-    //     HttpStatus.NOT_FOUND,
-    //   );
-    // }
+        this.logger.log(
+          `Factura ${numSerie}-${numCorrelativo} enviada correctamente.`,
+        );
+      } catch (error) {
+        this.logger.error(
+          `Error al procesar factura ${numSerie}-${numCorrelativo}: ${error.message}`,
+        );
+        const data = new CreateInvoiceDto();
+        data.tipoComprobante = tipoComprobante ?? '';
+        data.serie = numSerie ?? '';
+        data.correlativo = numCorrelativo;
+        await this.procesarErrorSunat(
+          error,
+          data,
+          factura.comprobanteId,
+          sucursalId,
+          xmlFirmado,
+          'Automatico',
+          auth.subDominio,
+          comprobanteRsptId,
+        );
+      }
+    }
   }
   /**
    * Sincroniza los datos del cliente con los valores recibidos desde SUNAT o el comprobante,
@@ -328,7 +403,6 @@ export class ComprobanteService {
     //   const { data } = await axios.get(`${this.SUNAT_API}?numero=${numero}`, {
     //     headers: { Authorization: `Bearer ${this.TOKEN}` },
     //   });
-
     //   return {
     //     tipoDocumento: '06',
     //     numeroDocumento: numero,
@@ -342,6 +416,30 @@ export class ComprobanteService {
     // } catch (error) {
     //   throw new HttpException(
     //     'No se encontró el RUC en SUNAT',
+    //     HttpStatus.NOT_FOUND,
+    //   );
+    // }
+  }
+  /**
+   * Consulta DNI → RENIEC
+   */
+  private async buscarDni(numero: string) {
+    // try {
+    //   const { data } = await axios.get(`${this.RENIEC_API}?numero=${numero}`, {
+    //     headers: { Authorization: `Bearer ${this.TOKEN}` },
+    //   });
+    //   return {
+    //     tipoDocumento: '01',
+    //     numeroDocumento: numero,
+    //     nombre: `${data.nombres} ${data.apellidoPaterno} ${data.apellidoMaterno}`,
+    //     apellidoPaterno: data.apellidoPaterno,
+    //     apellidoMaterno: data.apellidoMaterno,
+    //     nombres: data.nombres,
+    //     fuente: 'RENIEC',
+    //   };
+    // } catch (error) {
+    //   throw new HttpException(
+    //     'No se encontró el DNI en RENIEC',
     //     HttpStatus.NOT_FOUND,
     //   );
     // }

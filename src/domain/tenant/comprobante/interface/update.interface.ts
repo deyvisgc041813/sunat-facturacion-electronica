@@ -7,4 +7,5 @@ export interface IUpdateComprobante {
   cdr?: Buffer | null
   descripcionEstado?:string
   fechaUpdate?:any
+  compRespIdSunat?: number
 }

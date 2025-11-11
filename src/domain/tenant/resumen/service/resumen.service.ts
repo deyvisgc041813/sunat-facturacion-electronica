@@ -225,10 +225,12 @@ export class ResumenService {
     fechaReferencia: string,
     tenantDatabase?: string,
   ) {
-    return this.comprobanteRepo.findBoletasForResumen(
+    return this.comprobanteRepo.findDocumentPendientes(
       sucursalId,
       fechaReferencia,
       [EstadoEnumComprobante.PENDIENTE, EstadoEnumComprobante.ANULADO],
+      "B",
+      TipoComprobanteEnum.BOLETA,
       tenantDatabase,
     );
   }
