@@ -111,7 +111,7 @@ export class EmpresaRepositoryImpl implements IEmpresaRepositoryPort {
       ],
     });
     if (!empresa) {
-      throw new BusinessLogicException(`Empresa con ruc ${ruc} se encontro`);
+      throw new BusinessLogicException(`Empresa con ruc ${ruc} no se encontro`);
     }
     return EmpresaMapper.toDomain(empresa, interno);
   }

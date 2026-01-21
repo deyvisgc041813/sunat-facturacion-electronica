@@ -33,8 +33,10 @@ export class AuthService {
       let sucursalActivaId = 0;
       const fechaSelec: Date | null = user.fecSelecSucursal ?? null;
       let subDominio = '';
+      console.log('user >>>', user)
       const empresa = user.sucursales?.[0]?.empresa;
       const empresaId = empresa?.empresaId ?? 0;
+      console.log('empresaId >>>', empresaId)
       const credencial = empresa?.credenciales.find(  (cr: EmpresaCredencialesInternaResponseDto) =>
           EstadoCredencialEmpresaSunat.VIGENTE === cr?.base?.estado,
       ) as EmpresaCredencialesInternaResponseDto;
