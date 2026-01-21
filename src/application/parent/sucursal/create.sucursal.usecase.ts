@@ -7,7 +7,7 @@ import { SucursalService } from "src/domain/parent/sucursal/service/sucursal.ser
 export class CreateSucursalUseCase {
   constructor(private readonly sucursalService: SucursalService) {}
   async execute(dto: CreateSucursalDto, auth: IUserPayload): Promise<GenericResponse<SucursalResponseDto>> {
-    return this.sucursalService.create(dto, auth);
+    return this.sucursalService.create(dto, auth, 0);
   }
 
 

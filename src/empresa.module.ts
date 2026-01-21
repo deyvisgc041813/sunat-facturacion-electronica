@@ -26,6 +26,8 @@ import { UbigeoModule } from './ubigeo.module';
 import { EmpresaOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa.orm.entity';
 import { EmpresaCredencialesOrmEntity } from './infrastructure/persistence/parent/entity/empresa/empesa-credenciales-sunat.orm.entity';
 import { EmpresaCredencialesSunatRepositoryImpl } from './infrastructure/persistence/parent/implement/empresa.credenciales.repository.impl';
+import { UsuarioService } from './domain/auth/services/usuario.service';
+import { UsuarioModule } from './usuario.module';
 
 @Module({
   imports: [
@@ -40,6 +42,7 @@ import { EmpresaCredencialesSunatRepositoryImpl } from './infrastructure/persist
     TenantConeccionesModule,
     TenantContextModule,
     AuthModule,
+    UsuarioModule,
     UbigeoModule
   ],
   controllers: [EmpresaController],
@@ -54,6 +57,7 @@ import { EmpresaCredencialesSunatRepositoryImpl } from './infrastructure/persist
         authService: AuthService,
         ubigeoService : UbigeoService,
         auditoriaService: AuditoriaService,
+         userService: UsuarioService
 
       ) =>
         new EmpresaService(
@@ -63,6 +67,7 @@ import { EmpresaCredencialesSunatRepositoryImpl } from './infrastructure/persist
           authService,
           ubigeoService,
           auditoriaService,
+          userService
         ),
       inject: [
         EmpresaRepositoryImpl,
@@ -70,7 +75,8 @@ import { EmpresaCredencialesSunatRepositoryImpl } from './infrastructure/persist
         TenantDatabaseService,
         AuthService,
         UbigeoService,
-        AuditoriaService
+        AuditoriaService,
+        UsuarioService
       ],
     },
     // Casos de uso

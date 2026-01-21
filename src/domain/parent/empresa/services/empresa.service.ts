@@ -23,6 +23,10 @@ import { UbigeoService } from '../../ubigeo/services/ubigeo.service';
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
 import { CreateEmpresaCredencialesDto } from '../dto/create.credenciales-sunat.request.dto';
 import { UpdateEmpresaCredencialesDto } from '../dto/update.credenciales-sunat.request.dto';
+import { SucursalOrmEntity } from 'src/infrastructure/persistence/parent/entity/sucursal.orm.entity';
+import { QueryRunner } from 'typeorm';
+import { UserSucursalesOrmEntity } from 'src/infrastructure/persistence/auth/user-sucursal.orm.entity';
+import { UsuarioService } from 'src/domain/auth/services/usuario.service';
 // import forge from 'node-forge';
 const forge = require('node-forge');
 
@@ -36,6 +40,7 @@ export class EmpresaService {
     private readonly authService: AuthService,
     private readonly ubigeoService: UbigeoService,
     private readonly auditoriaService: AuditoriaService,
+    private readonly userService: UsuarioService
   ) {}
 
   async getAll(): Promise<EmpresaResponseDto[]> {
@@ -111,6 +116,7 @@ export class EmpresaService {
     };
   }
   async save(body: CreateEmpresaDto, auth: IUserPayload): Promise<any> {
+  
     let createEmpresa: { empresaId: number; crencialId: number } = {
       crencialId: 0,
       empresaId: 0,
@@ -160,7 +166,8 @@ export class EmpresaService {
           (createSucursal.entorno = body.ambiente));
         createSucursal.usuarioRegistro = auth.correo;
         createSucursal.estado = EEstadosGlobales.HABILITADA_FACTURACION;
-        sucursal = await this.sucursalService.create(createSucursal, auth);
+        const user = await this.userService.findByUsername(auth.correo)
+        sucursal = await this.sucursalService.create(createSucursal, auth, user?.usuarioId ?? 0);
       }
       const sucursalId = sucursal?.data?.sucursalId;
       let tenant: any = null
@@ -173,6 +180,7 @@ export class EmpresaService {
         auth.empresaId = createEmpresa?.empresaId;
         auth.credencialId = createEmpresa?.crencialId;
         activate = await this.authService.branchActive(sucursalId, auth, false);
+        
       }
       return {
         success: true,

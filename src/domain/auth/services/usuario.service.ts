@@ -128,7 +128,9 @@ export class UsuarioService {
       throw error;
     }
   }
-
+  async findByUsername(correo: string): Promise<UsuarioResponseDto | null> {
+    return await this.usuarioRepo.findByUsername(correo);
+  }
   // async remove(id: number): Promise<void> {
   //   const user = await this.findOne(id);
   //   await this.usuarioRepo.remove(user);

@@ -6,6 +6,7 @@ import { EEstadosGlobales } from 'src/util/estado.enum';
 
 export interface ISucursalRepository {
   save(
+    usuerId:number,
     sucursal: CreateSucursalDto,
   ): Promise<GenericResponse<SucursalResponseDto>>;
   getSucursalByStatus(

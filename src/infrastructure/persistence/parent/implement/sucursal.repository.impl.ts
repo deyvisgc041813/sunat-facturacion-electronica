@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, QueryRunner, Repository } from 'typeorm';
 import { EEstadosGlobales } from 'src/util/estado.enum';
 import { SucursalMapper } from 'src/domain/mapper/sucursal.mapper';
 import { GenericResponse } from 'src/adapter/web/response/response.interface';
@@ -10,6 +10,7 @@ import { SucursalResponseDto } from 'src/domain/parent/sucursal/dto/sucursal.res
 import { CreateSucursalDto } from 'src/domain/parent/sucursal/dto/create.request.dto';
 import { UpdateSucursalDto } from 'src/domain/parent/sucursal/dto/update.request.dto';
 import { BusinessLogicException } from 'src/adapter/web/exception/exeception-dynamic';
+import { UserSucursalesOrmEntity } from '../../auth/user-sucursal.orm.entity';
 const estadosVisibles = [
   EEstadosGlobales.ACTIVO,
   EEstadosGlobales.INACTIVO,
@@ -22,18 +23,22 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
   constructor(
     @InjectRepository(SucursalOrmEntity)
     private readonly repo: Repository<SucursalOrmEntity>,
+    private readonly dataSource: DataSource
   ) {}
 
   async save(
+    usuerId: number,
     sucursal: CreateSucursalDto,
   ): Promise<GenericResponse<SucursalResponseDto>> {
     const newSucursal = await this.repo.save(
       SucursalMapper.dtoToCreate(sucursal),
     );
-
     let resp = SucursalMapper.toDomain(newSucursal);
     delete resp.empresa;
     delete resp.ubicacionGeografica;
+    if(usuerId > 0) {
+      await this.addUserSucursales(usuerId, [resp.sucursalId])
+    }
     return {
       status: true,
       message: 'La sucursal se registró correctamente.',
@@ -57,7 +62,9 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       ],
     });
     if (!result)
-      throw new BusinessLogicException('No se encontro sucursales para esta sesion');
+      throw new BusinessLogicException(
+        'No se encontro sucursales para esta sesion',
+      );
     return result.map((sucursal) => SucursalMapper.toDomain(sucursal));
   }
   async getByIdSucursal(
@@ -107,7 +114,7 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       relations: ['empresa', 'empresa.credenciales'],
     });
     if (!sucursal) {
-     throw new BusinessLogicException(
+      throw new BusinessLogicException(
         'La sucursal actual no se encuentra activa para emitir comprobantes de venta. Verifique el estado o comuníquese con el administrador del sistema.',
       );
     }
@@ -183,4 +190,38 @@ export class SucursalRepositoryImpl implements ISucursalRepository {
       empresa: { empresaId: empresaId },
     });
   }
+async addUserSucursales(
+  usuarioId: number,
+  sucursales: number[]
+) {
+  const queryRunner = this.dataSource.createQueryRunner();
+
+  await queryRunner.connect();
+  await queryRunner.startTransaction();
+
+  try {
+    const sucursalesFinals =
+      sucursales?.map((id) => ({ sucursalId: id }) as SucursalOrmEntity) ?? [];
+
+    const userSucursales = sucursalesFinals.map((sucursal) => ({
+      usuarioId,
+      sucursalId: sucursal.sucursalId,
+    }));
+
+    await queryRunner.manager.insert(
+      UserSucursalesOrmEntity,
+      userSucursales
+    );
+
+    await queryRunner.commitTransaction();
+
+  } catch (error) {
+    await queryRunner.rollbackTransaction();
+    throw error;
+
+  } finally {
+    await queryRunner.release();
+  }
+}
+
 }

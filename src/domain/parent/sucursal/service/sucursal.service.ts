@@ -33,6 +33,7 @@ export class SucursalService {
   async create(
     dto: CreateSucursalDto,
     auth: IUserPayload,
+    userId:number
   ): Promise<GenericResponse<SucursalResponseDto>> {
     try {
       dto.usuarioRegistro = auth.correo;
@@ -45,7 +46,7 @@ export class SucursalService {
         dto.empresaId,
       );
       dto.codigo = codigo;
-      const newSucursal = await this.sucursalRepo.save(dto);
+      const newSucursal = await this.sucursalRepo.save(userId, dto);
       const logData = buildLogData({
         tablaAfectada: ETablaAudit.SUCURSAL,
         accion: EAccionAudit.INSERT,
