@@ -63,7 +63,7 @@ export class CreateEmpresaDto extends CreateEmpresaCredencialesDto {
    @IsString({
     message: 'El codigo de establecimiento de la sucursal debe ser un texto',
   })
-  @Length(1, 4, { message: 'El codigo de establecimiento de la sucursal debe tener máximo 4 caracteres'})
+  // @Length(1, 4, { message: 'El codigo de establecimiento de la sucursal debe tener máximo 4 caracteres'})
   codigoEstablecimiento: string;
   @Expose({ name: 'distrito_id' })
   @Transform(({ value }) => Number(value))

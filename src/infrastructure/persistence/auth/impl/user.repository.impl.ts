@@ -71,6 +71,7 @@ export class UserRepositoryImpl implements IUsuarioRepositoryPort {
   }
 
   async findByUsername(correo: string): Promise<UsuarioResponseDto | null> {
+    console.log('correo >>>>', correo)
     const usuario = await this.repo.findOne({
       where: { correo },
       relations: ['sucursales', 'sucursales.empresa', 'sucursales.empresa.credenciales'],
