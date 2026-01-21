@@ -257,7 +257,7 @@ export class TenantDatabaseService {
     return {
       usersDatabase: username,
       databaseName: dbName,
-      databasePassword: dbPassword
+      databasePassword: await CryptoUtil.decrypt(dbPassword) 
     }
   }
   async deleteTenant(
